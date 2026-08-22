@@ -395,7 +395,15 @@
     </div>
 
     <script>
-        let BASE_URL = localStorage.getItem('CHEMICAL_API_URL') || 'https://chemical-backend.onrender.com';
+        // บังคับเปลี่ยน BASE_URL เป็น URL หลักของคุณบน Render ทันที
+        const OFFICIAL_API_URL = 'https://chemical-backend-s3pz.onrender.com';
+        let BASE_URL = localStorage.getItem('CHEMICAL_API_URL');
+        
+        if (!BASE_URL || BASE_URL.includes('chemical-backend.onrender.com')) {
+            BASE_URL = OFFICIAL_API_URL;
+            localStorage.setItem('CHEMICAL_API_URL', OFFICIAL_API_URL);
+        }
+
         let currentUser = JSON.parse(localStorage.getItem('LOGGED_USER')) || null;
         let allChemicals = [];
         let cart = [];
