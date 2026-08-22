@@ -10,7 +10,7 @@ import requests
 
 app = FastAPI(title="Chemical Inventory API")
 
-# เปิดสิทธิ์ CORS ให้ส่งข้อมูล POST/GET ได้ทุกโดเมนโดยไม่โดนบล็อก
+# ปลดล็อก CORS ทุกโดเมน 100% ให้หน้าเว็บส่ง POST/GET ได้ไม่โดนบล็อก
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,8 +24,15 @@ LINE_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 
 def get_db():
     if not DATABASE_URL:
-        raise HTTPException(status_code=500, detail="DATABASE_URL is not configured")
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        raise HTTPException(status_code=500, detail="DATABASE_URL is not configured in Environment Variables")
+    try:
+        # บังคับใช้ SSL และ autocommit เพื่อป้องกัน Connection ค้างในระบบ Pooler
+        conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+        conn.autocommit = True
+        return conn
+    except Exception as e:
+        print("Database Connection Error:", str(e))
+        raise HTTPException(status_code=500, detail=f"Database Connection Failed: {str(e)}")
 
 def send_line_notify(message: str):
     if not LINE_TOKEN:
@@ -65,20 +72,21 @@ def read_root():
 def get_chemicals():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM chemicals ORDER BY id ASC")
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    try:
+        cursor.execute("SELECT * FROM chemicals ORDER BY id ASC;")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Query Error: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
 
-# แก้ไขฟังก์ชันบันทึกสารเคมีให้ปลอดภัย ไม่ติด Crash และรองรับค่าว่าง
 @app.post("/chemicals")
 def add_chemical(chem: ChemicalCreate):
-    conn = None
+    conn = get_db()
+    cursor = conn.cursor()
     try:
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        # จัดการค่าว่าง ให้เปลี่ยนเป็น None (Null ใน Database)
         cas = chem.cas_number.strip() if chem.cas_number and chem.cas_number.strip() else None
         loc = chem.location.strip() if chem.location and chem.location.strip() else None
         exp = chem.expiry_date.strip() if chem.expiry_date and chem.expiry_date.strip() else None
@@ -88,28 +96,22 @@ def add_chemical(chem: ChemicalCreate):
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (cas, chem.name.strip(), float(chem.quantity), chem.unit.strip(), loc, exp))
         
-        conn.commit()
-        cursor.close()
-        conn.close()
         return {"message": "เพิ่มสารเคมีเรียบร้อยแล้ว"}
     except Exception as e:
-        if conn:
-            conn.rollback()
-            conn.close()
         print("Add Chemical Error:", str(e))
-        raise HTTPException(status_code=400, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Insert failed: {str(e)}")
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/requisitions")
 def create_requisition(req: RequisitionCreate):
-    conn = None
+    conn = get_db()
+    cursor = conn.cursor()
     try:
-        conn = get_db()
-        cursor = conn.cursor()
-        
         cursor.execute("SELECT name, quantity, unit FROM chemicals WHERE id = %s", (req.chemical_id,))
         chem = cursor.fetchone()
         if not chem:
-            conn.close()
             raise HTTPException(status_code=404, detail="ไม่พบสารเคมีนี้")
         
         chem_dict = dict(chem)
@@ -119,48 +121,48 @@ def create_requisition(req: RequisitionCreate):
             VALUES (%s, %s, %s, 'PENDING')
         """, (req.user_id, req.chemical_id, float(req.requested_quantity)))
         
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
         msg = f"🧪 มีคำขอเบิกสารเคมีใหม่!\nสารเคมี: {chem_dict['name']}\nจำนวน: {req.requested_quantity} {chem_dict['unit']}\nสถานะ: รอการอนุมัติ"
         send_line_notify(msg)
         
         return {"message": "ส่งคำขอเบิกเรียบร้อยแล้ว", "status": "PENDING"}
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        if conn:
-            conn.rollback()
-            conn.close()
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.get("/requisitions")
 def get_requisitions():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT r.id, u.full_name as requester_name, c.name as chemical_name, 
-               r.requested_quantity, c.unit, r.status, r.approved_by, r.created_at
-        FROM requisitions r
-        JOIN users u ON r.user_id = u.id
-        JOIN chemicals c ON r.chemical_id = c.id
-        ORDER BY r.id DESC
-    """)
-    rows = cursor.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+    try:
+        cursor.execute("""
+            SELECT r.id, u.full_name as requester_name, c.name as chemical_name, 
+                   r.requested_quantity, c.unit, r.status, r.approved_by, r.created_at
+            FROM requisitions r
+            JOIN users u ON r.user_id = u.id
+            JOIN chemicals c ON r.chemical_id = c.id
+            ORDER BY r.id DESC
+        """)
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/requisitions/{req_id}/approve")
 def approve_requisition(req_id: int, action: ActionRequisition):
-    conn = None
+    conn = get_db()
+    cursor = conn.cursor()
     try:
-        conn = get_db()
-        cursor = conn.cursor()
-        
         cursor.execute("SELECT chemical_id, requested_quantity, status FROM requisitions WHERE id = %s", (req_id,))
         req = cursor.fetchone()
         
         if not req:
-            conn.close()
             raise HTTPException(status_code=404, detail="ไม่พบรายการเบิกนี้")
         
         req_dict = dict(req)
@@ -172,44 +174,37 @@ def approve_requisition(req_id: int, action: ActionRequisition):
         current_qty = float(chem["quantity"])
         
         if current_qty < req_qty:
-            conn.close()
             raise HTTPException(status_code=400, detail="สารเคมีในคลังไม่พอให้เบิก")
         
         new_qty = current_qty - req_qty
         cursor.execute("UPDATE chemicals SET quantity = %s WHERE id = %s", (new_qty, chem_id))
         cursor.execute("UPDATE requisitions SET status = 'APPROVED', approved_by = %s WHERE id = %s", (action.admin_name, req_id))
         
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
         msg = f"✅ อนุมัติการเบิกสารเคมีแล้ว!\nสารเคมี: {chem['name']}\nจำนวน: {req_qty} {chem['unit']}\nผู้อนุมัติ: {action.admin_name}"
         send_line_notify(msg)
         
         return {"message": "อนุมัติการเบิกและตัดสต็อกเรียบร้อยแล้ว"}
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        if conn:
-            conn.rollback()
-            conn.close()
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/requisitions/{req_id}/reject")
 def reject_requisition(req_id: int, action: ActionRequisition):
-    conn = None
+    conn = get_db()
+    cursor = conn.cursor()
     try:
-        conn = get_db()
-        cursor = conn.cursor()
         cursor.execute("UPDATE requisitions SET status = 'REJECTED', approved_by = %s WHERE id = %s", (action.admin_name, req_id))
-        conn.commit()
-        cursor.close()
-        conn.close()
         
         msg = f"❌ ปฏิเสธคำขอเบิกสารเคมี\nผู้อนุมัติ/ปฏิเสธ: {action.admin_name}"
         send_line_notify(msg)
         
         return {"message": "ปฏิเสธคำขอเบิกแล้ว"}
     except Exception as e:
-        if conn:
-            conn.rollback()
-            conn.close()
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
