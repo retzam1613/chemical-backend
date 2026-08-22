@@ -9,7 +9,7 @@ from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 import requests
 
-app = FastAPI(title="Chemical Inventory Pro API")
+app = FastAPI(title="Chemical Inventory Management API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,7 +40,7 @@ def send_line_notify(message: str):
     except Exception as e:
         print("LINE Error:", e)
 
-# --- Pydantic Models ---
+# Pydantic Schemas
 class UserRegister(BaseModel):
     full_name: str
     email: str
@@ -67,6 +67,17 @@ class ChemicalItem(BaseModel):
 class ChemicalBatchCreate(BaseModel):
     items: List[ChemicalItem]
 
+class ChemicalUpdate(BaseModel):
+    name: str
+    brand: Optional[str] = None
+    cas_number: Optional[str] = None
+    capacity_value: float
+    capacity_unit: str
+    quantity: float
+    package_unit: str
+    location: Optional[str] = None
+    expiry_date: Optional[str] = None
+
 class RequisitionItem(BaseModel):
     chemical_id: int
     requested_quantity: float
@@ -83,7 +94,7 @@ class ActionPayload(BaseModel):
 @app.post("/auth/register")
 def register_user(u: UserRegister):
     if not re.match(r'^[a-zA-Z0-9]+$', u.username):
-        raise HTTPException(status_code=400, detail="User ต้องเป็นภาษาอังกฤษและตัวเลขเท่านั้น ห้ามมีอักขระพิเศษ")
+        raise HTTPException(status_code=400, detail="User ต้องเป็นภาษาอังกฤษและตัวเลขเท่านั้น")
     if u.username.lower() == 'admin':
         raise HTTPException(status_code=400, detail="ไม่อนุญาตให้ใช้ Username 'admin'")
     
@@ -119,17 +130,7 @@ def login_user(u: UserLogin):
     del user_dict["password"]
     return {"message": "เข้าสู่ระบบสำเร็จ", "user": user_dict}
 
-@app.get("/users")
-def get_users():
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, full_name, username, role FROM users ORDER BY id ASC")
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return [dict(r) for r in rows]
-
-# --- DASHBOARD METRICS ENDPOINT ---
+# --- DASHBOARD & NOTIFICATIONS ---
 @app.get("/dashboard/metrics")
 def get_dashboard_metrics():
     conn = get_db()
@@ -137,6 +138,7 @@ def get_dashboard_metrics():
     cursor.execute("""
         SELECT 
             COUNT(*) as total_items,
+            COUNT(*) FILTER (WHERE quantity = 0) as out_of_stock,
             COUNT(*) FILTER (WHERE expiry_date IS NOT NULL AND expiry_date < CURRENT_DATE) as expired,
             COUNT(*) FILTER (WHERE expiry_date IS NOT NULL AND expiry_date >= CURRENT_DATE AND expiry_date <= CURRENT_DATE + INTERVAL '1 day') as exp_1d,
             COUNT(*) FILTER (WHERE expiry_date IS NOT NULL AND expiry_date > CURRENT_DATE + INTERVAL '1 day' AND expiry_date <= CURRENT_DATE + INTERVAL '3 days') as exp_3d,
@@ -149,6 +151,30 @@ def get_dashboard_metrics():
     cursor.close()
     conn.close()
     return dict(metrics)
+
+@app.get("/notifications")
+def get_notifications():
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, name, brand, location, expiry_date,
+            CASE 
+                WHEN expiry_date < CURRENT_DATE THEN 'EXPIRED'
+                WHEN expiry_date <= CURRENT_DATE + INTERVAL '1 day' THEN '1_DAY'
+                WHEN expiry_date <= CURRENT_DATE + INTERVAL '3 days' THEN '3_DAYS'
+                WHEN expiry_date <= CURRENT_DATE + INTERVAL '7 days' THEN '7_DAYS'
+                WHEN expiry_date <= CURRENT_DATE + INTERVAL '30 days' THEN '30_DAYS'
+            END as alert_level
+        FROM chemicals
+        WHERE (status = 'APPROVED' OR status IS NULL)
+          AND expiry_date IS NOT NULL
+          AND expiry_date <= CURRENT_DATE + INTERVAL '30 days'
+        ORDER BY expiry_date ASC;
+    """)
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return [dict(r) for r in rows]
 
 # --- CHEMICALS ENDPOINTS ---
 @app.get("/chemicals")
@@ -187,8 +213,28 @@ def add_chemicals_batch(batch: ChemicalBatchCreate):
             """, (item.name.strip(), item.brand, item.cas_number, item.capacity_value, item.capacity_unit, 
                   item.quantity, unit_str, item.package_unit, item.location, exp, item.created_by_name))
         
-        send_line_notify(f"🧪 มีการขอเพิ่มสารเคมีใหม่ {len(batch.items)} รายการ โดยคุณ {batch.items[0].created_by_name}")
+        send_line_notify(f"🧪 คำขอเพิ่มสารเคมีใหม่ {len(batch.items)} รายการ โดยคุณ {batch.items[0].created_by_name}")
         return {"message": "ส่งรายการขอเพิ่มสารเคมีเรียบร้อยแล้ว"}
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/chemicals/{chem_id}")
+def update_chemical(chem_id: int, chem: ChemicalUpdate):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        exp = chem.expiry_date.strip() if chem.expiry_date and chem.expiry_date.strip() else None
+        unit_str = f"{chem.capacity_value} {chem.capacity_unit}/{chem.package_unit}"
+        
+        cursor.execute("""
+            UPDATE chemicals 
+            SET name=%s, brand=%s, cas_number=%s, capacity_value=%s, capacity_unit=%s, 
+                quantity=%s, unit=%s, package_unit=%s, location=%s, expiry_date=%s
+            WHERE id=%s
+        """, (chem.name.strip(), chem.brand, chem.cas_number, chem.capacity_value, chem.capacity_unit, 
+              chem.quantity, unit_str, chem.package_unit, chem.location, exp, chem_id))
+        return {"message": "อัปเดตข้อมูลสารเคมีเรียบร้อยแล้ว"}
     finally:
         cursor.close()
         conn.close()
@@ -221,18 +267,17 @@ def create_requisition_basket(basket: RequisitionBasket):
     batch_id = str(uuid.uuid4())[:8]
     try:
         for item in basket.items:
-            # Check Stock Guard
             cursor.execute("SELECT quantity, name FROM chemicals WHERE id = %s", (item.chemical_id,))
             chem = cursor.fetchone()
             if not chem or float(chem["quantity"]) < item.requested_quantity:
-                raise HTTPException(status_code=400, detail=f"สารเคมี {chem['name'] if chem else ''} มีสต็อกไม่พอสำหรับการเบิก")
+                raise HTTPException(status_code=400, detail=f"สารเคมี {chem['name'] if chem else ''} มีสต็อกไม่พอ")
             
             cursor.execute("""
                 INSERT INTO requisitions (user_id, chemical_id, requested_quantity, status, batch_id)
                 VALUES (%s, %s, %s, 'PENDING', %s)
             """, (basket.user_id, item.chemical_id, item.requested_quantity, batch_id))
             
-        send_line_notify(f"🛒 คำขอเบิกสารเคมีใหม่ (#{batch_id}) จำนวน {len(basket.items)} รายการ โดยคุณ {basket.requester_name}")
+        send_line_notify(f"🛒 คำขอเบิกสารเคมี (#{batch_id}) โดยคุณ {basket.requester_name}")
         return {"message": "ส่งคำขอเบิกสารเคมีเรียบร้อยแล้ว", "batch_id": batch_id}
     finally:
         cursor.close()
@@ -271,13 +316,13 @@ def approve_requisition(req_id: int, action: ActionPayload):
         cursor.execute("SELECT name, quantity, package_unit FROM chemicals WHERE id = %s", (chem_id,))
         chem = cursor.fetchone()
         if float(chem["quantity"]) < req_qty:
-            raise HTTPException(status_code=400, detail="สารเคมีในสต็อกไม่พอให้เบิก")
+            raise HTTPException(status_code=400, detail="สารเคมีในสต็อกไม่พอ")
         
         new_qty = float(chem["quantity"]) - req_qty
         cursor.execute("UPDATE chemicals SET quantity = %s WHERE id = %s", (new_qty, chem_id))
         cursor.execute("UPDATE requisitions SET status = 'APPROVED', approved_by = %s, approved_at = CURRENT_TIMESTAMP WHERE id = %s", (action.admin_name, req_id))
         
-        send_line_notify(f"✅ อนุมัติการเบิก #{req_id} ({chem['name']}) โดย {action.admin_name}")
+        send_line_notify(f"✅ อนุมัติการเบิก #{req_id} โดย {action.admin_name}")
         return {"message": "อนุมัติและตัดสต็อกเรียบร้อยแล้ว"}
     finally:
         cursor.close()
