@@ -337,3 +337,7 @@ def reject_requisition(req_id: int, action: ActionPayload):
     conn.close()
     send_line_notify(f"❌ ปฏิเสธการเบิก #{req_id} โดย {action.admin_name}")
     return {"message": "ปฏิเสธรายการเบิกเรียบร้อยแล้ว"}
+    
+@app.get("/")
+def read_root():
+    return {"status": "Chemical Inventory Management API Active"}
