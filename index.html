@@ -5,376 +5,245 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CIMs - Chemical Inventory Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: { extend: {} }
-        }
-    </script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>tailwind.config = { darkMode: 'class', theme: { extend: {} } }</script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Sarabun', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        .truncate-remark {
-            max-width: 120px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        body { font-family: 'Sarabun', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
+        .dark .glass-card { background: rgba(15, 23, 42, 0.85); }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col relative antialiased">
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center text-white hidden">
-        <i class="fa-solid fa-spinner animate-spin text-5xl text-indigo-500 mb-4"></i>
-        <p id="loading-text" class="text-base font-semibold tracking-wide">กำลังประมวลผลข้อมูล...</p>
+        <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
+        <p id="loading-text" class="text-sm font-bold tracking-wide">กำลังประมวลผล / Processing...</p>
     </div>
 
-    <!-- SIDEBAR DRAWER MENU -->
+    <!-- SIDEBAR DRAWER -->
     <div id="sidebar-drawer" class="fixed inset-0 z-50 flex hidden">
-        <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"></div>
+        <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
         <div class="relative w-72 max-w-[80%] bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col border-r border-slate-200 dark:border-slate-800 z-10">
             <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-indigo-600 text-white">
                 <div class="flex items-center space-x-2">
-                    <!-- SVG LOGO -->
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path>
-                    </svg>
+                    <svg class="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path></svg>
                     <span class="font-extrabold text-sm tracking-wider">CIMs MENU</span>
                 </div>
-                <button onclick="toggleSidebar()" class="text-white hover:opacity-80"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <nav class="p-4 space-y-1.5 flex-1">
-                <button onclick="switchTab('inv'); toggleSidebar();" id="menu-inv" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i>
-                    <span>คลังสารเคมี</span>
+            <nav class="p-4 space-y-2 flex-1">
+                <button onclick="switchTab('inv'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i><span data-i18n="menu_inv">คลังสารเคมี</span>
                 </button>
-                <button onclick="switchTab('req'); toggleSidebar();" id="menu-req" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-file-invoice text-amber-500 text-base"></i>
-                    <span>คำขอเบิกสารเคมี</span>
+                <button onclick="switchTab('approval'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-list-check text-amber-500 text-base"></i><span data-i18n="menu_approval">คำขอเบิก-นำเข้าสารเคมี</span>
                 </button>
-                <button onclick="switchTab('pending'); toggleSidebar();" id="menu-pending" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-truck-ramp-box text-emerald-500 text-base"></i>
-                    <span>คำขอนำเข้าสารเคมี</span>
+                <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hidden">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span>
                 </button>
-                <button onclick="switchTab('history'); toggleSidebar();" id="menu-history" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                    <i class="fa-solid fa-clock-rotate-left text-blue-500 text-base"></i>
-                    <span>ประวัติการนำเข้าสารเคมี</span>
-                </button>
-                <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition hidden">
-                    <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i>
-                    <span>สารเคมีใกล้หมดอายุ</span>
+                <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-slate-800">
+                    <i class="fa-solid fa-bug text-rose-500 text-base"></i><span data-i18n="btn_report_issue">แจ้งปัญหา</span>
                 </button>
             </nav>
             <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-                <button onclick="logout()" class="w-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 border border-rose-200 dark:border-rose-900">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>ออกจากระบบ</span>
+                <button onclick="logout()" class="w-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 border border-rose-200">
+                    <i class="fa-solid fa-right-from-bracket"></i><span data-i18n="btn_logout">ออกจากระบบ</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- AUTH SECTION -->
-    <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-100 dark:bg-slate-900">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 space-y-6">
+    <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-slate-900">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 space-y-6">
             <div class="text-center space-y-2">
-                <!-- SVG LOGO -->
-                <div class="inline-flex items-center justify-center bg-indigo-600 p-4 rounded-3xl text-white shadow-lg shadow-indigo-500/30 mb-2">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path>
-                    </svg>
+                <div class="inline-flex items-center justify-center bg-indigo-600 p-4 rounded-3xl text-white shadow-xl shadow-indigo-500/30">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path></svg>
                 </div>
                 <h1 class="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-wider">CIMs</h1>
-                <p class="text-xs font-semibold text-slate-500 dark:text-slate-400">Chemical Inventory Management System</p>
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Chemical Inventory Management System</p>
             </div>
 
-            <!-- LOGIN FORM -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Username</label>
-                    <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="กรอก Username">
+                    <label class="block text-xs font-semibold mb-1">Username</label>
+                    <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-slate-50 dark:bg-slate-700" placeholder="Username">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Password</label>
-                    <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl text-sm border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                    <label class="block text-xs font-semibold mb-1">Password</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-slate-50 dark:bg-slate-700" placeholder="••••••••">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-md shadow-indigo-600/20 text-sm">
-                    เข้าสู่ระบบ
-                </button>
-                <div class="text-center pt-2">
-                    <button type="button" onclick="toggleAuthMode('register')" class="text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
-                        ยังไม่มีบัญชีผู้ใช้? ลงทะเบียน (Requester)
-                    </button>
-                </div>
-            </form>
-
-            <!-- REGISTER FORM -->
-            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-3 hidden">
-                <div>
-                    <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">ชื่อ-นามสกุล *</label>
-                    <input type="text" id="reg-fullname" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white" placeholder="ดร.สมชาย ใจดี">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">อีเมล *</label>
-                    <input type="email" id="reg-email" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white" placeholder="somchai@lab.com">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">เบอร์โทรศัพท์ *</label>
-                    <input type="tel" id="reg-phone" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white" placeholder="0812345678">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Username * (เฉพาะ A-Z, a-z, 0-9)</label>
-                    <input type="text" id="reg-username" pattern="[a-zA-Z0-9]+" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white" placeholder="somchai123">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold mb-1 text-slate-600 dark:text-slate-300">Password *</label>
-                    <input type="password" id="reg-password" required class="w-full px-3 py-2 rounded-xl text-xs border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 dark:text-white" placeholder="••••••••">
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition shadow-md shadow-emerald-600/20 text-xs">
-                    ยืนยันการลงทะเบียน
-                </button>
-                <div class="text-center pt-1">
-                    <button type="button" onclick="toggleAuthMode('login')" class="text-xs text-slate-500 hover:underline">
-                        กลับไปหน้าเข้าสู่ระบบ
-                    </button>
-                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 text-sm" data-i18n="btn_login">เข้าสู่ระบบ</button>
             </form>
         </div>
     </div>
 
-    <!-- MAIN APP CONTENT -->
+    <!-- MAIN APP -->
     <div id="app-content" class="flex-1 flex flex-col hidden">
-        <!-- Header Nav -->
-        <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap justify-between items-center gap-2">
+        <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-xs">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-2">
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleSidebar()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition">
-                        <i class="fa-solid fa-bars text-base"></i>
-                    </button>
+                    <button onclick="toggleSidebar()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800"><i class="fa-solid fa-bars text-base"></i></button>
                     <div class="flex items-center space-x-2">
-                        <!-- HEADER SVG LOGO -->
                         <div class="bg-indigo-600 p-2 rounded-xl text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path>
-                            </svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path></svg>
                         </div>
                         <div>
-                            <h1 class="text-base font-black tracking-wider text-indigo-600 dark:text-indigo-400 leading-tight">CIMs</h1>
+                            <h1 class="text-base font-black tracking-wider text-indigo-600 dark:text-indigo-400">CIMs</h1>
                             <p class="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Chemical Inventory Management System</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <!-- Manual Refresh Button -->
-                    <button onclick="refreshData()" title="รีเฟรชข้อมูล" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 transition">
-                        <i class="fa-solid fa-rotate-right text-xs"></i>
+                    <!-- Language Switcher -->
+                    <button onclick="toggleLang()" class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs border border-slate-200 dark:border-slate-700">
+                        <span id="lang-label">🇬🇧 EN</span>
                     </button>
-
-                    <!-- Status Badge -->
-                    <div id="status-badge" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
-                        <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-                        <span id="status-text">offline</span>
-                    </div>
-
+                    <!-- Manual Refresh -->
+                    <button onclick="refreshData()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-indigo-600"><i class="fa-solid fa-rotate-right text-xs"></i></button>
                     <!-- Theme Toggle -->
-                    <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                        <i id="theme-icon" class="fa-solid fa-moon text-xs"></i>
-                    </button>
-
-                    <!-- Notification Bell -->
+                    <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800"><i id="theme-icon" class="fa-solid fa-moon text-xs"></i></button>
+                    <!-- Notif Bell -->
                     <div class="relative">
-                        <button onclick="toggleNotificationCenter()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 relative">
+                        <button onclick="toggleNotifs()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 relative">
                             <i class="fa-solid fa-bell text-xs"></i>
                             <span id="notif-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse hidden">!</span>
                         </button>
-                        
-                        <!-- Notification Dropdown Panel (Max 5 items + scrollbar) -->
-                        <div id="notif-dropdown" class="fixed inset-x-4 top-16 md:absolute md:inset-auto md:right-0 md:top-10 md:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4 z-50 hidden">
-                            <div class="flex justify-between items-center pb-2 border-b dark:border-slate-700 mb-3">
-                                <h4 class="font-bold text-xs text-slate-800 dark:text-white"><i class="fa-solid fa-bell text-indigo-500 mr-1.5"></i>ศูนย์แจ้งเตือน</h4>
-                                <span id="notif-count" class="text-[10px] bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold">0</span>
+                        <div id="notif-dropdown" class="fixed inset-x-4 top-16 md:absolute md:inset-auto md:right-0 md:top-10 md:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border p-4 z-50 hidden">
+                            <div class="flex justify-between items-center pb-2 border-b mb-3">
+                                <h4 class="font-bold text-xs" data-i18n="notif_title">ศูนย์แจ้งเตือน</h4>
+                                <span id="notif-count" class="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold">0</span>
                             </div>
                             <div id="notif-list" class="space-y-2 text-xs max-h-64 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
-
-                    <!-- Cart Trigger Button -->
-                    <button onclick="openCartModal()" class="relative bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center">
-                        <i class="fa-solid fa-cart-shopping mr-1"></i> ตะกร้า
-                        <span id="cart-badge" class="ml-1 bg-rose-600 text-white text-[9px] px-1.5 py-0.2 rounded-full">0</span>
+                    <!-- Cart Trigger -->
+                    <button onclick="openCartModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center">
+                        <i class="fa-solid fa-cart-shopping mr-1"></i> <span data-i18n="btn_cart">ตะกร้า</span>
+                        <span id="cart-badge" class="ml-1 bg-rose-600 text-white text-[9px] px-1.5 rounded-full">0</span>
                     </button>
-
-                    <!-- User Profile Display -->
-                    <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
-                        <i class="fa-solid fa-circle-user text-indigo-600 dark:text-indigo-400"></i>
-                        <span id="current-user-display" class="font-bold text-[11px] text-slate-800 dark:text-white"></span>
+                    <!-- User Profile -->
+                    <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border text-xs">
+                        <i class="fa-solid fa-circle-user text-indigo-600"></i>
+                        <span id="current-user-display" class="font-bold text-[11px]"></span>
                     </div>
                 </div>
             </div>
         </header>
 
-        <!-- MAIN CONTENT AREA -->
         <main class="max-w-7xl mx-auto px-4 py-4 flex-1 w-full space-y-4">
-
-            <!-- TOTAL CHEMICAL SUMMARY BOX -->
+            <!-- SUMMARY CARDS -->
             <section class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+                <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
                     <div>
-                        <p class="text-[11px] font-medium opacity-90">ปริมาณสารเคมีทั้งหมดในคลัง</p>
-                        <h2 id="summary-total-qty" class="text-2xl font-black mt-0.5">0 Units</h2>
+                        <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_qty">ปริมาณสารเคมีทั้งหมดในคลัง</p>
+                        <h2 id="summary-total-qty" class="text-2xl font-black mt-0.5">0 ชิ้น</h2>
                     </div>
-                    <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-flask text-2xl"></i></div>
+                    <div class="bg-white/20 p-3 rounded-2xl"><i class="fa-solid fa-flask text-2xl"></i></div>
                 </div>
-                <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+                <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
                     <div>
-                        <p class="text-[11px] font-medium opacity-90">จำนวนรายการสารเคมีทั้งหมด</p>
+                        <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_items">จำนวนรายการสารเคมีทั้งหมด</p>
                         <h2 id="summary-total-items" class="text-2xl font-black mt-0.5">0 รายการ</h2>
                     </div>
-                    <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-boxes-stacked text-2xl"></i></div>
+                    <div class="bg-white/20 p-3 rounded-2xl"><i class="fa-solid fa-boxes-stacked text-2xl"></i></div>
                 </div>
             </section>
 
-            <!-- STOREKEEPER DAILY ANALYTICS GRAPH (1 MONTH) -->
-            <section id="storekeeper-analytics-section" class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm hidden space-y-3">
-                <h3 class="font-bold text-xs text-slate-800 dark:text-white flex items-center justify-between">
-                    <span><i class="fa-solid fa-chart-line text-indigo-500 mr-1.5"></i>กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง (รายวัน ย้อนหลัง 1 เดือน)</span>
+            <!-- LINE CHART (STOREKEEPER) -->
+            <section id="storekeeper-analytics-section" class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm hidden space-y-3">
+                <h3 class="font-bold text-xs flex items-center justify-between">
+                    <span><i class="fa-solid fa-chart-line text-indigo-500 mr-1.5"></i><span data-i18n="chart_title">กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง (รายวัน ย้อนหลัง 1 เดือน)</span></span>
                 </h3>
-                <div class="w-full h-48 md:h-60">
-                    <canvas id="analyticsChart"></canvas>
-                </div>
+                <div class="w-full h-48 md:h-60"><canvas id="analyticsChart"></canvas></div>
             </section>
 
             <!-- ACTION BAR -->
-            <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <span id="active-tab-title" class="font-bold text-xs text-slate-700 dark:text-slate-200 px-2">คลังสารเคมี</span>
-                <button onclick="openBatchAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center">
-                    <i class="fa-solid fa-plus mr-1.5"></i>เพิ่มสารเคมีเข้าคลัง
+            <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-2.5 rounded-2xl border shadow-sm">
+                <span id="active-tab-title" class="font-bold text-xs px-2" data-i18n="menu_inv">คลังสารเคมี</span>
+                <button onclick="openBatchAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center shadow-md">
+                    <i class="fa-solid fa-plus mr-1.5"></i><span data-i18n="btn_add_chem">เพิ่มสารเคมีเข้าคลัง</span>
                 </button>
             </div>
 
             <!-- TAB 1: INVENTORY TABLE -->
             <section id="tab-inv" class="space-y-3">
-                <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
-                
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs bg-white dark:bg-slate-800 border shadow-sm">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border overflow-hidden shadow-sm">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                            <thead class="bg-slate-100 dark:bg-slate-800/80 uppercase text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th>
-                                    <th class="py-3 px-3">ชื่อสารเคมี</th>
-                                    <th class="py-3 px-3">Brand</th>
-                                    <th class="py-3 px-3">CAS Number</th>
-                                    <th class="py-3 px-3">ปริมาณต่อหน่วย</th>
-                                    <th class="py-3 px-3">จำนวนคงเหลือ</th>
-                                    <th class="py-3 px-3">สถานที่จัดเก็บ</th>
-                                    <th class="py-3 px-3">วันหมดอายุ</th>
-                                    <th class="py-3 px-3">Remark</th>
-                                    <th class="py-3 px-3 text-center min-w-[150px]">ดำเนินการ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[150px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="chemical-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            <tbody id="chemical-table-body" class="divide-y"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB 2: REQUISITION LOG -->
-            <section id="tab-req" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 class="font-bold text-xs text-slate-800 dark:text-white mb-3"><i class="fa-solid fa-file-invoice mr-1.5 text-amber-500"></i>คำขอเบิกสารเคมี</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                            <thead class="bg-slate-100 dark:bg-slate-800/80 uppercase text-[10px] font-bold text-slate-700 dark:text-slate-300">
+            <!-- TAB 2: MERGED APPROVAL & HISTORY PROCESS -->
+            <section id="tab-approval" class="space-y-3 hidden">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
+                        <div class="flex space-x-2">
+                            <button onclick="switchSubApproval('pending')" id="sub-btn-pending" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white" data-i18n="sub_tab_pending">คำขอที่รออนุมัติ</button>
+                            <button onclick="switchSubApproval('history')" id="sub-btn-history" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300" data-i18n="sub_tab_history">แสดงประวัติการเบิก-นำเข้าสารเคมี</button>
+                        </div>
+                        <!-- Filter -->
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="font-bold text-slate-500">Filter:</span>
+                            <select id="approval-type-filter" onchange="renderApprovalTables()" class="p-1.5 rounded-xl border bg-slate-50 dark:bg-slate-800 font-semibold">
+                                <option value="ALL" data-i18n="opt_all">ทั้งหมด (All)</option>
+                                <option value="IMPORT" data-i18n="opt_import">📥 นำเข้า (Import)</option>
+                                <option value="EXPORT" data-i18n="opt_export">📤 เบิกออก (Export)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SUB TAB: PENDING -->
+                    <div id="sub-tab-pending" class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
                                 <tr>
-                                    <th class="py-3 px-3">Order</th>
-                                    <th class="py-3 px-3">ผู้ขอเบิก</th>
-                                    <th class="py-3 px-3">สารเคมี (Brand)</th>
-                                    <th class="py-3 px-3">จำนวนเบิก</th>
-                                    <th class="py-3 px-3">Timestamp</th>
-                                    <th class="py-3 px-3">Remark</th>
-                                    <th class="py-3 px-3">สถานะ</th>
-                                    <th class="py-3 px-3">ผู้อนุมัติ</th>
-                                    <th class="py-3 px-3 text-center">จัดการ</th>
+                                    <th class="py-3 px-3" data-i18n="th_type">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3" data-i18n="th_requester">ผู้ขอ</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_req_qty">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3" data-i18n="th_status">สถานะ</th><th class="py-3 px-3 text-center" data-i18n="th_action">อนุมัติ/ปฏิเสธ</th>
                                 </tr>
                             </thead>
-                            <tbody id="req-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            <tbody id="pending-approval-tbody" class="divide-y"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- SUB TAB: HISTORY -->
+                    <div id="sub-tab-history" class="overflow-x-auto hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
+                                <tr>
+                                    <th class="py-3 px-3" data-i18n="th_type">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3" data-i18n="th_requester">ผู้ขอ</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_req_qty">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3" data-i18n="th_status">สถานะ</th><th class="py-3 px-3" data-i18n="th_approver">ผู้อนุมัติ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-approval-tbody" class="divide-y"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB 3: PENDING IMPORTS -->
-            <section id="tab-pending" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 class="font-bold text-xs text-slate-800 dark:text-white mb-3"><i class="fa-solid fa-truck-ramp-box mr-1.5 text-emerald-500"></i>คำขอนำเข้าสารเคมี</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                            <thead class="bg-slate-100 dark:bg-slate-800/80 uppercase text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                                <tr>
-                                    <th class="py-3 px-3">Order</th>
-                                    <th class="py-3 px-3">ผู้ขอเพิ่ม</th>
-                                    <th class="py-3 px-3">ชื่อสารเคมี (Brand)</th>
-                                    <th class="py-3 px-3">ปริมาณต่อหน่วย</th>
-                                    <th class="py-3 px-3">จำนวนนำเข้า</th>
-                                    <th class="py-3 px-3">สถานที่จัดเก็บ</th>
-                                    <th class="py-3 px-3">Timestamp</th>
-                                    <th class="py-3 px-3">Remark</th>
-                                    <th class="py-3 px-3">สถานะ</th>
-                                    <th class="py-3 px-3 text-center">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pending-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 4: IMPORT HISTORY LOG -->
-            <section id="tab-history" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 class="font-bold text-xs text-slate-800 dark:text-white mb-3"><i class="fa-solid fa-clock-rotate-left mr-1.5 text-blue-500"></i>ประวัติการนำเข้าสารเคมี (ที่อนุมัติแล้ว)</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                            <thead class="bg-slate-100 dark:bg-slate-800/80 uppercase text-[10px] font-bold text-slate-700 dark:text-slate-300">
-                                <tr>
-                                    <th class="py-3 px-3">Order</th>
-                                    <th class="py-3 px-3">ผู้นำเข้า</th>
-                                    <th class="py-3 px-3">ชื่อสารเคมี (Brand)</th>
-                                    <th class="py-3 px-3">ปริมาณต่อหน่วย</th>
-                                    <th class="py-3 px-3">จำนวน</th>
-                                    <th class="py-3 px-3">สถานที่จัดเก็บ</th>
-                                    <th class="py-3 px-3">Timestamp</th>
-                                    <th class="py-3 px-3">Remark</th>
-                                </tr>
-                            </thead>
-                            <tbody id="history-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 5: EXPIRY LOG -->
+            <!-- TAB 3: EXPIRY LOG -->
             <section id="tab-expiry" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h3 class="font-bold text-xs text-rose-500 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>สารเคมีใกล้หมดอายุ</h3>
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm">
+                    <h3 class="font-bold text-xs text-rose-500 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span></h3>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                            <thead class="bg-slate-100 dark:bg-slate-800/80 uppercase text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th>
-                                    <th class="py-3 px-3">ชื่อสารเคมี (Brand)</th>
-                                    <th class="py-3 px-3">สถานที่จัดเก็บ</th>
-                                    <th class="py-3 px-3">จำนวนคงเหลือ</th>
-                                    <th class="py-3 px-3">วันหมดอายุ</th>
-                                    <th class="py-3 px-3">ระดับการแจ้งเตือน</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3" data-i18n="th_alert">ระดับการแจ้งเตือน</th>
                                 </tr>
                             </thead>
-                            <tbody id="expiry-table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                            <tbody id="expiry-table-body" class="divide-y"></tbody>
                         </table>
                     </div>
                 </div>
@@ -382,164 +251,57 @@
         </main>
     </div>
 
-    <!-- MODAL: BATCH ADD CHEMICAL -->
+    <!-- ISSUE REPORT MODAL -->
+    <div id="modal-issue" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b">
+                <h3 class="font-bold text-sm text-rose-500"><i class="fa-solid fa-bug mr-2"></i><span data-i18n="modal_issue_title">แจ้งปัญหาการใช้งาน</span></h3>
+                <button onclick="closeModal('modal-issue')"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <textarea id="issue-text-input" rows="4" class="w-full p-3 border rounded-xl text-xs bg-slate-50 dark:bg-slate-700" placeholder="พิมพ์ข้อความแจ้งปัญหาถึง Storekeeper..."></textarea>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal('modal-issue')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">ยกเลิก</button>
+                <button onclick="submitIssue()" class="px-4 py-2 text-xs bg-rose-600 text-white font-bold rounded-xl shadow-md" data-i18n="btn_send">ส่งข้อความ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BATCH ADD MODAL -->
     <div id="modal-batch-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-5xl rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center pb-3 border-b dark:border-slate-700">
-                <h3 class="font-bold text-sm text-slate-900 dark:text-white"><i class="fa-solid fa-plus-circle text-emerald-500 mr-2"></i>เพิ่มสารเคมีเข้าคลัง</h3>
-                <button onclick="closeModal('modal-batch-add')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="bg-white dark:bg-slate-800 w-full max-w-5xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center pb-3 border-b">
+                <h3 class="font-bold text-sm" data-i18n="btn_add_chem"><i class="fa-solid fa-plus-circle text-emerald-500 mr-2"></i>เพิ่มสารเคมีเข้าคลัง</h3>
+                <button onclick="closeModal('modal-batch-add')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-3 overflow-y-auto flex-1 space-y-3">
-                <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                    <thead class="bg-slate-100 dark:bg-slate-700/50 uppercase font-semibold">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-100 dark:bg-slate-700 uppercase font-semibold">
                         <tr>
-                            <th class="p-2">ชื่อสารเคมี *</th>
-                            <th class="p-2">Brand</th>
-                            <th class="p-2">CAS No.</th>
-                            <th class="p-2">ปริมาณ/หน่วย *</th>
-                            <th class="p-2">จำนวน *</th>
-                            <th class="p-2">สถานที่จัดเก็บ *</th>
-                            <th class="p-2">วันหมดอายุ</th>
-                            <th class="p-2">Remark</th>
-                            <th class="p-2 text-center">ลบ</th>
+                            <th class="p-2">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No.</th><th class="p-2">ปริมาณ/หน่วย *</th><th class="p-2">จำนวน *</th><th class="p-2">สถานที่จัดเก็บ *</th><th class="p-2">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
                         </tr>
                     </thead>
                     <tbody id="batch-add-tbody"></tbody>
                 </table>
-                <button onclick="addBatchRow()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs px-3 py-1.5 rounded-xl font-bold">
-                    <i class="fa-solid fa-plus mr-1"></i> เพิ่มอีก 1 รายการ
-                </button>
+                <button onclick="addBatchRow()" class="bg-slate-100 dark:bg-slate-700 text-xs px-3 py-1.5 rounded-xl font-bold">+ เพิ่มอีก 1 รายการ</button>
             </div>
-            <div class="pt-3 border-t dark:border-slate-700 flex justify-end space-x-2">
-                <button onclick="closeModal('modal-batch-add')" class="px-4 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-xl">ยกเลิก</button>
-                <button onclick="submitBatchAdd()" class="px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl text-white shadow-md">ส่งขอเพิ่มสารเคมี</button>
+            <div class="pt-3 border-t flex justify-end space-x-2">
+                <button onclick="closeModal('modal-batch-add')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">ยกเลิก</button>
+                <button onclick="submitBatchAdd()" class="px-4 py-2 text-xs bg-emerald-600 font-bold rounded-xl text-white shadow-md" data-i18n="btn_send">ส่งขอเพิ่มสารเคมี</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: EDIT CHEMICAL -->
-    <div id="modal-edit-chem" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
-            <div class="flex justify-between items-center pb-2 border-b dark:border-slate-700">
-                <h3 class="font-bold text-sm text-slate-900 dark:text-white"><i class="fa-solid fa-pen-to-square text-indigo-500 mr-2"></i>แก้ไขข้อมูลสารเคมี</h3>
-                <button onclick="closeModal('modal-edit-chem')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="edit-chem-form" onsubmit="submitEditChemical(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="edit-chem-id">
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-semibold mb-1">ชื่อสารเคมี *</label>
-                        <input type="text" id="edit-name" required class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600">
-                    </div>
-                    <div>
-                        <label class="block font-semibold mb-1">Brand</label>
-                        <input type="text" id="edit-brand" class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-semibold mb-1">CAS Number</label>
-                        <input type="text" id="edit-cas" class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600">
-                    </div>
-                    <div>
-                        <label class="block font-semibold mb-1">สถานที่จัดเก็บ *</label>
-                        <select id="edit-loc" class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600"></select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block font-semibold mb-1">ปริมาณต่อหน่วย *</label>
-                        <div class="flex gap-1">
-                            <input type="number" step="any" id="edit-cap-val" required class="w-20 p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600">
-                            <select id="edit-cap-unit" class="flex-1 p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600"></select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block font-semibold mb-1">จำนวนสต็อก *</label>
-                        <div class="flex gap-1">
-                            <input type="number" min="0" id="edit-qty" required class="w-20 p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600">
-                            <select id="edit-pkg-unit" class="flex-1 p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600"></select>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">วันหมดอายุ</label>
-                    <input type="date" id="edit-exp" class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600">
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">Remark</label>
-                    <textarea id="edit-remark" rows="2" class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
-                </div>
-                <div class="pt-3 flex justify-end space-x-2">
-                    <button type="button" onclick="closeModal('modal-edit-chem')" class="px-4 py-2 border rounded-xl">ยกเลิก</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl">บันทึกการแก้ไข</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: EDIT REQUISITION -->
-    <div id="modal-edit-req" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
-            <div class="flex justify-between items-center pb-2 border-b dark:border-slate-700">
-                <h3 class="font-bold text-sm text-slate-900 dark:text-white"><i class="fa-solid fa-pen text-amber-500 mr-2"></i>แก้ไขรายการเบิก</h3>
-                <button onclick="closeModal('modal-edit-req')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <form id="edit-req-form" onsubmit="submitEditRequisition(event)" class="space-y-3 text-xs">
-                <input type="hidden" id="edit-req-id">
-                <div>
-                    <label class="block font-semibold mb-1">จำนวนที่ขอเบิก *</label>
-                    <input type="number" min="1" id="edit-req-qty" required class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600">
-                </div>
-                <div>
-                    <label class="block font-semibold mb-1">Remark</label>
-                    <textarea id="edit-req-remark" rows="2" class="w-full p-2 border rounded-xl dark:bg-slate-700 dark:border-slate-600" placeholder="ระบุเหตุผลในการเบิก..."></textarea>
-                </div>
-                <div class="pt-2 flex justify-end space-x-2">
-                    <button type="button" onclick="closeModal('modal-edit-req')" class="px-4 py-2 border rounded-xl">ยกเลิก</button>
-                    <button type="submit" class="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl">บันทึกแก้ไข</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: REMARK FULL VIEW -->
-    <div id="modal-remark-view" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
-            <div class="flex justify-between items-center pb-2 border-b dark:border-slate-700">
-                <h3 class="font-bold text-sm text-indigo-500"><i class="fa-solid fa-comment-dots mr-2"></i>รายละเอียด Remark</h3>
-                <button onclick="closeModal('modal-remark-view')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <p id="remark-full-content" class="text-xs leading-relaxed text-slate-700 dark:text-slate-300 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border dark:border-slate-700"></p>
-            <div class="flex justify-end">
-                <button onclick="closeModal('modal-remark-view')" class="px-4 py-1.5 bg-slate-200 dark:bg-slate-700 font-bold text-xs rounded-xl">ปิด</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: CART -->
+    <!-- CART MODAL -->
     <div id="modal-cart" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[85vh]">
-            <div class="flex justify-between items-center pb-3 border-b dark:border-slate-700">
-                <h3 class="font-bold text-sm text-slate-900 dark:text-white"><i class="fa-solid fa-cart-shopping text-amber-500 mr-2"></i>ตรวจสอบรายการในตะกร้าเบิกสาร</h3>
-                <button onclick="closeModal('modal-cart')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center pb-3 border-b">
+                <h3 class="font-bold text-sm" data-i18n="btn_cart"><i class="fa-solid fa-cart-shopping text-amber-500 mr-2"></i>ตะกร้าเบิกสาร</h3>
+                <button onclick="closeModal('modal-cart')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <div class="p-3 overflow-y-auto flex-1">
-                <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                    <thead class="bg-slate-100 dark:bg-slate-700/50 uppercase font-semibold">
-                        <tr>
-                            <th class="p-2.5">สารเคมี (Brand)</th>
-                            <th class="p-2.5 text-center">จำนวนขอเบิก</th>
-                            <th class="p-2.5">Remark</th>
-                            <th class="p-2.5 text-center">ลบ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cart-tbody"></tbody>
-                </table>
-            </div>
-            <div class="pt-3 border-t dark:border-slate-700 flex justify-end space-x-2">
-                <button onclick="closeModal('modal-cart')" class="px-4 py-2 text-xs border rounded-xl">เลือกสารเพิ่ม</button>
-                <button onclick="submitCartRequisition()" class="px-4 py-2 text-xs bg-amber-500 hover:bg-amber-600 font-bold rounded-xl text-slate-950 shadow-md">Confirm ส่งคำขอเบิก</button>
+            <div class="p-3 overflow-y-auto flex-1"><table class="w-full text-left text-xs"><tbody id="cart-tbody"></tbody></table></div>
+            <div class="pt-3 border-t flex justify-end space-x-2">
+                <button onclick="closeModal('modal-cart')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">เลือกสารเพิ่ม</button>
+                <button onclick="submitCartRequisition()" class="px-4 py-2 text-xs bg-amber-500 font-bold rounded-xl text-slate-950 shadow-md" data-i18n="btn_send">Confirm ส่งคำขอเบิก</button>
             </div>
         </div>
     </div>
@@ -548,824 +310,281 @@
         const OFFICIAL_API_URL = 'https://chemical-backend-s3pz.onrender.com';
         let BASE_URL = localStorage.getItem('CHEMICAL_API_URL') || OFFICIAL_API_URL;
         let currentUser = JSON.parse(localStorage.getItem('LOGGED_USER')) || null;
-        let allChemicals = [];
-        let cart = [];
+        let currentLang = localStorage.getItem('CIMS_LANG') || 'TH';
+        let allChemicals = [], cart = [], rawApprovalData = { pending: [], history: [] };
         let analyticsChartInstance = null;
 
         const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ขวด', 'หลอด', 'แกลลอน', 'ปอนด์'];
         const PACKAGE_UNITS = ['ขวด', 'แกลลอน', 'กล่อง', 'ถัง', 'แพ็ค', 'หลอด', 'กระป๋อง'];
 
+        const i18n = {
+            TH: {
+                menu_inv: "คลังสารเคมี", menu_approval: "คำขอเบิก-นำเข้าสารเคมี", menu_expiry: "สารเคมีใกล้หมดอายุ",
+                summary_total_qty: "ปริมาณสารเคมีทั้งหมดในคลัง", summary_total_items: "จำนวนรายการสารเคมีทั้งหมด",
+                chart_title: "กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง (รายวัน ย้อนหลัง 1 เดือน)", btn_add_chem: "เพิ่มสารเคมีเข้าคลัง",
+                btn_report_issue: "แจ้งปัญหา", btn_logout: "ออกจากระบบ", btn_login: "เข้าสู่ระบบ", btn_cart: "ตะกร้า",
+                btn_cancel: "ยกเลิก", btn_send: "ส่งข้อมูล", notif_title: "ศูนย์แจ้งเตือน",
+                th_name: "ชื่อสารเคมี", th_capacity: "ปริมาณต่อหน่วย", th_qty: "จำนวนคงเหลือ", th_loc: "สถานที่จัดเก็บ",
+                th_exp: "วันหมดอายุ", th_action: "ดำเนินการ", th_type: "ประเภท", th_requester: "ผู้ขอ",
+                th_req_qty: "จำนวน", th_status: "สถานะ", th_approver: "ผู้อนุมัติ", th_alert: "ระดับการแจ้งเตือน",
+                sub_tab_pending: "คำขอที่รออนุมัติ", sub_tab_history: "แสดงประวัติการเบิก-นำเข้าสารเคมี",
+                opt_all: "ทั้งหมด (All)", opt_import: "📥 นำเข้า (Import)", opt_export: "📤 เบิกออก (Export)",
+                modal_issue_title: "แจ้งปัญหาการใช้งาน"
+            },
+            EN: {
+                menu_inv: "Chemical Inventory", menu_approval: "Approval Process", menu_expiry: "Expiring Chemicals",
+                summary_total_qty: "Total Chemical Volume", summary_total_items: "Total Unique Chemical Items",
+                chart_title: "Chemical Stock Movement (Daily - Past 30 Days)", btn_add_chem: "Add Chemical",
+                btn_report_issue: "Report Issue", btn_logout: "Logout", btn_login: "Login", btn_cart: "Cart",
+                btn_cancel: "Cancel", btn_send: "Submit", notif_title: "Notification Center",
+                th_name: "Chemical Name", th_capacity: "Unit Capacity", th_qty: "Stock Quantity", th_loc: "Storage Location",
+                th_exp: "Expiration Date", th_action: "Action", th_type: "Type", th_requester: "Requester",
+                th_req_qty: "Quantity", th_status: "Status", th_approver: "Approver", th_alert: "Alert Level",
+                sub_tab_pending: "Pending Requests", sub_tab_history: "Transaction History",
+                opt_all: "All Transactions", opt_import: "📥 Imports Only", opt_export: "📤 Exports Only",
+                modal_issue_title: "Report System Issue"
+            }
+        };
+
         function generateLocations() {
             let locs = [];
-            "ABCDEFGHIJKLMN".split("").forEach(l => {
-                [1, 2, 3].forEach(n => { locs.push(`Shelf ${l}${n}L`); locs.push(`Shelf ${l}${n}R`); });
-            });
+            "ABCDEFGHIJKLMN".split("").forEach(l => { [1,2,3].forEach(n => { locs.push(`Shelf ${l}${n}L`); locs.push(`Shelf ${l}${n}R`); }); });
             for (let i = 1; i <= 6; i++) locs.push(`Spill Tray ${i}`);
             return locs;
         }
         const LOCATIONS = generateLocations();
 
         document.addEventListener('DOMContentLoaded', () => {
-            if (currentUser) {
-                initApp();
-            } else {
-                document.getElementById('auth-section').classList.remove('hidden');
-            }
-            checkOnlineStatus();
-            setInterval(checkOnlineStatus, 10000);
+            if (currentUser) { initApp(); } else { document.getElementById('auth-section').classList.remove('hidden'); }
+            applyLanguage();
             setInterval(() => { if (currentUser) fetchNotifications(); }, 12000);
         });
 
-        function checkOnlineStatus() {
-            fetch(`${BASE_URL}/`, { method: 'GET' })
-                .then(r => r.ok ? updateStatusUI(true) : updateStatusUI(false))
-                .catch(() => updateStatusUI(false));
+        function applyLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
+            });
+            document.getElementById('lang-label').innerText = currentLang === 'TH' ? '🇬🇧 EN' : '🇹🇭 TH';
         }
 
-        function updateStatusUI(isOnline) {
-            const dot = document.getElementById('status-dot');
-            const text = document.getElementById('status-text');
-            if (isOnline) {
-                dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
-                text.innerText = 'online';
-                text.className = 'text-emerald-600 dark:text-emerald-400';
-            } else {
-                dot.className = 'w-2 h-2 rounded-full bg-slate-400';
-                text.innerText = 'offline';
-                text.className = 'text-slate-500';
-            }
-        }
-
-        function showLoading(msg = 'กำลังประมวลผลข้อมูล...') {
-            document.getElementById('loading-text').innerText = msg;
-            document.getElementById('loading-overlay').classList.remove('hidden');
-        }
-        function hideLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar-drawer').classList.toggle('hidden');
-        }
-
-        function toggleTheme() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            if (html.classList.contains('dark')) {
-                html.classList.remove('dark');
-                html.classList.add('light');
-                icon.className = 'fa-solid fa-moon text-xs';
-            } else {
-                html.classList.remove('light');
-                html.classList.add('dark');
-                icon.className = 'fa-solid fa-sun text-amber-400 text-xs';
-            }
-        }
-
-        function toggleAuthMode(mode) {
-            document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
-            document.getElementById('register-form').classList.toggle('hidden', mode !== 'register');
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            showLoading('กำลังตรวจสอบข้อมูลการเข้าสู่ระบบ...');
-            fetch(`${BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: document.getElementById('login-username').value.trim(),
-                    password: document.getElementById('login-password').value
-                })
-            })
-            .then(r => {
-                if (!r.ok) throw new Error('User หรือ Password ไม่ถูกต้อง');
-                return r.json();
-            })
-            .then(d => {
-                currentUser = d.user;
-                localStorage.setItem('LOGGED_USER', JSON.stringify(currentUser));
-                document.getElementById('auth-section').classList.add('hidden');
-                initApp();
-            })
-            .catch(err => alert('❌ ' + err.message))
-            .finally(() => hideLoading());
-        }
-
-        function handleRegister(e) {
-            e.preventDefault();
-            showLoading('กำลังลงทะเบียนผู้ใช้ใหม่...');
-            fetch(`${BASE_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    full_name: document.getElementById('reg-fullname').value.trim(),
-                    email: document.getElementById('reg-email').value.trim(),
-                    phone: document.getElementById('reg-phone').value.trim(),
-                    username: document.getElementById('reg-username').value.trim(),
-                    password: document.getElementById('reg-password').value
-                })
-            })
-            .then(r => {
-                if (!r.ok) return r.json().then(data => { throw new Error(data.detail); });
-                return r.json();
-            })
-            .then(d => {
-                alert('✅ ลงทะเบียนสำเร็จ! กรุณาเข้าสู่ระบบด้วย Username ที่สมัครไว้');
-                toggleAuthMode('login');
-            })
-            .catch(err => alert('❌ เกิดข้อผิดพลาด: ' + err.message))
-            .finally(() => hideLoading());
-        }
-
-        function logout() {
-            localStorage.removeItem('LOGGED_USER');
-            location.reload();
+        function toggleLang() {
+            currentLang = currentLang === 'TH' ? 'EN' : 'TH';
+            localStorage.setItem('CIMS_LANG', currentLang);
+            applyLanguage();
+            refreshData();
         }
 
         function initApp() {
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('current-user-display').innerText = `${currentUser.full_name} (${currentUser.role})`;
-            
             if (currentUser.role === 'storekeeper') {
                 document.getElementById('storekeeper-analytics-section').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.add('flex');
-                fetchAnalyticsGraph();
             }
-
             refreshData();
         }
 
         function refreshData() {
-            fetchNotifications();
-            fetchChemicals();
-            fetchRequisitions();
-            fetchPendingChemicals();
-            fetchImportHistory();
+            fetchNotifications(); fetchChemicals(); fetchAllApprovals();
             if (currentUser.role === 'storekeeper') fetchAnalyticsGraph();
         }
 
-        function fetchAnalyticsGraph() {
-            fetch(`${BASE_URL}/dashboard/analytics`)
-                .then(r => r.json())
-                .then(data => {
-                    renderAnalyticsChart(data);
-                });
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            document.getElementById('theme-icon').className = html.classList.contains('dark') ? 'fa-solid fa-sun text-amber-400 text-xs' : 'fa-solid fa-moon text-xs';
         }
 
-        function renderAnalyticsChart(data) {
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            
-            const labels = Array.from(new Set([
-                ...data.imports.map(i => i.day_key),
-                ...data.exports.map(e => e.day_key)
-            ])).sort();
+        function handleLogin(e) {
+            e.preventDefault();
+            fetch(`${BASE_URL}/auth/login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: document.getElementById('login-username').value.trim(), password: document.getElementById('login-password').value })
+            }).then(r => { if (!r.ok) throw new Error('Invalid username/password'); return r.json(); })
+            .then(d => { currentUser = d.user; localStorage.setItem('LOGGED_USER', JSON.stringify(currentUser)); document.getElementById('auth-section').classList.add('hidden'); initApp(); })
+            .catch(err => alert('❌ ' + err.message));
+        }
 
-            const importData = labels.map(l => {
-                const item = data.imports.find(i => i.day_key === l);
-                return item ? item.total_imported_qty : 0;
-            });
+        function logout() { localStorage.removeItem('LOGGED_USER'); location.reload(); }
 
-            const exportData = labels.map(l => {
-                const item = data.exports.find(e => e.day_key === l);
-                return item ? item.total_exported_qty : 0;
-            });
+        function fetchAnalyticsGraph() {
+            fetch(`${BASE_URL}/dashboard/analytics`).then(r => r.json()).then(data => {
+                const ctx = document.getElementById('analyticsChart').getContext('2d');
+                const labels = Array.from(new Set([...data.imports.map(i => i.day_key), ...data.exports.map(e => e.day_key)])).sort();
+                const impData = labels.map(l => (data.imports.find(i => i.day_key === l) || {}).total || 0);
+                const expData = labels.map(l => (data.exports.find(e => e.day_key === l) || {}).total || 0);
 
-            if (analyticsChartInstance) analyticsChartInstance.destroy();
-
-            analyticsChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.length ? labels : ['วันนี้'],
-                    datasets: [
-                        { label: 'นำเข้า (Units)', data: importData, backgroundColor: 'rgba(16, 185, 129, 0.7)', borderRadius: 4 },
-                        { label: 'เบิกออก (Units)', data: exportData, backgroundColor: 'rgba(244, 63, 94, 0.7)', borderRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { labels: { font: { family: 'Sarabun' } } } },
-                    scales: { y: { beginAtZero: true } }
-                }
+                if (analyticsChartInstance) analyticsChartInstance.destroy();
+                analyticsChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels.length ? labels : ['Today'],
+                        datasets: [
+                            { label: currentLang === 'TH' ? 'นำเข้า (Imports)' : 'Imports', data: impData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.3, fill: true },
+                            { label: currentLang === 'TH' ? 'เบิกออก (Exports)' : 'Exports', data: expData, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', tension: 0.3, fill: true }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
             });
         }
 
         function fetchNotifications() {
             fetch(`${BASE_URL}/notifications/user/${currentUser.id}?role=${currentUser.role}`)
-                .then(r => r.json())
-                .then(data => {
-                    const badgeElem = document.getElementById('notif-badge');
-                    const countElem = document.getElementById('notif-count');
-                    const listElem = document.getElementById('notif-list');
-                    const expiryTbody = document.getElementById('expiry-table-body');
-
-                    const totalNotifs = data.unread_count || 0;
-                    countElem.innerText = totalNotifs;
-
-                    if (totalNotifs > 0) badgeElem.classList.remove('hidden');
-                    else badgeElem.classList.add('hidden');
+                .then(r => r.json()).then(data => {
+                    const badge = document.getElementById('notif-badge');
+                    document.getElementById('notif-count').innerText = data.unread_count || 0;
+                    if (data.unread_count > 0) badge.classList.remove('hidden'); else badge.classList.add('hidden');
 
                     let htmls = [];
-
-                    // Render Activity Notifs
                     (data.activity_notifs || []).forEach(n => {
-                        htmls.push(`
-                            <div class="p-2.5 rounded-xl border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/40 text-slate-800 dark:text-slate-200">
-                                <p class="font-bold text-xs">${n.message}</p>
-                                <span class="text-[9px] text-slate-400 font-mono">${n.time_str}</span>
-                            </div>
-                        `);
+                        htmls.push(`<div class="p-2 rounded-xl border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/40"><p class="font-bold text-xs">${n.message}</p><span class="text-[9px] text-slate-400 font-mono">${n.time_str}</span></div>`);
                     });
-
-                    // Render Expiry Notifs (New Color Scheme - Red/Amber/Yellow)
                     (data.expiry_notifs || []).forEach(n => {
-                        let colorStyle = 'text-yellow-600 bg-yellow-50 dark:bg-yellow-950/40 border-yellow-300';
-                        let label = 'หมดอายุใน 30 วัน';
-                        
-                        if (n.alert_level === 'EXPIRED') { 
-                            colorStyle = 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-400'; 
-                            label = '🔴 EXPIRED'; 
-                        } else if (n.alert_level === '1_DAY') { 
-                            colorStyle = 'text-rose-600 bg-rose-50 dark:bg-rose-950/40 border-rose-400'; 
-                            label = '🔴 หมดอายุใน 1 วัน'; 
-                        } else if (n.alert_level === '3_DAYS') { 
-                            colorStyle = 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-300'; 
-                            label = '🟠 หมดอายุใน 3 วัน'; 
-                        } else if (n.alert_level === '7_DAYS') { 
-                            colorStyle = 'text-amber-600 bg-amber-50 dark:bg-amber-950/40 border-amber-300'; 
-                            label = '🟠 หมดอายุใน 7 วัน'; 
-                        }
-
-                        htmls.push(`
-                            <div class="p-2.5 rounded-xl border ${colorStyle} space-y-1">
-                                <div class="flex justify-between font-bold text-xs">
-                                    <span>${n.name} (${n.brand || 'ทั่วไป'})</span>
-                                    <span class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-white dark:bg-slate-800 font-extrabold">${label}</span>
-                                </div>
-                                <p class="text-[10px] opacity-90">Location: ${n.location || '-'} | Exp: <span class="font-bold underline">${n.expiry_date}</span></p>
-                            </div>
-                        `);
+                        let color = n.alert_level === 'EXPIRED' || n.alert_level === '1_DAY' ? 'text-rose-600 border-rose-400 bg-rose-50' : 'text-amber-600 border-amber-300 bg-amber-50';
+                        htmls.push(`<div class="p-2 rounded-xl border ${color}"><div class="flex justify-between font-bold text-xs"><span>${n.name} (${n.brand || '-'})</span><span class="text-[9px]">${n.alert_level}</span></div><p class="text-[10px]">Exp: ${n.expiry_date}</p></div>`);
                     });
-
-                    listElem.innerHTML = htmls.length ? htmls.join('') : `<p class="text-slate-400 text-center py-4">ไม่มีรายการแจ้งเตือน</p>`;
-
-                    // Expiry Table Body Sync
-                    expiryTbody.innerHTML = (data.expiry_notifs || []).map(n => `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                            <td class="py-2.5 px-3 font-mono text-[10px] text-slate-400">#${n.id}</td>
-                            <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-100">${n.name} (${n.brand || 'ทั่วไป'})</td>
-                            <td class="py-2.5 px-3">${n.location || '-'}</td>
-                            <td class="py-2.5 px-3 font-bold text-indigo-500">${n.quantity || '-'}</td>
-                            <td class="py-2.5 px-3 font-bold text-rose-500">${n.expiry_date}</td>
-                            <td class="py-2.5 px-3"><span class="bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold text-[10px]">${n.alert_level}</span></td>
-                        </tr>
-                    `).join('');
+                    document.getElementById('notif-list').innerHTML = htmls.length ? htmls.join('') : '<p class="text-slate-400 text-center py-4">No Notifications</p>';
                 });
         }
 
-        function toggleNotificationCenter() {
+        function toggleNotifs() {
             const dropdown = document.getElementById('notif-dropdown');
-            const isHidden = dropdown.classList.contains('hidden');
             dropdown.classList.toggle('hidden');
-
-            if (isHidden) {
-                // Mark notifications as read when opening dropdown
+            if (!dropdown.classList.contains('hidden')) {
                 fetch(`${BASE_URL}/notifications/read`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: currentUser.id, role: currentUser.role })
-                }).then(() => {
-                    document.getElementById('notif-badge').classList.add('hidden');
-                });
+                }).then(() => document.getElementById('notif-badge').classList.add('hidden'));
             }
         }
 
         function switchTab(t) {
-            ['inv', 'req', 'pending', 'history', 'expiry'].forEach(x => {
-                const elem = document.getElementById(`tab-${x}`);
-                if (elem) elem.classList.toggle('hidden', x !== t);
-            });
-            const titleMap = { 
-                inv: 'คลังสารเคมี', 
-                req: 'คำขอเบิกสารเคมี', 
-                pending: 'คำขอนำเข้าสารเคมี', 
-                history: 'ประวัติการนำเข้าสารเคมี', 
-                expiry: 'สารเคมีใกล้หมดอายุ' 
-            };
-            document.getElementById('active-tab-title').innerText = titleMap[t] || 'คลังสารเคมี';
+            ['inv', 'approval', 'expiry'].forEach(x => { document.getElementById(`tab-${x}`).classList.toggle('hidden', x !== t); });
+            const titleMap = { inv: i18n[currentLang].menu_inv, approval: i18n[currentLang].menu_approval, expiry: i18n[currentLang].menu_expiry };
+            document.getElementById('active-tab-title').innerText = titleMap[t];
         }
 
         function fetchChemicals() {
-            fetch(`${BASE_URL}/chemicals`)
-                .then(r => r.json())
-                .then(data => {
-                    allChemicals = Array.isArray(data.items) ? data.items : [];
-                    renderChemicals(allChemicals);
-                    document.getElementById('summary-total-qty').innerText = `${data.total_quantity || 0} Units`;
-                    document.getElementById('summary-total-items').innerText = `${data.total_items || 0} รายการ`;
-                });
+            fetch(`${BASE_URL}/chemicals`).then(r => r.json()).then(data => {
+                allChemicals = data.items || [];
+                renderChemicals(allChemicals);
+                document.getElementById('summary-total-qty').innerText = `${data.total_quantity || 0} ${currentLang === 'TH' ? 'ชิ้น' : 'Items'}`;
+                document.getElementById('summary-total-items').innerText = `${data.total_items || 0} ${currentLang === 'TH' ? 'รายการ' : 'Records'}`;
+            });
         }
 
         function renderChemicals(data) {
             const tbody = document.getElementById('chemical-table-body');
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-slate-400">ไม่พบสารเคมีในคลัง</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = data.map(c => {
-                const isOutOfStock = c.quantity <= 0;
-                
-                // Expiry Color Logic (No Green - Red, Amber, Yellow Only)
-                let expColor = 'text-slate-500 dark:text-slate-400';
-                if (c.expiry_date) {
-                    const exp = new Date(c.expiry_date);
-                    const now = new Date();
-                    const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 1) expColor = 'text-rose-600 font-black';
-                    else if (diffDays <= 7) expColor = 'text-amber-500 font-bold';
-                    else if (diffDays <= 30) expColor = 'text-yellow-600 font-bold';
-                }
-
-                return `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-b border-slate-100 dark:border-slate-800">
-                        <td class="py-3 px-3 font-mono text-[10px] text-slate-400">#${c.id}</td>
-                        <td class="py-3 px-3 font-bold text-slate-800 dark:text-slate-100">${c.name}</td>
-                        <td class="py-3 px-3 text-indigo-600 dark:text-indigo-400 font-semibold">${c.brand || '-'}</td>
-                        <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
-                        <td class="py-3 px-3">${c.capacity_value ? c.capacity_value + ' ' + c.capacity_unit : c.unit || '-'}</td>
-                        <td class="py-3 px-3 font-bold ${isOutOfStock ? 'text-rose-500' : 'text-emerald-500'}">
-                            ${c.quantity} ${c.package_unit || ''}
-                        </td>
-                        <td class="py-3 px-3"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg text-[10px] border border-slate-200 dark:border-slate-700">${c.location || '-'}</span></td>
-                        <td class="py-3 px-3 ${expColor}">${c.expiry_date || '-'}</td>
-                        <td class="py-3 px-3">
-                            ${c.remark ? `<button onclick="viewRemark('${encodeURIComponent(c.remark)}')" class="truncate-remark text-indigo-500 underline text-[10px] block">${c.remark}</button>` : '-'}
-                        </td>
-                        <td class="py-3 px-3 text-center">
-                            <div class="flex items-center justify-center space-x-1">
-                                <div class="flex items-center space-x-0.5 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                                    <button onclick="changeChemRowQty(${c.id}, -1)" ${isOutOfStock ? 'disabled' : ''} class="px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 rounded">-</button>
-                                    <input type="number" id="row-qty-${c.id}" value="1" min="1" max="${c.quantity}" ${isOutOfStock ? 'disabled' : ''} class="w-8 text-center text-[11px] font-bold bg-transparent focus:outline-none">
-                                    <button onclick="changeChemRowQty(${c.id}, 1)" ${isOutOfStock ? 'disabled' : ''} class="px-1.5 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 rounded">+</button>
-                                </div>
-                                <button onclick="addToCartFromRow(${c.id})" ${isOutOfStock ? 'disabled' : ''} 
-                                    class="${isOutOfStock ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-500/20'} font-bold px-2 py-1 rounded-lg text-[10px] transition shadow-xs">
-                                    ${isOutOfStock ? 'หมด' : '<i class="fa-solid fa-cart-plus"></i>'}
-                                </button>
-                                ${currentUser.role === 'storekeeper' ? `
-                                    <button onclick="openEditModal(${c.id})" class="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 font-bold px-1.5 py-1 rounded-lg text-[10px]">
-                                        <i class="fa-solid fa-pen-to-square"></i>
-                                    </button>
-                                    <button onclick="deleteChemical(${c.id})" class="bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 font-bold px-1.5 py-1 rounded-lg text-[10px]">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function changeChemRowQty(id, delta) {
-            const input = document.getElementById(`row-qty-${id}`);
-            if (!input) return;
-            let val = parseInt(input.value) + delta;
-            let max = parseInt(input.max);
-            if (val >= 1 && val <= max) input.value = val;
-        }
-
-        function addToCartFromRow(id) {
-            const item = allChemicals.find(x => x.id === id);
-            const input = document.getElementById(`row-qty-${id}`);
-            const qty = input ? parseInt(input.value) : 1;
-
-            if (!item || item.quantity <= 0) return;
-
-            const exist = cart.find(x => x.chemical_id === id);
-            if (exist) {
-                if (exist.requested_quantity + qty <= item.quantity) exist.requested_quantity += qty;
-            } else {
-                cart.push({ chemical_id: id, name: item.name, brand: item.brand, max_qty: item.quantity, requested_quantity: qty, package_unit: item.package_unit, remark: '' });
-            }
-            document.getElementById('cart-badge').innerText = cart.length;
-        }
-
-        function filterChemicals() {
-            const q = document.getElementById('search-chem').value.toLowerCase();
-            const filtered = allChemicals.filter(c => 
-                (c.name && c.name.toLowerCase().includes(q)) ||
-                (c.brand && c.brand.toLowerCase().includes(q)) ||
-                (c.cas_number && c.cas_number.toLowerCase().includes(q)) ||
-                (c.location && c.location.toLowerCase().includes(q))
-            );
-            renderChemicals(filtered);
-        }
-
-        function viewRemark(encodedRemark) {
-            document.getElementById('remark-full-content').innerText = decodeURIComponent(encodedRemark);
-            document.getElementById('modal-remark-view').classList.remove('hidden');
-        }
-
-        function fetchImportHistory() {
-            fetch(`${BASE_URL}/chemicals/import-history`)
-                .then(r => r.json())
-                .then(data => {
-                    const tbody = document.getElementById('history-table-body');
-                    if (!data || data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">ไม่มีประวัติการนำเข้าสารเคมี</td></tr>`;
-                        return;
-                    }
-                    tbody.innerHTML = data.map(c => `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                            <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500 font-bold">${c.order_code || '#'+c.id}</td>
-                            <td class="py-2.5 px-3 font-medium">${c.created_by_name || 'ไม่ระบุ'}</td>
-                            <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-100">${c.name} (${c.brand || 'ทั่วไป'})</td>
-                            <td class="py-2.5 px-3">${c.unit || '-'}</td>
-                            <td class="py-2.5 px-3 font-bold text-emerald-500">${c.quantity} ${c.package_unit || ''}</td>
-                            <td class="py-2.5 px-3"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg text-[10px] border border-slate-200 dark:border-slate-700">${c.location || '-'}</span></td>
-                            <td class="py-2.5 px-3 text-[10px] font-mono text-slate-400">${c.formatted_created_at || '-'}</td>
-                            <td class="py-2.5 px-3">
-                                ${c.remark ? `<button onclick="viewRemark('${encodeURIComponent(c.remark)}')" class="truncate-remark text-indigo-500 underline text-[10px] block">${c.remark}</button>` : '-'}
-                            </td>
-                        </tr>
-                    `).join('');
-                });
-        }
-
-        function fetchPendingChemicals() {
-            fetch(`${BASE_URL}/chemicals/pending`)
-                .then(r => r.json())
-                .then(data => {
-                    const tbody = document.getElementById('pending-table-body');
-                    if (!data || data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-slate-400">ไม่มีคำขอนำเข้าสารเคมี</td></tr>`;
-                        return;
-                    }
-                    tbody.innerHTML = data.map(c => `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                            <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500 font-bold">${c.order_code || '#'+c.id}</td>
-                            <td class="py-2.5 px-3 font-medium">${c.created_by_name || 'ไม่ระบุ'}</td>
-                            <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-100">${c.name} (${c.brand || 'ทั่วไป'})</td>
-                            <td class="py-2.5 px-3">${c.unit || '-'}</td>
-                            <td class="py-2.5 px-3 font-bold text-emerald-500">${c.quantity} ${c.package_unit || ''}</td>
-                            <td class="py-2.5 px-3"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg text-[10px] border border-slate-200 dark:border-slate-700">${c.location || '-'}</span></td>
-                            <td class="py-2.5 px-3 text-[10px] font-mono text-slate-400">${c.formatted_created_at || '-'}</td>
-                            <td class="py-2.5 px-3">
-                                ${c.remark ? `<button onclick="viewRemark('${encodeURIComponent(c.remark)}')" class="truncate-remark text-indigo-500 underline text-[10px] block">${c.remark}</button>` : '-'}
-                            </td>
-                            <td class="py-2.5 px-3">
-                                ${c.status === 'REJECTED_ADD' ? '<span class="bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold text-[10px]">REJECTED</span>' : '<span class="bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold text-[10px]">PENDING</span>'}
-                            </td>
-                            <td class="py-2.5 px-3 text-center">
-                                ${currentUser.role === 'storekeeper' && c.status === 'PENDING_ADD' ? `
-                                    <button onclick="approveAdd(${c.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-lg text-[10px] mr-1 font-bold">อนุมัติ</button>
-                                    <button onclick="rejectAdd(${c.id})" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded-lg text-[10px] font-bold">ปฏิเสธ</button>
-                                ` : ''}
-                                ${c.status === 'PENDING_ADD' ? `
-                                    <button onclick="openEditModal(${c.id})" class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-2 py-1 rounded-lg text-[10px] font-bold">Edit</button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
-                });
-        }
-
-        function approveAdd(id) {
-            showLoading('กำลังอนุมัตินำเข้าสารเคมี...');
-            fetch(`${BASE_URL}/chemicals/${id}/approve-add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ admin_name: currentUser.full_name })
-            }).then(() => refreshData()).finally(() => hideLoading());
-        }
-
-        function rejectAdd(id) {
-            showLoading('กำลังปฏิเสธคำขอ...');
-            fetch(`${BASE_URL}/chemicals/${id}/reject-add`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ admin_name: currentUser.full_name })
-            }).then(() => refreshData()).finally(() => hideLoading());
-        }
-
-        function fetchRequisitions() {
-            fetch(`${BASE_URL}/requisitions`)
-                .then(r => r.json())
-                .then(data => {
-                    const tbody = document.getElementById('req-table-body');
-                    if (!data || data.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400">ไม่มีคำขอเบิกสารเคมี</td></tr>`;
-                        return;
-                    }
-                    tbody.innerHTML = data.map(r => `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                            <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500 font-bold">${r.order_code || r.batch_id || '#'+r.id}</td>
-                            <td class="py-2.5 px-3 font-medium">${r.requester_name}</td>
-                            <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-100">${r.chemical_name} (${r.brand || 'ทั่วไป'})</td>
-                            <td class="py-2.5 px-3 font-bold text-indigo-600 dark:text-indigo-400">${r.requested_quantity} ${r.unit || ''}</td>
-                            <td class="py-2.5 px-3 font-mono text-[10px] text-slate-400">${r.formatted_created_at || '-'}</td>
-                            <td class="py-2.5 px-3">
-                                ${r.remark ? `<button onclick="viewRemark('${encodeURIComponent(r.remark)}')" class="truncate-remark text-indigo-500 underline text-[10px] block">${r.remark}</button>` : '-'}
-                            </td>
-                            <td class="py-2.5 px-3">
-                                ${r.status === 'APPROVED' ? '<span class="bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-300 px-2 py-0.5 rounded-full font-bold text-[10px]">APPROVED</span>' : 
-                                  r.status === 'REJECTED' ? '<span class="bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded-full font-bold text-[10px]">REJECTED</span>' : 
-                                  '<span class="bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold text-[10px]">PENDING</span>'}
-                            </td>
-                            <td class="py-2.5 px-3 text-[10px] text-slate-400">${r.approved_by || '-'}</td>
-                            <td class="py-2.5 px-3 text-center">
-                                ${r.status === 'PENDING' && currentUser.role === 'storekeeper' ? `
-                                    <button onclick="approveReq(${r.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-lg text-[10px] mr-1 font-bold">อนุมัติ</button>
-                                    <button onclick="rejectReq(${r.id})" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded-lg text-[10px] font-bold">ปฏิเสธ</button>
-                                ` : ''}
-                                ${r.status === 'PENDING' ? `
-                                    <button onclick="openEditReqModal(${r.id}, ${r.requested_quantity}, '${encodeURIComponent(r.remark || '')}')" class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-2 py-1 rounded-lg text-[10px] font-bold">Edit</button>
-                                ` : ''}
-                            </td>
-                        </tr>
-                    `).join('');
-                });
-        }
-
-        function approveReq(id) {
-            showLoading('กำลังอนุมัติคำขอเบิก...');
-            fetch(`${BASE_URL}/requisitions/${id}/approve`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ admin_name: currentUser.full_name })
-            }).then(() => refreshData()).finally(() => hideLoading());
-        }
-
-        function rejectReq(id) {
-            showLoading('กำลังปฏิเสธคำขอเบิก...');
-            fetch(`${BASE_URL}/requisitions/${id}/reject`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ admin_name: currentUser.full_name })
-            }).then(() => refreshData()).finally(() => hideLoading());
-        }
-
-        function deleteChemical(id) {
-            if (!confirm('คุณต้องการลบสารเคมีรายการนี้ออกจากคลังใช่หรือไม่?')) return;
-            showLoading('กำลังลบสารเคมี...');
-            fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' })
-                .then(r => r.json())
-                .then(d => {
-                    alert('✅ ' + d.message);
-                    refreshData();
-                })
-                .finally(() => hideLoading());
-        }
-
-        function submitBatchAdd() {
-            const rows = document.querySelectorAll('#batch-add-tbody tr');
-            let items = [];
-            rows.forEach(r => {
-                const name = r.querySelector('.add-name').value.trim();
-                if (name) {
-                    items.push({
-                        name: name,
-                        brand: r.querySelector('.add-brand').value.trim() || null,
-                        cas_number: r.querySelector('.add-cas').value.trim() || null,
-                        capacity_value: parseFloat(r.querySelector('.add-cap-val').value) || 0,
-                        capacity_unit: r.querySelector('.add-cap-unit').value,
-                        quantity: parseFloat(r.querySelector('.add-qty').value) || 1,
-                        package_unit: r.querySelector('.add-pkg-unit').value,
-                        location: r.querySelector('.add-loc').value,
-                        expiry_date: r.querySelector('.add-exp').value || null,
-                        remark: r.querySelector('.add-remark').value.trim() || null,
-                        created_by_name: currentUser.full_name,
-                        user_id: currentUser.id
-                    });
-                }
-            });
-            if (items.length === 0) return alert('กรุณากรอกข้อมูลอย่างน้อย 1 รายการ');
-
-            showLoading('กำลังส่งรายการขอเพิ่มสารเคมีเข้าคลัง...');
-            fetch(`${BASE_URL}/chemicals/batch`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ items: items })
-            })
-            .then(r => r.json())
-            .then(d => {
-                alert('✅ ' + d.message);
-                closeModal('modal-batch-add');
-                refreshData();
-                switchTab('pending');
-            })
-            .finally(() => hideLoading());
-        }
-
-        function submitCartRequisition() {
-            if (cart.length === 0) return alert('ตะกร้าว่างเปล่า');
-            showLoading('กำลังส่งคำขอเบิกสารเคมี...');
-            fetch(`${BASE_URL}/requisitions/basket`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: currentUser.id,
-                    requester_name: currentUser.full_name,
-                    items: cart.map(x => ({ chemical_id: x.chemical_id, requested_quantity: x.requested_quantity, remark: x.remark }))
-                })
-            })
-            .then(r => r.json())
-            .then(d => {
-                alert('✅ ' + d.message);
-                cart = [];
-                document.getElementById('cart-badge').innerText = 0;
-                closeModal('modal-cart');
-                refreshData();
-                switchTab('req');
-            })
-            .catch(err => alert('❌ เกิดข้อผิดพลาด: ' + err.message))
-            .finally(() => hideLoading());
-        }
-
-        function openBatchAddModal() {
-            document.getElementById('batch-add-tbody').innerHTML = '';
-            addBatchRow();
-            document.getElementById('modal-batch-add').classList.remove('hidden');
-        }
-
-        function addBatchRow() {
-            const tbody = document.getElementById('batch-add-tbody');
-            const tr = document.createElement('tr');
-            tr.className = 'border-b border-slate-100 dark:border-slate-800';
-            tr.innerHTML = `
-                <td class="p-1"><input type="text" class="add-name border p-1 rounded-lg w-full dark:bg-slate-700" required placeholder="ชื่อสาร..."></td>
-                <td class="p-1"><input type="text" class="add-brand border p-1 rounded-lg w-full dark:bg-slate-700" placeholder="Sigma"></td>
-                <td class="p-1"><input type="text" class="add-cas border p-1 rounded-lg w-full dark:bg-slate-700" placeholder="67-64-1"></td>
-                <td class="p-1">
-                    <div class="flex gap-1">
-                        <input type="number" step="any" class="add-cap-val border p-1 rounded-lg w-14 dark:bg-slate-700" placeholder="1000">
-                        <select class="add-cap-unit border rounded-lg p-1 dark:bg-slate-700">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
-                    </div>
-                </td>
-                <td class="p-1">
-                    <div class="flex gap-1">
-                        <input type="number" min="1" class="add-qty border p-1 rounded-lg w-12 dark:bg-slate-700" value="1">
-                        <select class="add-pkg-unit border rounded-lg p-1 dark:bg-slate-700">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
-                    </div>
-                </td>
-                <td class="p-1">
-                    <select class="add-loc border p-1 rounded-lg w-full dark:bg-slate-700">
-                        ${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}
-                    </select>
-                </td>
-                <td class="p-1"><input type="date" class="add-exp border p-1 rounded-lg w-full dark:bg-slate-700"></td>
-                <td class="p-1"><input type="text" class="add-remark border p-1 rounded-lg w-full dark:bg-slate-700" placeholder="Remark..."></td>
-                <td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-rose-500 font-bold">X</button></td>
-            `;
-            tbody.appendChild(tr);
-        }
-
-        function openEditModal(id) {
-            const c = allChemicals.find(x => x.id === id);
-            if (!c) return;
-
-            document.getElementById('edit-chem-id').value = c.id;
-            document.getElementById('edit-name').value = c.name;
-            document.getElementById('edit-brand').value = c.brand || '';
-            document.getElementById('edit-cas').value = c.cas_number || '';
-            document.getElementById('edit-cap-val').value = c.capacity_value || 0;
-            document.getElementById('edit-qty').value = c.quantity;
-            document.getElementById('edit-exp').value = c.expiry_date || '';
-            document.getElementById('edit-remark').value = c.remark || '';
-
-            const locSelect = document.getElementById('edit-loc');
-            locSelect.innerHTML = LOCATIONS.map(l => `<option value="${l}" ${l === c.location ? 'selected' : ''}>${l}</option>`).join('');
-
-            const capUnitSelect = document.getElementById('edit-cap-unit');
-            capUnitSelect.innerHTML = CAPACITY_UNITS.map(u => `<option value="${u}" ${u === c.capacity_unit ? 'selected' : ''}>${u}</option>`).join('');
-
-            const pkgUnitSelect = document.getElementById('edit-pkg-unit');
-            pkgUnitSelect.innerHTML = PACKAGE_UNITS.map(u => `<option value="${u}" ${u === c.package_unit ? 'selected' : ''}>${u}</option>`).join('');
-
-            document.getElementById('modal-edit-chem').classList.remove('hidden');
-        }
-
-        function submitEditChemical(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-chem-id').value;
-            const payload = {
-                name: document.getElementById('edit-name').value.trim(),
-                brand: document.getElementById('edit-brand').value.trim() || null,
-                cas_number: document.getElementById('edit-cas').value.trim() || null,
-                capacity_value: parseFloat(document.getElementById('edit-cap-val').value) || 0,
-                capacity_unit: document.getElementById('edit-cap-unit').value,
-                quantity: parseFloat(document.getElementById('edit-qty').value) || 0,
-                package_unit: document.getElementById('edit-pkg-unit').value,
-                location: document.getElementById('edit-loc').value,
-                expiry_date: document.getElementById('edit-exp').value || null,
-                remark: document.getElementById('edit-remark').value.trim() || null
-            };
-
-            showLoading('กำลังอัปเดตข้อมูลสารเคมี...');
-            fetch(`${BASE_URL}/chemicals/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(d => {
-                alert('✅ ' + d.message);
-                closeModal('modal-edit-chem');
-                refreshData();
-            })
-            .finally(() => hideLoading());
-        }
-
-        function openEditReqModal(id, currentQty, encodedRemark) {
-            document.getElementById('edit-req-id').value = id;
-            document.getElementById('edit-req-qty').value = currentQty;
-            document.getElementById('edit-req-remark').value = decodeURIComponent(encodedRemark);
-            document.getElementById('modal-edit-req').classList.remove('hidden');
-        }
-
-        function submitEditRequisition(e) {
-            e.preventDefault();
-            const id = document.getElementById('edit-req-id').value;
-            const payload = {
-                requested_quantity: parseFloat(document.getElementById('edit-req-qty').value) || 1,
-                remark: document.getElementById('edit-req-remark').value.trim() || null
-            };
-
-            showLoading('กำลังอัปเดตรายการเบิก...');
-            fetch(`${BASE_URL}/requisitions/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(d => {
-                alert('✅ ' + d.message);
-                closeModal('modal-edit-req');
-                refreshData();
-            })
-            .finally(() => hideLoading());
-        }
-
-        function viewRemark(encodedRemark) {
-            document.getElementById('remark-full-content').innerText = decodeURIComponent(encodedRemark);
-            document.getElementById('modal-remark-view').classList.remove('hidden');
-        }
-
-        function openCartModal() {
-            renderCart();
-            document.getElementById('modal-cart').classList.remove('hidden');
-        }
-
-        function renderCart() {
-            const tbody = document.getElementById('cart-tbody');
-            if (cart.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">ยังไม่มีรายการในตะกร้าเบิกสาร</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = cart.map((item, idx) => `
-                <tr class="border-b dark:border-slate-800">
-                    <td class="p-2 font-bold text-slate-800 dark:text-slate-100">${item.name} (${item.brand || 'ทั่วไป'})</td>
-                    <td class="p-2 text-center">
-                        <div class="flex items-center justify-center space-x-1">
-                            <button onclick="updateCartQty(${idx}, -1)" class="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded font-bold">-</button>
-                            <input type="number" min="1" max="${item.max_qty}" value="${item.requested_quantity}" onchange="setCartQty(${idx}, this.value)" class="w-14 border rounded p-1 text-center font-bold dark:bg-slate-700">
-                            <button onclick="updateCartQty(${idx}, 1)" class="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded font-bold">+</button>
-                        </div>
-                    </td>
-                    <td class="p-2"><input type="text" value="${item.remark || ''}" onchange="setCartRemark(${idx}, this.value)" placeholder="หมายเหตุ..." class="w-full border rounded p-1 text-xs dark:bg-slate-700"></td>
-                    <td class="p-2 text-center">
-                        <button onclick="removeFromCart(${idx})" class="text-rose-500 hover:text-rose-600"><i class="fa-solid fa-trash"></i></button>
+            tbody.innerHTML = data.map(c => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                    <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
+                    <td class="py-3 px-3 font-bold">${c.name}</td>
+                    <td class="py-3 px-3 text-indigo-500">${c.brand || '-'}</td>
+                    <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
+                    <td class="py-3 px-3">${c.capacity_value ? c.capacity_value + ' ' + c.capacity_unit : c.unit || '-'}</td>
+                    <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
+                    <td class="py-3 px-3"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px]">${c.location || '-'}</span></td>
+                    <td class="py-3 px-3">${c.expiry_date || '-'}</td>
+                    <td class="py-3 px-3">${c.remark || '-'}</td>
+                    <td class="py-3 px-3 text-center">
+                        <button onclick="addToCartFromRow(${c.id})" class="bg-amber-500 font-bold px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-cart-plus"></i></button>
+                        ${currentUser.role === 'storekeeper' ? `<button onclick="deleteChem(${c.id})" class="bg-rose-500 text-white font-bold px-2 py-1 rounded text-[10px] ml-1"><i class="fa-solid fa-trash"></i></button>` : ''}
                     </td>
                 </tr>
             `).join('');
         }
 
-        function updateCartQty(idx, delta) {
-            let n = cart[idx].requested_quantity + delta;
-            if (n >= 1 && n <= cart[idx].max_qty) cart[idx].requested_quantity = n;
-            renderCart();
+        function deleteChem(id) {
+            if (!confirm('Are you sure to delete this chemical?')) return;
+            fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' }).then(() => refreshData());
         }
 
-        function setCartQty(idx, val) {
-            let v = parseFloat(val);
-            if (v >= 1 && v <= cart[idx].max_qty) cart[idx].requested_quantity = v;
-            renderCart();
+        function fetchAllApprovals() {
+            fetch(`${BASE_URL}/all-approvals`).then(r => r.json()).then(data => {
+                rawApprovalData = data;
+                renderApprovalTables();
+            });
         }
 
-        function setCartRemark(idx, val) {
-            cart[idx].remark = val.trim();
+        function renderApprovalTables() {
+            const filter = document.getElementById('approval-type-filter').value;
+            const pBody = document.getElementById('pending-approval-tbody');
+            const hBody = document.getElementById('history-approval-tbody');
+
+            let pending = rawApprovalData.pending || [];
+            let history = rawApprovalData.history || [];
+
+            if (filter !== 'ALL') {
+                pending = pending.filter(x => x.type === filter);
+                history = history.filter(x => x.type === filter);
+            }
+
+            pBody.innerHTML = pending.map(item => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                    <td class="py-2.5 px-3 font-bold">${item.type === 'IMPORT' ? '📥 <span class="text-emerald-600">นำเข้า</span>' : '📤 <span class="text-amber-600">เบิกออก</span>'}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code || '#'+item.id}</td>
+                    <td class="py-2.5 px-3">${item.requester_name}</td>
+                    <td class="py-2.5 px-3 font-bold">${item.chemical_name} (${item.brand || '-'})</td>
+                    <td class="py-2.5 px-3 font-bold">${item.qty} ${item.unit || ''}</td>
+                    <td class="py-2.5 px-3 text-[10px] font-mono">${item.created_at_str}</td>
+                    <td class="py-2.5 px-3">${item.remark || '-'}</td>
+                    <td class="py-2.5 px-3"><span class="bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold text-[10px]">PENDING</span></td>
+                    <td class="py-2.5 px-3 text-center">
+                        ${currentUser.role === 'storekeeper' ? `
+                            <button onclick="actionApproval('${item.type}', ${item.id}, 'approve')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold mr-1">อนุมัติ</button>
+                            <button onclick="actionApproval('${item.type}', ${item.id}, 'reject')" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px] font-bold">ปฏิเสธ</button>
+                        ` : '-'}
+                    </td>
+                </tr>
+            `).join('');
+
+            hBody.innerHTML = history.map(item => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                    <td class="py-2.5 px-3 font-bold">${item.type === 'IMPORT' ? '📥 <span class="text-emerald-600">นำเข้า</span>' : '📤 <span class="text-amber-600">เบิกออก</span>'}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code || '#'+item.id}</td>
+                    <td class="py-2.5 px-3">${item.requester_name}</td>
+                    <td class="py-2.5 px-3 font-bold">${item.chemical_name} (${item.brand || '-'})</td>
+                    <td class="py-2.5 px-3 font-bold">${item.qty} ${item.unit || ''}</td>
+                    <td class="py-2.5 px-3 text-[10px] font-mono">${item.approved_at_str || '-'}</td>
+                    <td class="py-2.5 px-3">${item.remark || '-'}</td>
+                    <td class="py-2.5 px-3"><span class="${item.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${item.status}</span></td>
+                    <td class="py-2.5 px-3 text-slate-400 text-[10px]">${item.approved_by || '-'}</td>
+                </tr>
+            `).join('');
         }
 
-        function removeFromCart(idx) {
-            cart.splice(idx, 1);
-            document.getElementById('cart-badge').innerText = cart.length;
-            renderCart();
+        function switchSubApproval(t) {
+            document.getElementById('sub-tab-pending').classList.toggle('hidden', t !== 'pending');
+            document.getElementById('sub-tab-history').classList.toggle('hidden', t !== 'history');
+            document.getElementById('sub-btn-pending').className = t === 'pending' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-600';
+            document.getElementById('sub-btn-history').className = t === 'history' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-600';
         }
 
+        function actionApproval(type, id, action) {
+            const ep = type === 'IMPORT' ? `/chemicals/${id}/${action}-add` : `/requisitions/${id}/${action}`;
+            fetch(`${BASE_URL}${ep}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ admin_name: currentUser.full_name })
+            }).then(() => refreshData());
+        }
+
+        function openIssueModal() { document.getElementById('modal-issue').classList.remove('hidden'); }
+        function submitIssue() {
+            const txt = document.getElementById('issue-text-input').value.trim();
+            if (!txt) return;
+            fetch(`${BASE_URL}/issues/report`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUser.id, reporter_name: currentUser.full_name, issue_text: txt })
+            }).then(() => { closeModal('modal-issue'); alert('Report submitted successfully!'); });
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar-drawer').classList.toggle('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function openBatchAddModal() { document.getElementById('modal-batch-add').classList.remove('hidden'); }
+        function openCartModal() { document.getElementById('modal-cart').classList.remove('hidden'); }
     </script>
 </body>
 </html>
