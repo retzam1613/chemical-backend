@@ -145,7 +145,47 @@ class ActionPayload(BaseModel):
 def read_root():
     return {"status": "Chemical Inventory Management API Active"}
 
-# Compatibility Endpoint สำหรับหน้าเว็บเก่าที่ยังค้างแคชอยู่
+# --- AUTH ENDPOINTS ---
+@app.post("/auth/register")
+def register_user(u: UserRegister):
+    if not re.match(r'^[a-zA-Z0-9]+$', u.username):
+        raise HTTPException(status_code=400, detail="User ต้องเป็นภาษาอังกฤษและตัวเลขเท่านั้น")
+    if u.username.lower() == 'admin':
+        raise HTTPException(status_code=400, detail="ไม่อนุญาตให้ใช้ Username 'admin'")
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO users (full_name, email, phone, username, password, role)
+            VALUES (%s, %s, %s, %s, %s, 'requester')
+            RETURNING id, full_name, username, role;
+        """, (u.full_name, u.email, u.phone, u.username, u.password))
+        user = cursor.fetchone()
+        return {"message": "ลงทะเบียนสำเร็จ", "user": dict(user)}
+    except psycopg2.IntegrityError:
+        raise HTTPException(status_code=400, detail="Username หรือ อีเมล นี้มีผู้ใช้งานแล้ว")
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.post("/auth/login")
+def login_user(u: UserLogin):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, full_name, username, role, password FROM users WHERE username = %s", (u.username,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if not user or user["password"] != u.password:
+        raise HTTPException(status_code=401, detail="User หรือ Password ไม่ถูกต้อง")
+    
+    user_dict = dict(user)
+    del user_dict["password"]
+    return {"message": "เข้าสู่ระบบสำเร็จ", "user": user_dict}
+
+# --- DASHBOARD & ANALYTICS ---
 @app.get("/dashboard/metrics")
 def get_legacy_dashboard_metrics():
     return {
@@ -217,6 +257,7 @@ def get_notifications():
     conn.close()
     return [dict(r) for r in rows]
 
+# --- CHEMICALS ENDPOINTS ---
 @app.get("/chemicals")
 def get_chemicals():
     conn = get_db()
@@ -318,6 +359,7 @@ def reject_chemical_add(chem_id: int, action: ActionPayload):
     send_line_notify(f"❌ ปฏิเสธคำขอนำเข้าสารเคมี ID #{chem_id} โดย {action.admin_name}")
     return {"message": "ปฏิเสธคำขอนำเข้าสารเคมีแล้ว"}
 
+# --- REQUISITIONS ENDPOINTS ---
 @app.post("/requisitions/basket")
 def create_requisition_basket(basket: RequisitionBasket):
     conn = get_db()
