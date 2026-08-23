@@ -20,31 +20,23 @@ def get_db():
     conn.autocommit = True
     return conn
 
-# --- AUTO MIGRATION SCHEMA ON STARTUP ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Execute Database Schema Migrations on Startup
     try:
         if DATABASE_URL:
             conn = get_db()
             cursor = conn.cursor()
-            
-            # Add missing columns to chemicals table
             cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS remark TEXT;")
             cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS order_code VARCHAR(50);")
             cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(100);")
-
-            # Add missing columns to requisitions table
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS remark TEXT;")
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS order_code VARCHAR(50);")
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS batch_id VARCHAR(50);")
-            
             cursor.close()
             conn.close()
-            print("✅ Database Auto-Migration Completed Successfully!")
+            print("✅ Database Migration Completed Successfully")
     except Exception as e:
-        print("⚠️ Database Migration Warning:", e)
-    
+        print("⚠️ Migration Warning:", e)
     yield
 
 app = FastAPI(title="Chemical Inventory Management API", lifespan=lifespan)
@@ -68,7 +60,6 @@ def send_line_notify(message: str):
     except Exception as e:
         print("LINE Error:", e)
 
-# Helper function to generate Order Codes (IN-YYYYMMDD-001 / OUT-YYYYMMDD-001)
 def generate_order_code(prefix: str):
     conn = get_db()
     cursor = conn.cursor()
@@ -94,7 +85,6 @@ def generate_order_code(prefix: str):
         num = 1
     return f"{prefix}-{today_str}-{num:03d}"
 
-# Pydantic Models
 class UserRegister(BaseModel):
     full_name: str
     email: str
@@ -155,47 +145,18 @@ class ActionPayload(BaseModel):
 def read_root():
     return {"status": "Chemical Inventory Management API Active"}
 
-# --- AUTH ENDPOINTS ---
-@app.post("/auth/register")
-def register_user(u: UserRegister):
-    if not re.match(r'^[a-zA-Z0-9]+$', u.username):
-        raise HTTPException(status_code=400, detail="User ต้องเป็นภาษาอังกฤษและตัวเลขเท่านั้น")
-    if u.username.lower() == 'admin':
-        raise HTTPException(status_code=400, detail="ไม่อนุญาตให้ใช้ Username 'admin'")
-    
-    conn = get_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-            INSERT INTO users (full_name, email, phone, username, password, role)
-            VALUES (%s, %s, %s, %s, %s, 'requester')
-            RETURNING id, full_name, username, role;
-        """, (u.full_name, u.email, u.phone, u.username, u.password))
-        user = cursor.fetchone()
-        return {"message": "ลงทะเบียนสำเร็จ", "user": dict(user)}
-    except psycopg2.IntegrityError:
-        raise HTTPException(status_code=400, detail="Username หรือ อีเมล นี้มีผู้ใช้งานแล้ว")
-    finally:
-        cursor.close()
-        conn.close()
+# Compatibility Endpoint สำหรับหน้าเว็บเก่าที่ยังค้างแคชอยู่
+@app.get("/dashboard/metrics")
+def get_legacy_dashboard_metrics():
+    return {
+        "total_chemicals": 0,
+        "expired": 0,
+        "expire_in_1_day": 0,
+        "expire_in_3_days": 0,
+        "expire_in_7_days": 0,
+        "expire_in_30_days": 0
+    }
 
-@app.post("/auth/login")
-def login_user(u: UserLogin):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, full_name, username, role, password FROM users WHERE username = %s", (u.username,))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    
-    if not user or user["password"] != u.password:
-        raise HTTPException(status_code=401, detail="User หรือ Password ไม่ถูกต้อง")
-    
-    user_dict = dict(user)
-    del user_dict["password"]
-    return {"message": "เข้าสู่ระบบสำเร็จ", "user": user_dict}
-
-# --- DASHBOARD & ANALYTICS ---
 @app.get("/dashboard/analytics")
 def get_dashboard_analytics():
     conn = get_db()
@@ -256,7 +217,6 @@ def get_notifications():
     conn.close()
     return [dict(r) for r in rows]
 
-# --- CHEMICALS ENDPOINTS ---
 @app.get("/chemicals")
 def get_chemicals():
     conn = get_db()
@@ -358,7 +318,6 @@ def reject_chemical_add(chem_id: int, action: ActionPayload):
     send_line_notify(f"❌ ปฏิเสธคำขอนำเข้าสารเคมี ID #{chem_id} โดย {action.admin_name}")
     return {"message": "ปฏิเสธคำขอนำเข้าสารเคมีแล้ว"}
 
-# --- REQUISITIONS ENDPOINTS ---
 @app.post("/requisitions/basket")
 def create_requisition_basket(basket: RequisitionBasket):
     conn = get_db()
