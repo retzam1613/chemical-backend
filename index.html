@@ -11,13 +11,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
         body { font-family: 'Sarabun', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); }
-        .dark .glass-card { background: rgba(15, 23, 42, 0.85); }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center text-white hidden">
         <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
         <p id="loading-text" class="text-sm font-bold tracking-wide">กำลังประมวลผล / Processing...</p>
@@ -29,7 +26,9 @@
         <div class="relative w-72 max-w-[80%] bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col border-r border-slate-200 dark:border-slate-800 z-10">
             <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-indigo-600 text-white">
                 <div class="flex items-center space-x-2">
-                    <svg class="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path></svg>
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
+                        <i class="fa-solid fa-vial-circle-check text-base"></i>
+                    </div>
                     <span class="font-extrabold text-sm tracking-wider">CIMs MENU</span>
                 </div>
                 <button onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -59,12 +58,15 @@
     <!-- AUTH SECTION -->
     <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-slate-900">
         <div class="bg-white dark:bg-slate-800 w-full max-w-md p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 space-y-6">
-            <div class="text-center space-y-2">
-                <div class="inline-flex items-center justify-center bg-indigo-600 p-4 rounded-3xl text-white shadow-xl shadow-indigo-500/30">
-                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path></svg>
+            <div class="text-center space-y-3">
+                <!-- NEW LOGO LAB FLASK -->
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 text-white shadow-xl shadow-indigo-500/30">
+                    <i class="fa-solid fa-flask-vial text-4xl animate-pulse"></i>
                 </div>
-                <h1 class="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-wider">CIMs</h1>
-                <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Chemical Inventory Management System</p>
+                <div>
+                    <h1 class="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-wider">CIMs</h1>
+                    <p class="text-xs font-bold text-slate-500 dark:text-slate-400">Chemical Inventory Management System</p>
+                </div>
             </div>
 
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
@@ -88,8 +90,9 @@
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleSidebar()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800"><i class="fa-solid fa-bars text-base"></i></button>
                     <div class="flex items-center space-x-2">
-                        <div class="bg-indigo-600 p-2 rounded-xl text-white">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.595 15.12a2 2 0 00-1.802.923l-1.155 2a2 2 0 001.022 2.708l16.1 3.22a2 2 0 002.408-1.528l.26-1.3a2 2 0 00-.98-2.122zM12 2v10m0 0l3-3m-3 3L9 9"></path></svg>
+                        <!-- HEADER LOGO -->
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center text-white shadow-md">
+                            <i class="fa-solid fa-flask-vial text-lg"></i>
                         </div>
                         <div>
                             <h1 class="text-base font-black tracking-wider text-indigo-600 dark:text-indigo-400">CIMs</h1>
@@ -99,15 +102,11 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <!-- Language Switcher -->
                     <button onclick="toggleLang()" class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs border border-slate-200 dark:border-slate-700">
                         <span id="lang-label">🇬🇧 EN</span>
                     </button>
-                    <!-- Manual Refresh -->
                     <button onclick="refreshData()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-indigo-600"><i class="fa-solid fa-rotate-right text-xs"></i></button>
-                    <!-- Theme Toggle -->
                     <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800"><i id="theme-icon" class="fa-solid fa-moon text-xs"></i></button>
-                    <!-- Notif Bell -->
                     <div class="relative">
                         <button onclick="toggleNotifs()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 relative">
                             <i class="fa-solid fa-bell text-xs"></i>
@@ -121,12 +120,10 @@
                             <div id="notif-list" class="space-y-2 text-xs max-h-64 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
-                    <!-- Cart Trigger -->
                     <button onclick="openCartModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center">
                         <i class="fa-solid fa-cart-shopping mr-1"></i> <span data-i18n="btn_cart">ตะกร้า</span>
                         <span id="cart-badge" class="ml-1 bg-rose-600 text-white text-[9px] px-1.5 rounded-full">0</span>
                     </button>
-                    <!-- User Profile -->
                     <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border text-xs">
                         <i class="fa-solid fa-circle-user text-indigo-600"></i>
                         <span id="current-user-display" class="font-bold text-[11px]"></span>
@@ -195,7 +192,6 @@
                             <button onclick="switchSubApproval('pending')" id="sub-btn-pending" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white" data-i18n="sub_tab_pending">คำขอที่รออนุมัติ</button>
                             <button onclick="switchSubApproval('history')" id="sub-btn-history" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300" data-i18n="sub_tab_history">แสดงประวัติการเบิก-นำเข้าสารเคมี</button>
                         </div>
-                        <!-- Filter -->
                         <div class="flex items-center space-x-2 text-xs">
                             <span class="font-bold text-slate-500">Filter:</span>
                             <select id="approval-type-filter" onchange="renderApprovalTables()" class="p-1.5 rounded-xl border bg-slate-50 dark:bg-slate-800 font-semibold">
@@ -206,7 +202,6 @@
                         </div>
                     </div>
 
-                    <!-- SUB TAB: PENDING -->
                     <div id="sub-tab-pending" class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
@@ -218,7 +213,6 @@
                         </table>
                     </div>
 
-                    <!-- SUB TAB: HISTORY -->
                     <div id="sub-tab-history" class="overflow-x-auto hidden">
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
@@ -499,7 +493,7 @@
 
         function deleteChem(id) {
             if (!confirm('Are you sure to delete this chemical?')) return;
-            fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' }).then(() => refreshData());
+            fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' }).then(() => fetchChemicals());
         }
 
         function fetchAllApprovals() {
@@ -550,7 +544,7 @@
                     <td class="py-2.5 px-3 font-bold">${item.qty} ${item.unit || ''}</td>
                     <td class="py-2.5 px-3 text-[10px] font-mono">${item.approved_at_str || '-'}</td>
                     <td class="py-2.5 px-3">${item.remark || '-'}</td>
-                    <td class="py-2.5 px-3"><span class="${item.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${item.status}</span></td>
+                    <td class="py-2.5 px-3"><span class="${item.status && item.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${item.status}</span></td>
                     <td class="py-2.5 px-3 text-slate-400 text-[10px]">${item.approved_by || '-'}</td>
                 </tr>
             `).join('');
@@ -578,7 +572,7 @@
             fetch(`${BASE_URL}/issues/report`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: currentUser.id, reporter_name: currentUser.full_name, issue_text: txt })
-            }).then(() => { closeModal('modal-issue'); alert('Report submitted successfully!'); });
+            }).then(() => { closeModal('modal-issue'); alert('Report submitted successfully!'); refreshData(); });
         }
 
         function toggleSidebar() { document.getElementById('sidebar-drawer').classList.toggle('hidden'); }
