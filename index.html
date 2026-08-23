@@ -174,7 +174,7 @@
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[160px]" data-i18n="th_action">ดำเนินการ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[200px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
                             </thead>
                             <tbody id="chemical-table-body" class="divide-y"></tbody>
@@ -242,6 +242,61 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- EDIT CHEMICAL MODAL -->
+    <div id="modal-edit-chem" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b">
+                <h3 class="font-bold text-sm text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-to-square mr-2"></i>แก้ไขข้อมูลสารเคมี</h3>
+                <button onclick="closeModal('modal-edit-chem')"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <input type="hidden" id="edit-id">
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="col-span-2">
+                    <label class="block font-semibold mb-1">ชื่อสารเคมี *</label>
+                    <input type="text" id="edit-name" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Brand</label>
+                    <input type="text" id="edit-brand" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">CAS Number</label>
+                    <input type="text" id="edit-cas" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">ปริมาณต่อหน่วย *</label>
+                    <div class="flex space-x-1">
+                        <input type="number" id="edit-cap-val" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                        <select id="edit-cap-unit" class="p-2 border rounded-xl dark:bg-slate-700"></select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">จำนวนคงเหลือ *</label>
+                    <div class="flex space-x-1">
+                        <input type="number" id="edit-qty" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                        <select id="edit-pkg-unit" class="p-2 border rounded-xl dark:bg-slate-700"></select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">สถานที่จัดเก็บ *</label>
+                    <select id="edit-loc" class="w-full p-2 border rounded-xl dark:bg-slate-700"></select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">วันหมดอายุ</label>
+                    <input type="date" id="edit-exp" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                </div>
+                <div class="col-span-2">
+                    <label class="block font-semibold mb-1">Remark</label>
+                    <input type="text" id="edit-remark" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2 border-t">
+                <button onclick="closeModal('modal-edit-chem')" class="px-4 py-2 text-xs border rounded-xl">ยกเลิก</button>
+                <button onclick="submitEditChem()" class="px-4 py-2 text-xs bg-indigo-600 text-white font-bold rounded-xl shadow-md">บันทึกแก้ไข</button>
+            </div>
+        </div>
     </div>
 
     <!-- ISSUE REPORT MODAL -->
@@ -474,9 +529,10 @@
             const tbody = document.getElementById('chemical-table-body');
             tbody.innerHTML = data.map(c => {
                 let statusBadge = '';
-                if (c.expiry_status === 'EXPIRED') statusBadge = '<span class="bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded text-[9px] font-bold">EXPIRED</span>';
-                else if (c.expiry_status === '3_DAYS') statusBadge = '<span class="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[9px] font-bold">Exp 3 Days</span>';
-                else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded text-[9px] font-bold">Exp 7 Days</span>';
+                if (c.expiry_status === 'EXPIRED') statusBadge = '<span class="bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-rose-300">EXPIRED</span>';
+                else if (c.expiry_status === '3_DAYS') statusBadge = '<span class="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-orange-300">Exp 3 Days</span>';
+                else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300">Exp 7 Days</span>';
+                else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300">Exp 30 Days</span>';
 
                 return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
@@ -485,19 +541,20 @@
                     <td class="py-3 px-3 text-indigo-500">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
                     <td class="py-3 px-3">${c.capacity_value ? c.capacity_value + ' ' + c.capacity_unit : c.unit || '-'}</td>
-                    <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">
-                        <div class="flex items-center space-x-1">
-                            <button onclick="adjustQty(${c.id}, -1)" class="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded text-xs font-black">-</button>
-                            <span>${c.quantity} ${c.package_unit || ''}</span>
-                            <button onclick="adjustQty(${c.id}, 1)" class="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded text-xs font-black">+</button>
-                        </div>
-                    </td>
+                    <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
                     <td class="py-3 px-3"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px]">${c.location || '-'}</span></td>
                     <td class="py-3 px-3">${c.expiry_date || '-'}</td>
                     <td class="py-3 px-3">${c.remark || '-'}</td>
                     <td class="py-3 px-3 text-center">
-                        <button onclick="addToCartFromRow(${c.id})" class="bg-amber-500 font-bold px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-cart-plus"></i></button>
-                        ${currentUser.role === 'storekeeper' ? `<button onclick="deleteChem(${c.id})" class="bg-rose-500 text-white font-bold px-2 py-1 rounded text-[10px] ml-1"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        <div class="flex items-center justify-center space-x-1">
+                            <button onclick="adjustQty(${c.id}, -1)" title="ลดจำนวน" class="w-6 h-6 bg-slate-200 dark:bg-slate-700 hover:bg-rose-200 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-black flex items-center justify-center">-</button>
+                            <button onclick="adjustQty(${c.id}, 1)" title="เพิ่มจำนวน" class="w-6 h-6 bg-slate-200 dark:bg-slate-700 hover:bg-emerald-200 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-black flex items-center justify-center">+</button>
+                            <button onclick="addToCartFromRow(${c.id})" title="ใส่ตะกร้า" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-2 py-1 rounded-lg text-[10px]"><i class="fa-solid fa-cart-plus"></i></button>
+                            ${currentUser.role === 'storekeeper' ? `
+                                <button onclick="openEditModal(${c.id})" title="แก้ไข" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-1 rounded-lg text-[10px]"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteChem(${c.id})" title="ลบ" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-2 py-1 rounded-lg text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                            ` : ''}
+                        </div>
                     </td>
                 </tr>`;
             }).join('');
@@ -528,6 +585,46 @@
         function deleteChem(id) {
             if (!confirm('ยืนยันลบสารเคมีรายการนี้ออกจากคลัง?')) return;
             fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' }).then(() => fetchChemicals());
+        }
+
+        function openEditModal(id) {
+            const c = allChemicals.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('edit-id').value = c.id;
+            document.getElementById('edit-name').value = c.name || '';
+            document.getElementById('edit-brand').value = c.brand || '';
+            document.getElementById('edit-cas').value = c.cas_number || '';
+            document.getElementById('edit-cap-val').value = c.capacity_value || 0;
+            document.getElementById('edit-qty').value = c.quantity || 0;
+            document.getElementById('edit-exp').value = c.expiry_date || '';
+            document.getElementById('edit-remark').value = c.remark || '';
+
+            const capSel = document.getElementById('edit-cap-unit');
+            capSel.innerHTML = CAPACITY_UNITS.map(u => `<option value="${u}" ${u === c.capacity_unit ? 'selected':''}>${u}</option>`).join('');
+
+            const pkgSel = document.getElementById('edit-pkg-unit');
+            pkgSel.innerHTML = PACKAGE_UNITS.map(u => `<option value="${u}" ${u === c.package_unit ? 'selected':''}>${u}</option>`).join('');
+
+            const locSel = document.getElementById('edit-loc');
+            locSel.innerHTML = LOCATIONS.map(l => `<option value="${l}" ${l === c.location ? 'selected':''}>${l}</option>`).join('');
+
+            document.getElementById('modal-edit-chem').classList.remove('hidden');
+        }
+
+        function submitEditChem() {
+            const id = document.getElementById('edit-id').value;
+            const payload = {
+                name: document.getElementById('edit-name').value, brand: document.getElementById('edit-brand').value,
+                cas_number: document.getElementById('edit-cas').value, capacity_value: parseFloat(document.getElementById('edit-cap-val').value) || 0,
+                capacity_unit: document.getElementById('edit-cap-unit').value, quantity: parseFloat(document.getElementById('edit-qty').value) || 0,
+                package_unit: document.getElementById('edit-pkg-unit').value, location: document.getElementById('edit-loc').value,
+                expiry_date: document.getElementById('edit-exp').value, remark: document.getElementById('edit-remark').value
+            };
+
+            fetch(`${BASE_URL}/chemicals/${id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => { closeModal('modal-edit-chem'); refreshData(); });
         }
 
         function filterChemicals() {
