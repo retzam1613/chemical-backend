@@ -15,6 +15,7 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
 
+    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center text-white hidden">
         <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
         <p id="loading-text" class="text-sm font-bold tracking-wide">กำลังประมวลผล / Processing...</p>
@@ -27,7 +28,7 @@
             <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-indigo-600 text-white">
                 <div class="flex items-center space-x-2">
                     <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
-                        <i class="fa-solid fa-vial-circle-check text-base"></i>
+                        <i class="fa-solid fa-flask-vial text-base"></i>
                     </div>
                     <span class="font-extrabold text-sm tracking-wider">CIMs MENU</span>
                 </div>
@@ -40,7 +41,7 @@
                 <button onclick="switchTab('approval'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
                     <i class="fa-solid fa-list-check text-amber-500 text-base"></i><span data-i18n="menu_approval">คำขอเบิก-นำเข้าสารเคมี</span>
                 </button>
-                <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hidden">
+                <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hidden">
                     <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span>
                 </button>
                 <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-slate-800">
@@ -59,7 +60,6 @@
     <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-slate-900">
         <div class="bg-white dark:bg-slate-800 w-full max-w-md p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 space-y-6">
             <div class="text-center space-y-3">
-                <!-- NEW LOGO LAB FLASK -->
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 text-white shadow-xl shadow-indigo-500/30">
                     <i class="fa-solid fa-flask-vial text-4xl animate-pulse"></i>
                 </div>
@@ -90,7 +90,6 @@
                 <div class="flex items-center space-x-3">
                     <button onclick="toggleSidebar()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800"><i class="fa-solid fa-bars text-base"></i></button>
                     <div class="flex items-center space-x-2">
-                        <!-- HEADER LOGO -->
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center text-white shadow-md">
                             <i class="fa-solid fa-flask-vial text-lg"></i>
                         </div>
@@ -175,7 +174,7 @@
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[150px]" data-i18n="th_action">ดำเนินการ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[160px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
                             </thead>
                             <tbody id="chemical-table-body" class="divide-y"></tbody>
@@ -465,6 +464,7 @@
             fetch(`${BASE_URL}/chemicals`).then(r => r.json()).then(data => {
                 allChemicals = data.items || [];
                 renderChemicals(allChemicals);
+                renderExpiryTable(allChemicals);
                 document.getElementById('summary-total-qty').innerText = `${data.total_quantity || 0} ${currentLang === 'TH' ? 'ชิ้น' : 'Items'}`;
                 document.getElementById('summary-total-items').innerText = `${data.total_items || 0} ${currentLang === 'TH' ? 'รายการ' : 'Records'}`;
             });
@@ -472,14 +472,26 @@
 
         function renderChemicals(data) {
             const tbody = document.getElementById('chemical-table-body');
-            tbody.innerHTML = data.map(c => `
+            tbody.innerHTML = data.map(c => {
+                let statusBadge = '';
+                if (c.expiry_status === 'EXPIRED') statusBadge = '<span class="bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded text-[9px] font-bold">EXPIRED</span>';
+                else if (c.expiry_status === '3_DAYS') statusBadge = '<span class="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[9px] font-bold">Exp 3 Days</span>';
+                else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded text-[9px] font-bold">Exp 7 Days</span>';
+
+                return `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
                     <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
-                    <td class="py-3 px-3 font-bold">${c.name}</td>
+                    <td class="py-3 px-3 font-bold">${c.name} ${statusBadge}</td>
                     <td class="py-3 px-3 text-indigo-500">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
                     <td class="py-3 px-3">${c.capacity_value ? c.capacity_value + ' ' + c.capacity_unit : c.unit || '-'}</td>
-                    <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
+                    <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">
+                        <div class="flex items-center space-x-1">
+                            <button onclick="adjustQty(${c.id}, -1)" class="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded text-xs font-black">-</button>
+                            <span>${c.quantity} ${c.package_unit || ''}</span>
+                            <button onclick="adjustQty(${c.id}, 1)" class="w-5 h-5 bg-slate-200 dark:bg-slate-700 rounded text-xs font-black">+</button>
+                        </div>
+                    </td>
                     <td class="py-3 px-3"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px]">${c.location || '-'}</span></td>
                     <td class="py-3 px-3">${c.expiry_date || '-'}</td>
                     <td class="py-3 px-3">${c.remark || '-'}</td>
@@ -487,13 +499,44 @@
                         <button onclick="addToCartFromRow(${c.id})" class="bg-amber-500 font-bold px-2 py-1 rounded text-[10px]"><i class="fa-solid fa-cart-plus"></i></button>
                         ${currentUser.role === 'storekeeper' ? `<button onclick="deleteChem(${c.id})" class="bg-rose-500 text-white font-bold px-2 py-1 rounded text-[10px] ml-1"><i class="fa-solid fa-trash"></i></button>` : ''}
                     </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderExpiryTable(data) {
+            const tbody = document.getElementById('expiry-table-body');
+            const expList = data.filter(c => c.expiry_status && c.expiry_status !== 'NORMAL');
+            tbody.innerHTML = expList.length ? expList.map(c => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                    <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
+                    <td class="py-3 px-3 font-bold">${c.name} (${c.brand || '-'})</td>
+                    <td class="py-3 px-3">${c.location || '-'}</td>
+                    <td class="py-3 px-3 font-bold">${c.quantity} ${c.package_unit || ''}</td>
+                    <td class="py-3 px-3 font-bold text-rose-500">${c.expiry_date || '-'}</td>
+                    <td class="py-3 px-3"><span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full font-bold text-[10px]">${c.expiry_status}</span></td>
                 </tr>
-            `).join('');
+            `).join('') : '<tr><td colspan="6" class="text-center py-4 text-slate-400">ไม่มีสารเคมีที่หมดอายุหรือใกล้หมดอายุ</td></tr>';
+        }
+
+        function adjustQty(id, change) {
+            fetch(`${BASE_URL}/chemicals/${id}/adjust`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity_change: change })
+            }).then(() => fetchChemicals());
         }
 
         function deleteChem(id) {
-            if (!confirm('Are you sure to delete this chemical?')) return;
+            if (!confirm('ยืนยันลบสารเคมีรายการนี้ออกจากคลัง?')) return;
             fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' }).then(() => fetchChemicals());
+        }
+
+        function filterChemicals() {
+            const q = document.getElementById('search-chem').value.toLowerCase();
+            const filtered = allChemicals.filter(c =>
+                c.name.toLowerCase().includes(q) || (c.brand && c.brand.toLowerCase().includes(q)) ||
+                (c.cas_number && c.cas_number.toLowerCase().includes(q)) || (c.location && c.location.toLowerCase().includes(q))
+            );
+            renderChemicals(filtered);
         }
 
         function fetchAllApprovals() {
@@ -516,10 +559,10 @@
                 history = history.filter(x => x.type === filter);
             }
 
-            pBody.innerHTML = pending.map(item => `
+            pBody.innerHTML = pending.length ? pending.map(item => `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
                     <td class="py-2.5 px-3 font-bold">${item.type === 'IMPORT' ? '📥 <span class="text-emerald-600">นำเข้า</span>' : '📤 <span class="text-amber-600">เบิกออก</span>'}</td>
-                    <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code || '#'+item.id}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code}</td>
                     <td class="py-2.5 px-3">${item.requester_name}</td>
                     <td class="py-2.5 px-3 font-bold">${item.chemical_name} (${item.brand || '-'})</td>
                     <td class="py-2.5 px-3 font-bold">${item.qty} ${item.unit || ''}</td>
@@ -533,12 +576,12 @@
                         ` : '-'}
                     </td>
                 </tr>
-            `).join('');
+            `).join('') : '<tr><td colspan="9" class="text-center py-4 text-slate-400">ไม่มีคำขอที่รออนุมัติ</td></tr>';
 
-            hBody.innerHTML = history.map(item => `
+            hBody.innerHTML = history.length ? history.map(item => `
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
                     <td class="py-2.5 px-3 font-bold">${item.type === 'IMPORT' ? '📥 <span class="text-emerald-600">นำเข้า</span>' : '📤 <span class="text-amber-600">เบิกออก</span>'}</td>
-                    <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code || '#'+item.id}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code}</td>
                     <td class="py-2.5 px-3">${item.requester_name}</td>
                     <td class="py-2.5 px-3 font-bold">${item.chemical_name} (${item.brand || '-'})</td>
                     <td class="py-2.5 px-3 font-bold">${item.qty} ${item.unit || ''}</td>
@@ -547,7 +590,7 @@
                     <td class="py-2.5 px-3"><span class="${item.status && item.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${item.status}</span></td>
                     <td class="py-2.5 px-3 text-slate-400 text-[10px]">${item.approved_by || '-'}</td>
                 </tr>
-            `).join('');
+            `).join('') : '<tr><td colspan="9" class="text-center py-4 text-slate-400">ไม่มีประวัติการเบิก-นำเข้า</td></tr>';
         }
 
         function switchSubApproval(t) {
@@ -565,6 +608,90 @@
             }).then(() => refreshData());
         }
 
+        function addToCartFromRow(id) {
+            const chem = allChemicals.find(c => c.id === id);
+            if (!chem) return;
+            const exist = cart.find(x => x.chemical_id === id);
+            if (exist) exist.requested_quantity += 1;
+            else cart.push({ chemical_id: id, name: chem.name, brand: chem.brand, requested_quantity: 1, package_unit: chem.package_unit || 'ขวด', remark: '' });
+            renderCart();
+        }
+
+        function renderCart() {
+            document.getElementById('cart-badge').innerText = cart.length;
+            const tbody = document.getElementById('cart-tbody');
+            tbody.innerHTML = cart.length ? cart.map((item, idx) => `
+                <tr class="border-b">
+                    <td class="py-2 px-2 font-bold">${item.name} (${item.brand || '-'})</td>
+                    <td class="py-2 px-2">
+                        <input type="number" min="1" value="${item.requested_quantity}" onchange="cart[${idx}].requested_quantity=parseFloat(this.value)" class="w-16 p-1 border rounded text-center"> ${item.package_unit}
+                    </td>
+                    <td class="py-2 px-2"><input type="text" placeholder="Remark..." value="${item.remark}" onchange="cart[${idx}].remark=this.value" class="w-full p-1 border rounded"></td>
+                    <td class="py-2 px-2"><button onclick="cart.splice(${idx},1); renderCart();" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+            `).join('') : '<tr><td colspan="4" class="text-center py-4 text-slate-400">ไม่มีสารในตะกร้า</td></tr>';
+        }
+
+        function submitCartRequisition() {
+            if (!cart.length) return alert('โปรดเลือกสารเคมีเข้าตะกร้าก่อน!');
+            fetch(`${BASE_URL}/requisitions/basket`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUser.id, requester_name: currentUser.full_name, items: cart })
+            }).then(r => { if (!r.ok) throw new Error('เกิดข้อผิดพลาด หรือยอดคงเหลือไม่พอ'); return r.json(); })
+            .then(() => { cart = []; renderCart(); closeModal('modal-cart'); alert('ส่งคำขอเบิกเรียบร้อยแล้ว!'); refreshData(); })
+            .catch(err => alert('❌ ' + err.message));
+        }
+
+        function addBatchRow() {
+            const tbody = document.getElementById('batch-add-tbody');
+            const row = document.createElement('tr');
+            row.className = 'border-b batch-row';
+            row.innerHTML = `
+                <td class="p-1"><input type="text" required placeholder="ชื่อสาร..." class="w-full p-1 border rounded text-xs b-name"></td>
+                <td class="p-1"><input type="text" placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand"></td>
+                <td class="p-1"><input type="text" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas"></td>
+                <td class="p-1">
+                    <div class="flex space-x-1">
+                        <input type="number" required placeholder="100" class="w-16 p-1 border rounded text-xs b-cap-val">
+                        <select class="p-1 border rounded text-xs b-cap-unit">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                    </div>
+                </td>
+                <td class="p-1">
+                    <div class="flex space-x-1">
+                        <input type="number" required placeholder="1" class="w-12 p-1 border rounded text-xs b-qty">
+                        <select class="p-1 border rounded text-xs b-pkg-unit">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                    </div>
+                </td>
+                <td class="p-1"><select class="w-full p-1 border rounded text-xs b-loc">${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}</select></td>
+                <td class="p-1"><input type="date" class="w-full p-1 border rounded text-xs b-exp"></td>
+                <td class="p-1"><input type="text" placeholder="Remark..." class="w-full p-1 border rounded text-xs b-remark"></td>
+                <td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        function submitBatchAdd() {
+            const rows = document.querySelectorAll('.batch-row');
+            if (!rows.length) return alert('โปรดเพิ่มอย่างน้อย 1 รายการ');
+            let items = [];
+            rows.forEach(r => {
+                const name = r.querySelector('.b-name').value.trim();
+                if (!name) return;
+                items.push({
+                    name: name, brand: r.querySelector('.b-brand').value.trim(), cas_number: r.querySelector('.b-cas').value.trim(),
+                    capacity_value: parseFloat(r.querySelector('.b-cap-val').value) || 0, capacity_unit: r.querySelector('.b-cap-unit').value,
+                    quantity: parseFloat(r.querySelector('.b-qty').value) || 1, package_unit: r.querySelector('.b-pkg-unit').value,
+                    location: r.querySelector('.b-loc').value, expiry_date: r.querySelector('.b-exp').value, remark: r.querySelector('.b-remark').value.trim(),
+                    created_by_name: currentUser.full_name, user_id: currentUser.id
+                });
+            });
+            if (!items.length) return alert('โปรดระบุชื่อสารเคมี');
+            fetch(`${BASE_URL}/chemicals/batch`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: items })
+            }).then(() => { closeModal('modal-batch-add'); alert('ส่งคำขอนำเข้าเรียบร้อยแล้ว!'); refreshData(); });
+        }
+
         function openIssueModal() { document.getElementById('modal-issue').classList.remove('hidden'); }
         function submitIssue() {
             const txt = document.getElementById('issue-text-input').value.trim();
@@ -572,13 +699,17 @@
             fetch(`${BASE_URL}/issues/report`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: currentUser.id, reporter_name: currentUser.full_name, issue_text: txt })
-            }).then(() => { closeModal('modal-issue'); alert('Report submitted successfully!'); refreshData(); });
+            }).then(() => { closeModal('modal-issue'); alert('ส่งรายงานปัญหาเรียบร้อยแล้ว!'); refreshData(); });
         }
 
         function toggleSidebar() { document.getElementById('sidebar-drawer').classList.toggle('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function openBatchAddModal() { document.getElementById('modal-batch-add').classList.remove('hidden'); }
-        function openCartModal() { document.getElementById('modal-cart').classList.remove('hidden'); }
+        function openBatchAddModal() {
+            document.getElementById('batch-add-tbody').innerHTML = '';
+            addBatchRow();
+            document.getElementById('modal-batch-add').classList.remove('hidden');
+        }
+        function openCartModal() { renderCart(); document.getElementById('modal-cart').classList.remove('hidden'); }
     </script>
 </body>
 </html>
