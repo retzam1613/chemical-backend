@@ -170,14 +170,14 @@ def get_all_approvals():
         SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, COALESCE(created_by_name, 'ไม่ระบุ') as requester_name, name as chemical_name, brand, quantity as qty, package_unit as unit, COALESCE(status, 'PENDING_ADD') as status, remark, TO_CHAR(COALESCE(created_at, CURRENT_TIMESTAMP), 'DD/MM/YYYY HH24:MI') as created_at_str
         FROM chemicals WHERE status = 'PENDING_ADD'
         UNION ALL
-        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status, r.remark, TO_CHAR(COALESCE(r.created_at, CURRENT_TIMESTAMP), 'DD/MM/YYYY HH24:MI') as created_at_str
-        FROM requisitions r LEFT JOIN users u ON r.user_id = u.id JOIN chemicals c ON r.chemical_id = c.id WHERE r.status = 'PENDING'
+        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, COALESCE(r.status, 'PENDING') as status, r.remark, TO_CHAR(COALESCE(r.created_at, CURRENT_TIMESTAMP), 'DD/MM/YYYY HH24:MI') as created_at_str
+        FROM requisitions r LEFT JOIN users u ON r.user_id = u.id JOIN chemicals c ON r.chemical_id = c.id WHERE r.status = 'PENDING' OR r.status IS NULL
         ORDER BY id DESC;
     """)
     pending = cursor.fetchall()
     cursor.execute("""
         SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, COALESCE(created_by_name, 'ไม่ระบุ') as requester_name, name as chemical_name, brand, quantity as qty, package_unit as unit, COALESCE(status, 'APPROVED') as status, COALESCE(approved_by, 'Admin') as approved_by, remark, TO_CHAR(COALESCE(approved_at, created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
-        FROM chemicals WHERE status IN ('APPROVED', 'REJECTED_ADD') OR status IS NULL
+        FROM chemicals WHERE status IN ('APPROVED', 'REJECTED_ADD')
         UNION ALL
         SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status, r.approved_by, r.remark, TO_CHAR(COALESCE(r.approved_at, r.created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
         FROM requisitions r LEFT JOIN users u ON r.user_id = u.id JOIN chemicals c ON r.chemical_id = c.id WHERE r.status IN ('APPROVED', 'REJECTED')
