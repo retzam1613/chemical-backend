@@ -89,7 +89,7 @@
     <!-- VERSION BADGE (BOTTOM RIGHT) -->
     <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
         <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
             <span>CIMs v2.4.0 (Liquid Glass)</span>
         </div>
     </div>
@@ -177,6 +177,14 @@
                 </div>
             </div>
 
+            <!-- SYSTEM STATUS ON LOGIN SCREEN -->
+            <div class="flex justify-center">
+                <div id="login-system-status" class="px-3 py-1 rounded-full text-[11px] font-bold border flex items-center space-x-1.5 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <span>Checking System Status...</span>
+                </div>
+            </div>
+
             <!-- LOGIN FORM -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
@@ -237,6 +245,15 @@
                 </div>
 
                 <div class="flex items-center gap-2">
+                    <!-- MAIN SYSTEM STATUS INDICATOR -->
+                    <div id="main-system-status" class="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm" title="สถานะการเชื่อมต่อกับเซิร์ฟเวอร์ระบบ">
+                        <span class="relative flex h-2 w-2">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span id="system-status-text" class="text-[11px]">System Online</span>
+                    </div>
+
                     <button onclick="toggleLang()" class="px-2.5 py-1.5 rounded-xl bg-white/50 dark:bg-slate-800/50 font-bold text-xs border border-white/40 dark:border-slate-700">
                         <span id="lang-label">🇬🇧 EN</span>
                     </button>
@@ -425,7 +442,7 @@
                 </div>
             </section>
 
-            <!-- TAB 6: STOREKEEPER - USERS STATUS WITH ONLINE / OFFLINE -->
+            <!-- TAB 6: STOREKEEPER - USERS STATUS -->
             <section id="tab-users-status" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4">
                     <h3 class="font-bold text-xs text-purple-600 dark:text-purple-400 mb-3"><i class="fa-solid fa-users mr-1.5"></i>รายชื่อผู้ใช้งาน</h3>
@@ -433,7 +450,7 @@
                         <table class="w-full text-left text-xs">
                             <thead class="bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold uppercase sticky top-0 z-10">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3">สถานะ</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">ใช้งานล่าสุดเมื่อ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">ใช้งานล่าสุดเมื่อ</th>
                                 </tr>
                             </thead>
                             <tbody id="users-status-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -604,10 +621,48 @@
         const LOCATIONS = generateLocations();
 
         document.addEventListener('DOMContentLoaded', () => {
+            checkSystemHealth();
             if (currentUser) { initApp(); } else { document.getElementById('auth-section').classList.remove('hidden'); }
             applyLanguage();
             setInterval(() => { if (currentUser) fetchNotifications(); }, 12000);
+            setInterval(checkSystemHealth, 15000); // Check server health every 15 secs
         });
+
+        /* --- CHECK SYSTEM SERVER STATUS (ONLINE / OFFLINE) --- */
+        function checkSystemHealth() {
+            fetch(`${BASE_URL}/chemicals`, { method: 'GET' })
+                .then(r => {
+                    if (r.ok) updateSystemStatusUI(true);
+                    else updateSystemStatusUI(false);
+                })
+                .catch(() => updateSystemStatusUI(false));
+        }
+
+        function updateSystemStatusUI(isOnline) {
+            const mainBadge = document.getElementById('main-system-status');
+            const loginBadge = document.getElementById('login-system-status');
+            const text = document.getElementById('system-status-text');
+
+            if (isOnline) {
+                if (mainBadge) {
+                    mainBadge.className = "px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm";
+                    mainBadge.innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span><span class="text-[11px]">System Online</span>`;
+                }
+                if (loginBadge) {
+                    loginBadge.className = "px-3 py-1 rounded-full text-[11px] font-bold border flex items-center space-x-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800";
+                    loginBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>System Online</span>`;
+                }
+            } else {
+                if (mainBadge) {
+                    mainBadge.className = "px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-300 dark:border-rose-800 shadow-sm";
+                    mainBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span><span class="text-[11px]">Server Offline</span>`;
+                }
+                if (loginBadge) {
+                    loginBadge.className = "px-3 py-1 rounded-full text-[11px] font-bold border flex items-center space-x-1.5 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-300 dark:border-rose-800";
+                    loginBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span><span>Server Offline (หรือกำลังตื่น)</span>`;
+                }
+            }
+        }
 
         function showLoading(msg = 'กำลังประมวลผล / Processing...') {
             document.getElementById('loading-text').innerText = msg;
@@ -695,7 +750,7 @@
         }
 
         function refreshData() {
-            fetchNotifications(); fetchChemicals(); fetchAllApprovals();
+            checkSystemHealth(); fetchNotifications(); fetchChemicals(); fetchAllApprovals();
             if (currentUser.role === 'storekeeper') fetchAnalyticsGraph();
         }
 
@@ -1113,7 +1168,7 @@
             }).then(() => { hideLoading(); closeModal('modal-batch-add'); showToast('ส่งคำขอนำเข้าเรียบร้อยแล้ว!', 'success'); refreshData(); });
         }
 
-        /* --- STOREKEEPER LOGS & ONLINE USERS --- */
+        /* --- STOREKEEPER LOGS & USERS LIST --- */
         function fetchLoginLogs() {
             showLoading('กำลังดึงข้อมูล Log การเข้าใช้งาน...');
             fetch(`${BASE_URL}/logs/login`).then(r => r.json()).then(data => {
@@ -1182,39 +1237,20 @@
             }
         }
 
-        /* --- USERS STATUS WITH ONLINE / OFFLINE LOGIC --- */
         function fetchUsersStatus() {
             showLoading('กำลังดึงข้อมูลผู้ใช้งาน...');
             fetch(`${BASE_URL}/users/status`).then(r => r.json()).then(data => {
                 hideLoading();
                 const tbody = document.getElementById('users-status-tbody');
-                const now = new Date();
-
-                tbody.innerHTML = (data.users || []).map(u => {
-                    // Check if online (Last online within 5 mins)
-                    let isOnline = false;
-                    if (u.last_online_str) {
-                        const lastTime = new Date(u.last_online_str);
-                        if (!isNaN(lastTime)) {
-                            const diffMins = (now - lastTime) / (1000 * 60);
-                            isOnline = diffMins <= 5;
-                        }
-                    }
-
-                    const statusBadge = isOnline 
-                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-ping"></span>Online</span>'
-                        : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"><span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1"></span>Offline</span>';
-
-                    return `
+                tbody.innerHTML = (data.users || []).map(u => `
                     <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                         <td class="py-2.5 px-3 font-mono text-[10px]">#${u.id}</td>
-                        <td class="py-2.5 px-3">${statusBadge}</td>
                         <td class="py-2.5 px-3 font-bold">${u.full_name}</td>
                         <td class="py-2.5 px-3 font-mono">${u.username}</td>
                         <td class="py-2.5 px-3"><span class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">${u.role}</span></td>
                         <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${u.last_online_str || 'ยังไม่เคย Online'}</td>
-                    </tr>`;
-                }).join('');
+                    </tr>
+                `).join('');
             });
         }
 
