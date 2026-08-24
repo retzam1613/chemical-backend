@@ -20,13 +20,22 @@ async def lifespan(app: FastAPI):
     try:
         if DATABASE_URL:
             conn = get_db(); cursor = conn.cursor()
+            # Migration สำหรับตาราง chemicals
             cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS remark TEXT;")
             cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS order_code VARCHAR(50);")
             cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS created_by_name VARCHAR(100);")
             cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'APPROVED';")
+            cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100);")
+            cursor.execute("ALTER TABLE chemicals ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;")
+
+            # Migration สำหรับตาราง requisitions
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS remark TEXT;")
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS order_code VARCHAR(50);")
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS batch_id VARCHAR(50);")
+            cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100);")
+            cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;")
+
+            # สร้างตารางเสริมหากยังไม่มี
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS user_notifications (
                     id SERIAL PRIMARY KEY, user_id INT, role_target VARCHAR(20),
@@ -179,7 +188,7 @@ def get_all_approvals():
         SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, COALESCE(created_by_name, 'ไม่ระบุ') as requester_name, name as chemical_name, brand, quantity as qty, package_unit as unit, COALESCE(status, 'APPROVED') as status, COALESCE(approved_by, 'Admin') as approved_by, remark, TO_CHAR(COALESCE(approved_at, created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
         FROM chemicals WHERE status IN ('APPROVED', 'REJECTED_ADD')
         UNION ALL
-        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status, r.approved_by, r.remark, TO_CHAR(COALESCE(r.approved_at, r.created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
+        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status, COALESCE(r.approved_by, 'Admin') as approved_by, r.remark, TO_CHAR(COALESCE(r.approved_at, r.created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
         FROM requisitions r LEFT JOIN users u ON r.user_id = u.id JOIN chemicals c ON r.chemical_id = c.id WHERE r.status IN ('APPROVED', 'REJECTED')
         ORDER BY id DESC LIMIT 200;
     """)
@@ -190,7 +199,7 @@ def get_all_approvals():
 def approve_add(cid: int, a: ActionPayload):
     conn = get_db(); cursor = conn.cursor()
     cursor.execute("SELECT name, order_code FROM chemicals WHERE id = %s", (cid,)); chem = cursor.fetchone()
-    cursor.execute("UPDATE chemicals SET status = 'APPROVED', approved_at = CURRENT_TIMESTAMP WHERE id = %s", (cid,))
+    cursor.execute("UPDATE chemicals SET status = 'APPROVED', approved_by = %s, approved_at = CURRENT_TIMESTAMP WHERE id = %s", (a.admin_name, cid))
     cursor.close(); conn.close()
     msg = f"✅ [อนุมัตินำเข้า] {chem['name'] if chem else ''} (#{chem['order_code'] if chem else cid})"
     add_notif(None, "requester", msg); send_line(msg); return {"message": "Approved"}
@@ -199,7 +208,7 @@ def approve_add(cid: int, a: ActionPayload):
 def reject_add(cid: int, a: ActionPayload):
     conn = get_db(); cursor = conn.cursor()
     cursor.execute("SELECT name, order_code FROM chemicals WHERE id = %s", (cid,)); chem = cursor.fetchone()
-    cursor.execute("UPDATE chemicals SET status = 'REJECTED_ADD', approved_at = CURRENT_TIMESTAMP WHERE id = %s", (cid,))
+    cursor.execute("UPDATE chemicals SET status = 'REJECTED_ADD', approved_by = %s, approved_at = CURRENT_TIMESTAMP WHERE id = %s", (a.admin_name, cid))
     cursor.close(); conn.close()
     msg = f"❌ [ปฏิเสธนำเข้า] {chem['name'] if chem else ''} (#{chem['order_code'] if chem else cid})"
     add_notif(None, "requester", msg); send_line(msg); return {"message": "Rejected"}
