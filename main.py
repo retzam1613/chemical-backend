@@ -2,7 +2,7 @@ import os, re, psycopg2, requests
 from datetime import datetime
 from typing import List, Optional
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
@@ -35,6 +35,9 @@ async def lifespan(app: FastAPI):
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS approved_by VARCHAR(100);")
             cursor.execute("ALTER TABLE requisitions ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP;")
 
+            # Migration สำหรับตาราง users
+            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;")
+
             # สร้างตารางเสริมหากยังไม่มี
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS user_notifications (
@@ -46,6 +49,13 @@ async def lifespan(app: FastAPI):
                 CREATE TABLE IF NOT EXISTS system_issues (
                     id SERIAL PRIMARY KEY, user_id INT, reporter_name VARCHAR(100),
                     issue_text TEXT, is_resolved BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS login_logs (
+                    id SERIAL PRIMARY KEY, user_id INT, username VARCHAR(100),
+                    full_name VARCHAR(100), role VARCHAR(20), ip_address VARCHAR(50),
+                    login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             """)
             cursor.close(); conn.close()
@@ -92,20 +102,28 @@ def root(): return {"status": "CIMs API Active"}
 
 @app.post("/auth/register")
 def register(u: UserReg):
-    if not re.match(r'^[a-zA-Z0-9]+$', u.username) or u.username.lower() == 'admin': raise HTTPException(400, "Invalid Username")
+    if not re.match(r'^[a-zA-Z0-9]+$', u.username) or u.username.lower() == 'admin':
+        raise HTTPException(400, "Username ไม่ถูกต้อง หรือใช้คำต้องห้าม")
     conn = get_db(); cursor = conn.cursor()
     try:
         cursor.execute("INSERT INTO users (full_name, email, phone, username, password, role) VALUES (%s,%s,%s,%s,%s,'requester') RETURNING id, full_name, username, role;", (u.full_name, u.email, u.phone, u.username, u.password))
         return {"message": "Success", "user": dict(cursor.fetchone())}
-    except: raise HTTPException(400, "Username/Email exists")
+    except:
+        raise HTTPException(400, "Username หรือ Email นี้มีอยู่ในระบบแล้ว")
     finally: cursor.close(); conn.close()
 
 @app.post("/auth/login")
-def login(u: UserLog):
+def login(u: UserLog, req: Request):
     conn = get_db(); cursor = conn.cursor()
     cursor.execute("SELECT id, full_name, username, role, password FROM users WHERE username = %s", (u.username,))
-    user = cursor.fetchone(); cursor.close(); conn.close()
-    if not user or user["password"] != u.password: raise HTTPException(401, "Invalid Credentials")
+    user = cursor.fetchone()
+    if not user or user["password"] != u.password:
+        cursor.close(); conn.close(); raise HTTPException(401, "Username หรือ Password ไม่ถูกต้อง")
+
+    ip = req.client.host if req.client else "Unknown"
+    cursor.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = %s", (user["id"],))
+    cursor.execute("INSERT INTO login_logs (user_id, username, full_name, role, ip_address) VALUES (%s, %s, %s, %s, %s)", (user["id"], user["username"], user["full_name"], user["role"], ip))
+    cursor.close(); conn.close()
     d = dict(user); del d["password"]; return {"message": "Success", "user": d}
 
 @app.get("/dashboard/analytics")
@@ -190,7 +208,7 @@ def get_all_approvals():
         UNION ALL
         SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status, COALESCE(r.approved_by, 'Admin') as approved_by, r.remark, TO_CHAR(COALESCE(r.approved_at, r.created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
         FROM requisitions r LEFT JOIN users u ON r.user_id = u.id JOIN chemicals c ON r.chemical_id = c.id WHERE r.status IN ('APPROVED', 'REJECTED')
-        ORDER BY id DESC LIMIT 200;
+        ORDER BY id DESC LIMIT 500;
     """)
     history = cursor.fetchall(); cursor.close(); conn.close()
     return {"pending": [dict(r) for r in pending], "history": [dict(r) for r in history]}
@@ -253,3 +271,43 @@ def report_issue(p: IssuePayload):
     cursor.close(); conn.close()
     msg = f"⚠️ [แจ้งปัญหาใหม่] โดยคุณ {p.reporter_name}: {p.issue_text}"
     add_notif(None, "storekeeper", msg); return {"message": "Success"}
+
+# --- STOREKEEPER SPECIAL LOGS & USERS ENDPOINTS ---
+
+@app.get("/logs/login")
+def get_login_logs():
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute("SELECT id, full_name, username, role, ip_address, TO_CHAR(login_at, 'DD/MM/YYYY HH24:MI:SS') as time_str FROM login_logs ORDER BY id DESC LIMIT 500;")
+    logs = cursor.fetchall(); cursor.close(); conn.close()
+    return {"logs": [dict(r) for r in logs]}
+
+@app.get("/logs/task-duration")
+def get_task_duration_logs():
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute("""
+        SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, COALESCE(created_by_name, 'ไม่ระบุ') as requester_name,
+               name as chemical_name, brand, quantity as qty, package_unit as unit, COALESCE(status, 'APPROVED') as status,
+               COALESCE(approved_by, 'Admin') as approved_by, remark,
+               TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str,
+               TO_CHAR(approved_at, 'DD/MM/YYYY HH24:MI:SS') as approved_at_str,
+               EXTRACT(EPOCH FROM (approved_at - created_at))/60 as duration_minutes
+        FROM chemicals WHERE approved_at IS NOT NULL
+        UNION ALL
+        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name,
+               c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status,
+               COALESCE(r.approved_by, 'Admin') as approved_by, r.remark,
+               TO_CHAR(r.created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str,
+               TO_CHAR(r.approved_at, 'DD/MM/YYYY HH24:MI:SS') as approved_at_str,
+               EXTRACT(EPOCH FROM (r.approved_at - r.created_at))/60 as duration_minutes
+        FROM requisitions r LEFT JOIN users u ON r.user_id = u.id JOIN chemicals c ON r.chemical_id = c.id WHERE r.approved_at IS NOT NULL
+        ORDER BY approved_at_str DESC LIMIT 500;
+    """)
+    logs = cursor.fetchall(); cursor.close(); conn.close()
+    return {"logs": [dict(r) for r in logs]}
+
+@app.get("/users/status")
+def get_users_status():
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute("SELECT id, full_name, username, role, TO_CHAR(last_login, 'DD/MM/YYYY HH24:MI:SS') as last_online_str FROM users ORDER BY last_login DESC NULLS LAST;")
+    users = cursor.fetchall(); cursor.close(); conn.close()
+    return {"users": [dict(r) for r in users]}
