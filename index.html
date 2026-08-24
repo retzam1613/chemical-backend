@@ -5,30 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CIMs - Chemical Inventory Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class', theme: { extend: {} } }</script>
+    <script>
+        tailwind.config = { 
+            darkMode: 'class', 
+            theme: { 
+                extend: {
+                    colors: {
+                        glass: {
+                            light: 'rgba(255, 255, 255, 0.65)',
+                            dark: 'rgba(15, 23, 42, 0.65)',
+                            borderLight: 'rgba(255, 255, 255, 0.4)',
+                            borderDark: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                } 
+            } 
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Sarabun', sans-serif; }
+        body { 
+            font-family: 'Sarabun', sans-serif; 
+            background: linear-gradient(135deg, #e0e7ff 0%, #f1f5f9 50%, #c7d2fe 100%);
+            background-attachment: fixed;
+        }
+        .dark body {
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);
+            background-attachment: fixed;
+        }
+        /* Liquid Glass FX */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .dark .glass-nav {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Fly Animation for Cart */
+        .flying-item {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            transition: all 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.5);
+        }
+        @keyframes cartBump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3) rotate(-10deg); }
+            100% { transform: scale(1); }
+        }
+        .cart-bounce {
+            animation: cartBump 0.4s ease-in-out;
+        }
     </style>
 </head>
-<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased relative selection:bg-indigo-500 selection:text-white">
+
+    <!-- VERSION BADGE (BOTTOM RIGHT) -->
+    <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
+        <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>CIMs v2.4.0 (Liquid Glass)</span>
+        </div>
+    </div>
 
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-2 max-w-sm w-full"></div>
 
     <!-- LOADING OVERLAY -->
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex flex-col items-center justify-center text-white hidden">
-        <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
-        <p id="loading-text" class="text-sm font-bold tracking-wide">กำลังประมวลผล / Processing...</p>
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex flex-col items-center justify-center text-white hidden">
+        <div class="glass-card p-8 rounded-3xl flex flex-col items-center border border-white/20">
+            <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
+            <p id="loading-text" class="text-sm font-bold tracking-wide">กำลังประมวลผล / Processing...</p>
+        </div>
     </div>
 
     <!-- SIDEBAR DRAWER -->
     <div id="sidebar-drawer" class="fixed inset-0 z-50 flex hidden">
-        <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"></div>
-        <div class="relative w-72 max-w-[80%] bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col border-r border-slate-200 dark:border-slate-800 z-10">
-            <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-indigo-600 text-white">
+        <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs"></div>
+        <div class="relative w-72 max-w-[80%] glass-card h-full shadow-2xl flex flex-col border-r z-10">
+            <div class="p-5 border-b border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center bg-indigo-600/90 text-white backdrop-blur-md">
                 <div class="flex items-center space-x-2">
                     <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
                         <i class="fa-solid fa-flask-vial text-base"></i>
@@ -37,37 +118,46 @@
                 </div>
                 <button onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <nav class="p-4 space-y-2 flex-1 overflow-y-auto">
-                <button onclick="switchTab('inv'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
-                    <i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i><span data-i18n="menu_inv">คลังสารเคมี</span>
+            
+            <!-- MENU ITEMS WITH EQUAL ICON WIDTH & ALIGNMENT -->
+            <nav class="p-4 space-y-1.5 flex-1 overflow-y-auto">
+                <button onclick="switchTab('inv'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i></span>
+                    <span data-i18n="menu_inv">คลังสารเคมี</span>
                 </button>
-                <button onclick="switchTab('approval'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
-                    <i class="fa-solid fa-list-check text-amber-500 text-base"></i><span data-i18n="menu_approval">คำขอเบิก-นำเข้าสารเคมี</span>
+                <button onclick="switchTab('approval'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-list-check text-amber-500 text-base"></i></span>
+                    <span data-i18n="menu_approval">คำขอเบิก-นำเข้าสารเคมี</span>
                 </button>
-                <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hidden">
-                    <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span>
+                <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all hidden">
+                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i></span>
+                    <span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span>
                 </button>
 
                 <!-- STOREKEEPER EXCLUSIVE MENUS -->
-                <div id="storekeeper-menus" class="hidden space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase px-4">Storekeeper Functions</p>
-                    <button onclick="switchTab('login-logs'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
-                        <i class="fa-solid fa-user-shield text-blue-500 text-base"></i><span>Log การเข้าสู่ระบบ</span>
+                <div id="storekeeper-menus" class="hidden space-y-1.5 pt-3 mt-2 border-t border-slate-200/50 dark:border-slate-800/50">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase px-3.5 mb-1">Storekeeper Functions</p>
+                    <button onclick="switchTab('login-logs'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-user-shield text-blue-500 text-base"></i></span>
+                        <span>Log การเข้าสู่ระบบ</span>
                     </button>
-                    <button onclick="switchTab('task-duration'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
-                        <i class="fa-solid fa-stopwatch text-emerald-500 text-base"></i><span>Log ระยะเวลาดำเนินงาน</span>
+                    <button onclick="switchTab('task-duration'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-stopwatch text-emerald-500 text-base"></i></span>
+                        <span>Log ระยะเวลาดำเนินงาน</span>
                     </button>
-                    <button onclick="switchTab('users-status'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
-                        <i class="fa-solid fa-users text-purple-500 text-base"></i><span>รายชื่อผู้ใช้งาน & สถานะ Online</span>
+                    <button onclick="switchTab('users-status'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-users text-purple-500 text-base"></i></span>
+                        <span>รายชื่อผู้ใช้งาน</span>
                     </button>
                 </div>
 
-                <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-slate-800">
-                    <i class="fa-solid fa-bug text-rose-500 text-base"></i><span data-i18n="btn_report_issue">แจ้งปัญหา</span>
+                <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50/80 dark:hover:bg-slate-800/80 transition-all">
+                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-bug text-rose-500 text-base"></i></span>
+                    <span data-i18n="btn_report_issue">แจ้งปัญหา</span>
                 </button>
             </nav>
-            <div class="p-4 border-t border-slate-200 dark:border-slate-800">
-                <button onclick="logout()" class="w-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 border border-rose-200">
+            <div class="p-4 border-t border-slate-200/50 dark:border-slate-800/50">
+                <button onclick="logout()" class="w-full bg-rose-500/10 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 border border-rose-500/20 hover:bg-rose-500/20 transition-all">
                     <i class="fa-solid fa-right-from-bracket"></i><span data-i18n="btn_logout">ออกจากระบบ</span>
                 </button>
             </div>
@@ -75,8 +165,8 @@
     </div>
 
     <!-- AUTH SECTION (LOGIN / REGISTER) -->
-    <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-slate-900">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 space-y-6">
+    <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xl">
+        <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl space-y-6 border border-white/50 dark:border-white/10">
             <div class="text-center space-y-3">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 text-white shadow-xl shadow-indigo-500/30">
                     <i class="fa-solid fa-flask-vial text-4xl animate-pulse"></i>
@@ -91,50 +181,50 @@
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold mb-1">Username</label>
-                    <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-slate-50 dark:bg-slate-700" placeholder="Username">
+                    <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Username">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">Password</label>
-                    <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-slate-50 dark:bg-slate-700" placeholder="••••••••">
+                    <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 text-sm" data-i18n="btn_login">เข้าสู่ระบบ</button>
-                <p class="text-center text-xs text-slate-500">ยังไม่มีบัญชีผู้ใช้? <button type="button" onclick="toggleAuthMode('reg')" class="text-indigo-600 font-bold hover:underline">ลงทะเบียนที่นี่</button></p>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 text-sm transition-all active:scale-95" data-i18n="btn_login">เข้าสู่ระบบ</button>
+                <p class="text-center text-xs text-slate-500">ยังไม่มีบัญชีผู้ใช้? <button type="button" onclick="toggleAuthMode('reg')" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">ลงทะเบียนที่นี่</button></p>
             </form>
 
             <!-- REGISTER FORM -->
             <form id="reg-form" onsubmit="handleRegister(event)" class="space-y-3 hidden">
                 <div>
                     <label class="block text-xs font-semibold mb-1">ชื่อ-นามสกุล *</label>
-                    <input type="text" id="reg-fullname" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                    <input type="text" id="reg-fullname" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">อีเมล *</label>
-                    <input type="email" id="reg-email" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                    <input type="email" id="reg-email" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label>
-                    <input type="tel" id="reg-phone" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                    <input type="tel" id="reg-phone" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">Username *</label>
-                    <input type="text" id="reg-username" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                    <input type="text" id="reg-username" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">Password *</label>
-                    <input type="password" id="reg-password" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                    <input type="password" id="reg-password" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
                 </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-lg text-xs">ยืนยันลงทะเบียน</button>
-                <p class="text-center text-xs text-slate-500">มีบัญชีผู้ใช้อยู่แล้ว? <button type="button" onclick="toggleAuthMode('login')" class="text-indigo-600 font-bold hover:underline">เข้าสู่ระบบ</button></p>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-lg text-xs transition-all active:scale-95">ยืนยันลงทะเบียน</button>
+                <p class="text-center text-xs text-slate-500">มีบัญชีผู้ใช้อยู่แล้ว? <button type="button" onclick="toggleAuthMode('login')" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">เข้าสู่ระบบ</button></p>
             </form>
         </div>
     </div>
 
     <!-- MAIN APP -->
     <div id="app-content" class="flex-1 flex flex-col hidden">
-        <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-xs">
+        <header class="glass-nav sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-2">
                 <div class="flex items-center space-x-3">
-                    <button onclick="toggleSidebar()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800"><i class="fa-solid fa-bars text-base"></i></button>
+                    <button onclick="toggleSidebar()" class="p-2.5 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 transition-all border border-white/40 dark:border-slate-700"><i class="fa-solid fa-bars text-base"></i></button>
                     <div class="flex items-center space-x-2">
                         <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center text-white shadow-md">
                             <i class="fa-solid fa-flask-vial text-lg"></i>
@@ -147,30 +237,33 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button onclick="toggleLang()" class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs border border-slate-200 dark:border-slate-700">
+                    <button onclick="toggleLang()" class="px-2.5 py-1.5 rounded-xl bg-white/50 dark:bg-slate-800/50 font-bold text-xs border border-white/40 dark:border-slate-700">
                         <span id="lang-label">🇬🇧 EN</span>
                     </button>
-                    <button onclick="refreshData()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-indigo-600"><i class="fa-solid fa-rotate-right text-xs"></i></button>
-                    <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800"><i id="theme-icon" class="fa-solid fa-moon text-xs"></i></button>
+                    <button onclick="refreshData()" class="p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 text-indigo-600 dark:text-indigo-400 border border-white/40 dark:border-slate-700"><i class="fa-solid fa-rotate-right text-xs"></i></button>
+                    <button onclick="toggleTheme()" class="p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-white/40 dark:border-slate-700"><i id="theme-icon" class="fa-solid fa-moon text-xs"></i></button>
                     <div class="relative">
-                        <button onclick="toggleNotifs()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 relative">
+                        <button onclick="toggleNotifs()" class="p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 relative border border-white/40 dark:border-slate-700">
                             <i class="fa-solid fa-bell text-xs"></i>
                             <span id="notif-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse hidden">!</span>
                         </button>
-                        <div id="notif-dropdown" class="fixed inset-x-4 top-16 md:absolute md:inset-auto md:right-0 md:top-10 md:w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border p-4 z-50 hidden">
-                            <div class="flex justify-between items-center pb-2 border-b mb-3">
+                        <div id="notif-dropdown" class="fixed inset-x-4 top-16 md:absolute md:inset-auto md:right-0 md:top-10 md:w-80 glass-card rounded-2xl shadow-2xl p-4 z-50 hidden border">
+                            <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50 mb-3">
                                 <h4 class="font-bold text-xs" data-i18n="notif_title">ศูนย์แจ้งเตือน</h4>
                                 <span id="notif-count" class="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold">0</span>
                             </div>
                             <div id="notif-list" class="space-y-2 text-xs max-h-64 overflow-y-auto pr-1"></div>
                         </div>
                     </div>
-                    <button onclick="openCartModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center">
+                    
+                    <!-- CART BUTTON WITH ID FOR ANIMATION -->
+                    <button id="header-cart-btn" onclick="openCartModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center shadow-md transition-all active:scale-95">
                         <i class="fa-solid fa-cart-shopping mr-1"></i> <span data-i18n="btn_cart">ตะกร้า</span>
                         <span id="cart-badge" class="ml-1 bg-rose-600 text-white text-[9px] px-1.5 rounded-full">0</span>
                     </button>
-                    <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl border text-xs">
-                        <i class="fa-solid fa-circle-user text-indigo-600"></i>
+
+                    <div class="flex items-center gap-1.5 bg-white/50 dark:bg-slate-800/50 px-2.5 py-1.5 rounded-xl border border-white/40 dark:border-slate-700 text-xs">
+                        <i class="fa-solid fa-circle-user text-indigo-600 dark:text-indigo-400"></i>
                         <span id="current-user-display" class="font-bold text-[11px]"></span>
                     </div>
                 </div>
@@ -178,16 +271,16 @@
         </header>
 
         <main class="max-w-7xl mx-auto px-4 py-4 flex-1 w-full space-y-4">
-            <!-- SUMMARY CARDS -->
+            <!-- SUMMARY CARDS WITH GLASSMORPHISM -->
             <section class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
+                <div class="bg-gradient-to-r from-indigo-600/90 to-blue-600/90 backdrop-blur-md text-white p-4 rounded-2xl shadow-lg border border-white/20 flex justify-between items-center">
                     <div>
                         <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_qty">ปริมาณสารเคมีทั้งหมดในคลัง</p>
                         <h2 id="summary-total-qty" class="text-2xl font-black mt-0.5">0 ชิ้น</h2>
                     </div>
                     <div class="bg-white/20 p-3 rounded-2xl"><i class="fa-solid fa-flask text-2xl"></i></div>
                 </div>
-                <div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 rounded-2xl shadow-md flex justify-between items-center">
+                <div class="bg-gradient-to-r from-emerald-600/90 to-teal-600/90 backdrop-blur-md text-white p-4 rounded-2xl shadow-lg border border-white/20 flex justify-between items-center">
                     <div>
                         <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_items">จำนวนรายการสารเคมีทั้งหมด</p>
                         <h2 id="summary-total-items" class="text-2xl font-black mt-0.5">0 รายการ</h2>
@@ -197,7 +290,7 @@
             </section>
 
             <!-- LINE CHART (STOREKEEPER) -->
-            <section id="storekeeper-analytics-section" class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm hidden space-y-3">
+            <section id="storekeeper-analytics-section" class="glass-card rounded-2xl p-4 hidden space-y-3">
                 <h3 class="font-bold text-xs flex items-center justify-between">
                     <span><i class="fa-solid fa-chart-line text-indigo-500 mr-1.5"></i><span data-i18n="chart_title">กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง (รายวัน ย้อนหลัง 1 เดือน)</span></span>
                 </h3>
@@ -205,25 +298,27 @@
             </section>
 
             <!-- ACTION BAR -->
-            <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-2.5 rounded-2xl border shadow-sm">
+            <div class="flex justify-between items-center glass-card p-2.5 rounded-2xl">
                 <span id="active-tab-title" class="font-bold text-xs px-2" data-i18n="menu_inv">คลังสารเคมี</span>
-                <button onclick="openBatchAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center shadow-md">
+                
+                <!-- BUTTON VISIBLE ONLY IN INV & APPROVAL TABS -->
+                <button id="btn-batch-add-top" onclick="openBatchAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
                     <i class="fa-solid fa-plus mr-1.5"></i><span data-i18n="btn_add_chem">เพิ่มสารเคมีเข้าคลัง</span>
                 </button>
             </div>
 
             <!-- TAB 1: INVENTORY TABLE -->
             <section id="tab-inv" class="space-y-3">
-                <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs bg-white dark:bg-slate-800 border shadow-sm">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl border overflow-hidden shadow-sm">
+                <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs glass-card border focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                            <thead class="bg-slate-200/50 dark:bg-slate-800/80 backdrop-blur-md text-[10px] font-bold uppercase sticky top-0 z-10">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[200px]" data-i18n="th_action">ดำเนินการ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
                             </thead>
-                            <tbody id="chemical-table-body" class="divide-y"></tbody>
+                            <tbody id="chemical-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -231,15 +326,15 @@
 
             <!-- TAB 2: MERGED APPROVAL & HISTORY PROCESS -->
             <section id="tab-approval" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm space-y-4">
-                    <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-3">
+                <div class="glass-card rounded-2xl p-4 space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3">
                         <div class="flex space-x-2">
-                            <button onclick="switchSubApproval('pending')" id="sub-btn-pending" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white" data-i18n="sub_tab_pending">คำขอที่รออนุมัติ</button>
-                            <button onclick="switchSubApproval('history')" id="sub-btn-history" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300" data-i18n="sub_tab_history">แสดงประวัติการเบิก-นำเข้าสารเคมี</button>
+                            <button onclick="switchSubApproval('pending')" id="sub-btn-pending" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-md" data-i18n="sub_tab_pending">คำขอที่รออนุมัติ</button>
+                            <button onclick="switchSubApproval('history')" id="sub-btn-history" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300" data-i18n="sub_tab_history">แสดงประวัติการเบิก-นำเข้าสารเคมี</button>
                         </div>
                         <div class="flex items-center space-x-2 text-xs">
                             <span class="font-bold text-slate-500">Filter:</span>
-                            <select id="approval-type-filter" onchange="renderApprovalTables()" class="p-1.5 rounded-xl border bg-slate-50 dark:bg-slate-800 font-semibold">
+                            <select id="approval-type-filter" onchange="renderApprovalTables()" class="p-1.5 rounded-xl border bg-white/50 dark:bg-slate-800/50 font-semibold">
                                 <option value="ALL" data-i18n="opt_all">ทั้งหมด (All)</option>
                                 <option value="IMPORT" data-i18n="opt_import">📥 นำเข้า (Import)</option>
                                 <option value="EXPORT" data-i18n="opt_export">📤 เบิกออก (Export)</option>
@@ -249,23 +344,23 @@
 
                     <div id="sub-tab-pending" class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                            <thead class="bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold uppercase sticky top-0 z-10">
                                 <tr>
                                     <th class="py-3 px-3" data-i18n="th_type">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3" data-i18n="th_requester">ผู้ขอ</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_req_qty">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3" data-i18n="th_status">สถานะ</th><th class="py-3 px-3 text-center" data-i18n="th_action">อนุมัติ/ปฏิเสธ</th>
                                 </tr>
                             </thead>
-                            <tbody id="pending-approval-tbody" class="divide-y"></tbody>
+                            <tbody id="pending-approval-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
                     </div>
 
                     <div id="sub-tab-history" class="overflow-x-auto max-h-[500px] overflow-y-auto hidden">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                            <thead class="bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold uppercase sticky top-0 z-10">
                                 <tr>
                                     <th class="py-3 px-3" data-i18n="th_type">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3" data-i18n="th_requester">ผู้ขอ</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_req_qty">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3" data-i18n="th_status">สถานะ</th><th class="py-3 px-3" data-i18n="th_approver">ผู้อนุมัติ</th>
                                 </tr>
                             </thead>
-                            <tbody id="history-approval-tbody" class="divide-y"></tbody>
+                            <tbody id="history-approval-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -273,16 +368,16 @@
 
             <!-- TAB 3: EXPIRY LOG -->
             <section id="tab-expiry" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm">
+                <div class="glass-card rounded-2xl p-4">
                     <h3 class="font-bold text-xs text-rose-500 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span></h3>
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                            <thead class="bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold uppercase sticky top-0 z-10">
                                 <tr>
                                     <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3" data-i18n="th_alert">ระดับการแจ้งเตือน</th>
                                 </tr>
                             </thead>
-                            <tbody id="expiry-table-body" class="divide-y"></tbody>
+                            <tbody id="expiry-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -290,57 +385,58 @@
 
             <!-- TAB 4: STOREKEEPER - LOGIN LOGS -->
             <section id="tab-login-logs" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm">
-                    <h3 class="font-bold text-xs text-indigo-600 mb-3"><i class="fa-solid fa-user-shield mr-1.5"></i>Log การเข้าสู่ระบบ</h3>
-                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-xl">
+                <div class="glass-card rounded-2xl p-4">
+                    <h3 class="font-bold text-xs text-indigo-600 dark:text-indigo-400 mb-3"><i class="fa-solid fa-user-shield mr-1.5"></i>Log การเข้าสู่ระบบ</h3>
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-white/20 rounded-xl">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                            <thead class="bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold uppercase sticky top-0 z-10">
                                 <tr><th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">IP Address</th><th class="py-3 px-3">วัน-เวลา Login</th></tr>
                             </thead>
-                            <tbody id="login-logs-tbody" class="divide-y"></tbody>
+                            <tbody id="login-logs-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB 5: STOREKEEPER - TASK DURATION LOGS WITH PAGINATION (50 ITEMS/PAGE) -->
+            <!-- TAB 5: STOREKEEPER - TASK DURATION LOGS WITH PAGINATION -->
             <section id="tab-task-duration" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm space-y-3">
+                <div class="glass-card rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-xs text-emerald-600"><i class="fa-solid fa-stopwatch mr-1.5"></i>Log ระยะเวลาดำเนินงานสารเคมี</h3>
+                        <h3 class="font-bold text-xs text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-stopwatch mr-1.5"></i>Log ระยะเวลาดำเนินงานสารเคมี</h3>
                         <span id="duration-page-info" class="text-[11px] font-bold text-slate-500">หน้า 1 / 1</span>
                     </div>
                     
-                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-xl">
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-white/20 rounded-xl">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                            <thead class="bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold uppercase sticky top-0 z-10">
                                 <tr>
                                     <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order Code</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">สารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">เวลาสร้างคำขอ</th><th class="py-3 px-3">เวลาที่อนุมัติ</th><th class="py-3 px-3">ระยะเวลาที่ใช้</th><th class="py-3 px-3">ผู้อนุมัติ</th><th class="py-3 px-3">สถานะ</th>
                                 </tr>
                             </thead>
-                            <tbody id="task-duration-tbody" class="divide-y"></tbody>
+                            <tbody id="task-duration-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
                     </div>
 
-                    <!-- PAGINATION CONTROLS -->
                     <div class="flex justify-between items-center pt-2">
-                        <button onclick="changeDurationPage(-1)" id="btn-prev-page" class="px-3 py-1.5 rounded-xl border font-bold text-xs bg-slate-50 dark:bg-slate-800">← หน้าก่อนหน้า</button>
+                        <button onclick="changeDurationPage(-1)" id="btn-prev-page" class="px-3 py-1.5 rounded-xl border font-bold text-xs bg-white/50 dark:bg-slate-800/50">← หน้าก่อนหน้า</button>
                         <span class="text-xs text-slate-400">แสดงผลครั้งละ 50 รายการ</span>
-                        <button onclick="changeDurationPage(1)" id="btn-next-page" class="px-3 py-1.5 rounded-xl border font-bold text-xs bg-slate-50 dark:bg-slate-800">หน้าถัดไป →</button>
+                        <button onclick="changeDurationPage(1)" id="btn-next-page" class="px-3 py-1.5 rounded-xl border font-bold text-xs bg-white/50 dark:bg-slate-800/50">หน้าถัดไป →</button>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB 6: STOREKEEPER - USERS STATUS -->
+            <!-- TAB 6: STOREKEEPER - USERS STATUS WITH ONLINE / OFFLINE -->
             <section id="tab-users-status" class="space-y-3 hidden">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm">
-                    <h3 class="font-bold text-xs text-purple-600 mb-3"><i class="fa-solid fa-users mr-1.5"></i>รายชื่อผู้ใช้งานทั้งหมด & สถานะ Online ล่าสุด</h3>
-                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-xl">
+                <div class="glass-card rounded-2xl p-4">
+                    <h3 class="font-bold text-xs text-purple-600 dark:text-purple-400 mb-3"><i class="fa-solid fa-users mr-1.5"></i>รายชื่อผู้ใช้งาน</h3>
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-white/20 rounded-xl">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
-                                <tr><th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">Online ล่าสุดเมื่อ</th></tr>
+                            <thead class="bg-slate-200/50 dark:bg-slate-800/80 text-[10px] font-bold uppercase sticky top-0 z-10">
+                                <tr>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3">สถานะ</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">ใช้งานล่าสุดเมื่อ</th>
+                                </tr>
                             </thead>
-                            <tbody id="users-status-tbody" class="divide-y"></tbody>
+                            <tbody id="users-status-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -349,9 +445,9 @@
     </div>
 
     <!-- EDIT CHEMICAL MODAL -->
-    <div id="modal-edit-chem" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4">
-            <div class="flex justify-between items-center pb-2 border-b">
+    <div id="modal-edit-chem" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-to-square mr-2"></i>แก้ไขข้อมูลสารเคมี</h3>
                 <button onclick="closeModal('modal-edit-chem')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
@@ -359,44 +455,44 @@
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <div class="col-span-2">
                     <label class="block font-semibold mb-1">ชื่อสารเคมี *</label>
-                    <input type="text" id="edit-name" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                    <input type="text" id="edit-name" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">Brand</label>
-                    <input type="text" id="edit-brand" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                    <input type="text" id="edit-brand" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">CAS Number</label>
-                    <input type="text" id="edit-cas" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                    <input type="text" id="edit-cas" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">ปริมาณต่อหน่วย *</label>
                     <div class="flex space-x-1">
-                        <input type="number" id="edit-cap-val" class="w-full p-2 border rounded-xl dark:bg-slate-700">
-                        <select id="edit-cap-unit" class="p-2 border rounded-xl dark:bg-slate-700"></select>
+                        <input type="number" id="edit-cap-val" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
+                        <select id="edit-cap-unit" class="p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50"></select>
                     </div>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">จำนวนคงเหลือ *</label>
                     <div class="flex space-x-1">
-                        <input type="number" id="edit-qty" class="w-full p-2 border rounded-xl dark:bg-slate-700">
-                        <select id="edit-pkg-unit" class="p-2 border rounded-xl dark:bg-slate-700"></select>
+                        <input type="number" id="edit-qty" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
+                        <select id="edit-pkg-unit" class="p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50"></select>
                     </div>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">สถานที่จัดเก็บ *</label>
-                    <select id="edit-loc" class="w-full p-2 border rounded-xl dark:bg-slate-700"></select>
+                    <select id="edit-loc" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50"></select>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">วันหมดอายุ</label>
-                    <input type="date" id="edit-exp" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                    <input type="date" id="edit-exp" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div class="col-span-2">
                     <label class="block font-semibold mb-1">Remark</label>
-                    <input type="text" id="edit-remark" class="w-full p-2 border rounded-xl dark:bg-slate-700">
+                    <input type="text" id="edit-remark" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
             </div>
-            <div class="flex justify-end space-x-2 pt-2 border-t">
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
                 <button onclick="closeModal('modal-edit-chem')" class="px-4 py-2 text-xs border rounded-xl">ยกเลิก</button>
                 <button onclick="submitEditChem()" class="px-4 py-2 text-xs bg-indigo-600 text-white font-bold rounded-xl shadow-md">บันทึกแก้ไข</button>
             </div>
@@ -404,13 +500,13 @@
     </div>
 
     <!-- ISSUE REPORT MODAL -->
-    <div id="modal-issue" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4">
-            <div class="flex justify-between items-center pb-2 border-b">
+    <div id="modal-issue" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm text-rose-500"><i class="fa-solid fa-bug mr-2"></i><span data-i18n="modal_issue_title">แจ้งปัญหาการใช้งาน</span></h3>
                 <button onclick="closeModal('modal-issue')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <textarea id="issue-text-input" rows="4" class="w-full p-3 border rounded-xl text-xs bg-slate-50 dark:bg-slate-700" placeholder="พิมพ์ข้อความแจ้งปัญหาถึง Storekeeper..."></textarea>
+            <textarea id="issue-text-input" rows="4" class="w-full p-3 border rounded-xl text-xs bg-white/50 dark:bg-slate-800/50" placeholder="พิมพ์ข้อความแจ้งปัญหาถึง Storekeeper..."></textarea>
             <div class="flex justify-end space-x-2">
                 <button onclick="closeModal('modal-issue')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">ยกเลิก</button>
                 <button onclick="submitIssue()" class="px-4 py-2 text-xs bg-rose-600 text-white font-bold rounded-xl shadow-md" data-i18n="btn_send">ส่งข้อความ</button>
@@ -419,24 +515,24 @@
     </div>
 
     <!-- BATCH ADD MODAL -->
-    <div id="modal-batch-add" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-5xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center pb-3 border-b">
+    <div id="modal-batch-add" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-5xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm" data-i18n="btn_add_chem"><i class="fa-solid fa-plus-circle text-emerald-500 mr-2"></i>เพิ่มสารเคมีเข้าคลัง</h3>
                 <button onclick="closeModal('modal-batch-add')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-3 overflow-y-auto flex-1 space-y-3">
                 <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-100 dark:bg-slate-700 uppercase font-semibold">
+                    <thead class="bg-slate-200/50 dark:bg-slate-800/80 uppercase font-semibold">
                         <tr>
                             <th class="p-2">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No.</th><th class="p-2">ปริมาณ/หน่วย *</th><th class="p-2">จำนวน *</th><th class="p-2">สถานที่จัดเก็บ *</th><th class="p-2">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
                         </tr>
                     </thead>
                     <tbody id="batch-add-tbody"></tbody>
                 </table>
-                <button onclick="addBatchRow()" class="bg-slate-100 dark:bg-slate-700 text-xs px-3 py-1.5 rounded-xl font-bold">+ เพิ่มอีก 1 รายการ</button>
+                <button onclick="addBatchRow()" class="bg-white/50 dark:bg-slate-800/50 text-xs px-3 py-1.5 rounded-xl font-bold border">+ เพิ่มอีก 1 รายการ</button>
             </div>
-            <div class="pt-3 border-t flex justify-end space-x-2">
+            <div class="pt-3 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-end space-x-2">
                 <button onclick="closeModal('modal-batch-add')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">ยกเลิก</button>
                 <button onclick="submitBatchAdd()" class="px-4 py-2 text-xs bg-emerald-600 font-bold rounded-xl text-white shadow-md" data-i18n="btn_send">ส่งขอเพิ่มสารเคมี</button>
             </div>
@@ -444,14 +540,14 @@
     </div>
 
     <!-- CART MODAL -->
-    <div id="modal-cart" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[85vh]">
-            <div class="flex justify-between items-center pb-3 border-b">
+    <div id="modal-cart" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm" data-i18n="btn_cart"><i class="fa-solid fa-cart-shopping text-amber-500 mr-2"></i>ตะกร้าเบิกสาร</h3>
                 <button onclick="closeModal('modal-cart')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-3 overflow-y-auto flex-1"><table class="w-full text-left text-xs"><tbody id="cart-tbody"></tbody></table></div>
-            <div class="pt-3 border-t flex justify-end space-x-2">
+            <div class="pt-3 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-end space-x-2">
                 <button onclick="closeModal('modal-cart')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">เลือกสารเพิ่ม</button>
                 <button onclick="submitCartRequisition()" class="px-4 py-2 text-xs bg-amber-500 font-bold rounded-xl text-slate-950 shadow-md" data-i18n="btn_send">Confirm ส่งคำขอเบิก</button>
             </div>
@@ -523,12 +619,12 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             const colors = {
-                success: 'bg-emerald-600 border-emerald-700 text-white',
-                error: 'bg-rose-600 border-rose-700 text-white',
-                warning: 'bg-amber-500 border-amber-600 text-white',
-                info: 'bg-indigo-600 border-indigo-700 text-white'
+                success: 'bg-emerald-600/90 border-emerald-500 text-white',
+                error: 'bg-rose-600/90 border-rose-500 text-white',
+                warning: 'bg-amber-500/90 border-amber-400 text-white',
+                info: 'bg-indigo-600/90 border-indigo-500 text-white'
             };
-            toast.className = `p-4 rounded-2xl shadow-2xl border flex items-center justify-between space-x-3 text-xs font-bold transform transition-all duration-300 translate-y-2 opacity-0 ${colors[type] || colors.info}`;
+            toast.className = `p-4 rounded-2xl shadow-2xl backdrop-blur-md border flex items-center justify-between space-x-3 text-xs font-bold transform transition-all duration-300 translate-y-2 opacity-0 ${colors[type] || colors.info}`;
             toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
             container.appendChild(toast);
             setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
@@ -640,10 +736,10 @@
 
                     let htmls = [];
                     (data.activity_notifs || []).forEach(n => {
-                        htmls.push(`<div class="p-2 rounded-xl border border-indigo-200 bg-indigo-50 dark:bg-indigo-950/40"><p class="font-bold text-xs">${n.message}</p><span class="text-[9px] text-slate-400 font-mono">${n.time_str}</span></div>`);
+                        htmls.push(`<div class="p-2 rounded-xl border border-indigo-200/50 bg-indigo-50/50 dark:bg-indigo-950/40"><p class="font-bold text-xs">${n.message}</p><span class="text-[9px] text-slate-400 font-mono">${n.time_str}</span></div>`);
                     });
                     (data.expiry_notifs || []).forEach(n => {
-                        let color = n.alert_level === 'EXPIRED' || n.alert_level === '1_DAY' ? 'text-rose-600 border-rose-400 bg-rose-50' : 'text-amber-600 border-amber-300 bg-amber-50';
+                        let color = n.alert_level === 'EXPIRED' || n.alert_level === '1_DAY' ? 'text-rose-600 border-rose-400/50 bg-rose-50/50' : 'text-amber-600 border-amber-300/50 bg-amber-50/50';
                         htmls.push(`<div class="p-2 rounded-xl border ${color}"><div class="flex justify-between font-bold text-xs"><span>${n.name} (${n.brand || '-'})</span><span class="text-[9px]">${n.alert_level}</span></div><p class="text-[10px]">Exp: ${n.expiry_date}</p></div>`);
                     });
                     document.getElementById('notif-list').innerHTML = htmls.length ? htmls.join('') : '<p class="text-slate-400 text-center py-4">No Notifications</p>';
@@ -661,14 +757,24 @@
             }
         }
 
+        /* --- SWITCH TAB AND CONTROL ADD BUTTON VISIBILITY --- */
         function switchTab(t) {
             ['inv', 'approval', 'expiry', 'login-logs', 'task-duration', 'users-status'].forEach(x => {
                 const el = document.getElementById(`tab-${x}`);
                 if (el) el.classList.toggle('hidden', x !== t);
             });
+
+            // Toggle top "Add Chemical" button visibility (Only in inv and approval)
+            const addBtn = document.getElementById('btn-batch-add-top');
+            if (t === 'inv' || t === 'approval') {
+                addBtn.classList.remove('hidden');
+            } else {
+                addBtn.classList.add('hidden');
+            }
+
             const titleMap = {
                 inv: i18n[currentLang].menu_inv, approval: i18n[currentLang].menu_approval, expiry: i18n[currentLang].menu_expiry,
-                'login-logs': 'Log การเข้าสู่ระบบ', 'task-duration': 'Log ระยะเวลาดำเนินงาน', 'users-status': 'รายชื่อผู้ใช้งาน & สถานะ Online'
+                'login-logs': 'Log การเข้าสู่ระบบ', 'task-duration': 'Log ระยะเวลาดำเนินงาน', 'users-status': 'รายชื่อผู้ใช้งาน'
             };
             document.getElementById('active-tab-title').innerText = titleMap[t] || 'CIMs';
 
@@ -687,34 +793,44 @@
             });
         }
 
+        /* --- RENDER CHEMICALS TABLE WITH [- INPUT +] CONTROL --- */
         function renderChemicals(data) {
             const tbody = document.getElementById('chemical-table-body');
             tbody.innerHTML = data.map(c => {
                 let statusBadge = '';
-                if (c.expiry_status === 'EXPIRED') statusBadge = '<span class="bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-rose-300">EXPIRED</span>';
-                else if (c.expiry_status === '3_DAYS') statusBadge = '<span class="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-orange-300">Exp 3 Days</span>';
-                else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300">Exp 7 Days</span>';
-                else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300">Exp 30 Days</span>';
+                if (c.expiry_status === 'EXPIRED') statusBadge = '<span class="bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-rose-300 dark:border-rose-800">EXPIRED</span>';
+                else if (c.expiry_status === '3_DAYS') statusBadge = '<span class="bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-orange-300 dark:border-orange-800">Exp 3 Days</span>';
+                else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300 dark:border-amber-800">Exp 7 Days</span>';
+                else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300 dark:border-blue-800">Exp 30 Days</span>';
 
                 return `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors">
                     <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
                     <td class="py-3 px-3 font-bold">${c.name} ${statusBadge}</td>
-                    <td class="py-3 px-3 text-indigo-500">${c.brand || '-'}</td>
+                    <td class="py-3 px-3 text-indigo-500 dark:text-indigo-400 font-semibold">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
                     <td class="py-3 px-3">${c.capacity_value ? c.capacity_value + ' ' + c.capacity_unit : c.unit || '-'}</td>
                     <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
-                    <td class="py-3 px-3"><span class="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-[10px]">${c.location || '-'}</span></td>
+                    <td class="py-3 px-3"><span class="bg-white/60 dark:bg-slate-800/60 px-2 py-0.5 rounded-lg text-[10px] border border-white/40 dark:border-slate-700">${c.location || '-'}</span></td>
                     <td class="py-3 px-3">${c.expiry_date || '-'}</td>
                     <td class="py-3 px-3">${c.remark || '-'}</td>
                     <td class="py-3 px-3 text-center">
-                        <div class="flex items-center justify-center space-x-1">
-                            <button onclick="adjustQty(${c.id}, -1)" title="ลดจำนวน" class="w-6 h-6 bg-slate-200 dark:bg-slate-700 hover:bg-rose-200 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-black flex items-center justify-center">-</button>
-                            <button onclick="adjustQty(${c.id}, 1)" title="เพิ่มจำนวน" class="w-6 h-6 bg-slate-200 dark:bg-slate-700 hover:bg-emerald-200 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-black flex items-center justify-center">+</button>
-                            <button onclick="addToCartFromRow(${c.id})" title="ใส่ตะกร้า" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-2 py-1 rounded-lg text-[10px]"><i class="fa-solid fa-cart-plus"></i></button>
+                        <div class="flex items-center justify-center space-x-1.5">
+                            <!-- INCREMENT/DECREMENT WITH INPUT FIELD -->
+                            <div class="inline-flex items-center bg-white/60 dark:bg-slate-800/60 border border-slate-300 dark:border-slate-700 rounded-lg p-0.5 shadow-inner">
+                                <button onclick="changeInputQty(${c.id}, -1)" class="w-5 h-5 bg-slate-200/70 dark:bg-slate-700/70 hover:bg-rose-200 dark:hover:bg-rose-900/60 text-slate-800 dark:text-slate-200 rounded text-xs font-black flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="row-qty-input-${c.id}" value="1" min="1" class="w-9 text-center bg-transparent text-xs font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                <button onclick="changeInputQty(${c.id}, 1)" class="w-5 h-5 bg-slate-200/70 dark:bg-slate-700/70 hover:bg-emerald-200 dark:hover:bg-emerald-900/60 text-slate-800 dark:text-slate-200 rounded text-xs font-black flex items-center justify-center transition-colors">+</button>
+                            </div>
+
+                            <!-- CART BUTTON WITH EVENT FOR FLY ANIMATION -->
+                            <button id="btn-add-cart-${c.id}" onclick="addToCartFromRow(${c.id}, event)" title="ใส่ตะกร้า" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-2 py-1.5 rounded-lg text-[11px] shadow-sm transition-all active:scale-90 flex items-center">
+                                <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+
                             ${currentUser.role === 'storekeeper' ? `
-                                <button onclick="openEditModal(${c.id})" title="แก้ไข" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-1 rounded-lg text-[10px]"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteChem(${c.id})" title="ลบ" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-2 py-1 rounded-lg text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                                <button onclick="openEditModal(${c.id})" title="แก้ไข" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-1.5 rounded-lg text-[11px] shadow-sm transition-all active:scale-90"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteChem(${c.id})" title="ลบ" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-2 py-1.5 rounded-lg text-[11px] shadow-sm transition-all active:scale-90"><i class="fa-solid fa-trash"></i></button>
                             ` : ''}
                         </div>
                     </td>
@@ -722,11 +838,20 @@
             }).join('');
         }
 
+        function changeInputQty(id, delta) {
+            const input = document.getElementById(`row-qty-input-${id}`);
+            if (!input) return;
+            let val = parseFloat(input.value) || 1;
+            val += delta;
+            if (val < 1) val = 1;
+            input.value = val;
+        }
+
         function renderExpiryTable(data) {
             const tbody = document.getElementById('expiry-table-body');
             const expList = data.filter(c => c.expiry_status && c.expiry_status !== 'NORMAL');
             tbody.innerHTML = expList.length ? expList.map(c => `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                     <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
                     <td class="py-3 px-3 font-bold">${c.name} (${c.brand || '-'})</td>
                     <td class="py-3 px-3">${c.location || '-'}</td>
@@ -735,13 +860,6 @@
                     <td class="py-3 px-3"><span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full font-bold text-[10px]">${c.expiry_status}</span></td>
                 </tr>
             `).join('') : '<tr><td colspan="6" class="text-center py-4 text-slate-400">ไม่มีสารเคมีที่หมดอายุหรือใกล้หมดอายุ</td></tr>';
-        }
-
-        function adjustQty(id, change) {
-            fetch(`${BASE_URL}/chemicals/${id}/adjust`, {
-                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ quantity_change: change })
-            }).then(() => fetchChemicals());
         }
 
         function deleteChem(id) {
@@ -819,7 +937,7 @@
             }
 
             pBody.innerHTML = pending.length ? pending.map(item => `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                     <td class="py-2.5 px-3 font-bold">${item.type === 'IMPORT' ? '📥 <span class="text-emerald-600">นำเข้า</span>' : '📤 <span class="text-amber-600">เบิกออก</span>'}</td>
                     <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code}</td>
                     <td class="py-2.5 px-3">${item.requester_name}</td>
@@ -830,15 +948,15 @@
                     <td class="py-2.5 px-3"><span class="bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold text-[10px]">PENDING</span></td>
                     <td class="py-2.5 px-3 text-center">
                         ${currentUser.role === 'storekeeper' ? `
-                            <button onclick="actionApproval('${item.type}', ${item.id}, 'approve')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold mr-1">อนุมัติ</button>
-                            <button onclick="actionApproval('${item.type}', ${item.id}, 'reject')" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px] font-bold">ปฏิเสธ</button>
+                            <button onclick="actionApproval('${item.type}', ${item.id}, 'approve')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold mr-1 shadow-sm">อนุมัติ</button>
+                            <button onclick="actionApproval('${item.type}', ${item.id}, 'reject')" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">ปฏิเสธ</button>
                         ` : '-'}
                     </td>
                 </tr>
             `).join('') : '<tr><td colspan="9" class="text-center py-4 text-slate-400">ไม่มีคำขอที่รออนุมัติ</td></tr>';
 
             hBody.innerHTML = history.length ? history.map(item => `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                     <td class="py-2.5 px-3 font-bold">${item.type === 'IMPORT' ? '📥 <span class="text-emerald-600">นำเข้า</span>' : '📤 <span class="text-amber-600">เบิกออก</span>'}</td>
                     <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${item.order_code}</td>
                     <td class="py-2.5 px-3">${item.requester_name}</td>
@@ -855,8 +973,8 @@
         function switchSubApproval(t) {
             document.getElementById('sub-tab-pending').classList.toggle('hidden', t !== 'pending');
             document.getElementById('sub-tab-history').classList.toggle('hidden', t !== 'history');
-            document.getElementById('sub-btn-pending').className = t === 'pending' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
-            document.getElementById('sub-btn-history').className = t === 'history' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+            document.getElementById('sub-btn-pending').className = t === 'pending' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-md' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300';
+            document.getElementById('sub-btn-history').className = t === 'history' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white shadow-md' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300';
         }
 
         function actionApproval(type, id, action) {
@@ -868,25 +986,66 @@
             }).then(() => { hideLoading(); showToast('บันทึกสถานะเรียบร้อยแล้ว', 'success'); refreshData(); });
         }
 
-        function addToCartFromRow(id) {
+        /* --- ADD TO CART WITH FLY ANIMATION --- */
+        function addToCartFromRow(id, event) {
             const chem = allChemicals.find(c => c.id === id);
             if (!chem) return;
+
+            const input = document.getElementById(`row-qty-input-${id}`);
+            const reqQty = input ? (parseFloat(input.value) || 1) : 1;
+
             const exist = cart.find(x => x.chemical_id === id);
-            if (exist) exist.requested_quantity += 1;
-            else cart.push({ chemical_id: id, name: chem.name, brand: chem.brand, requested_quantity: 1, package_unit: chem.package_unit || 'ขวด', remark: '' });
-            renderCart(); showToast(`เพิ่ม ${chem.name} ลงตะกร้าแล้ว`, 'info');
+            if (exist) exist.requested_quantity += reqQty;
+            else cart.push({ chemical_id: id, name: chem.name, brand: chem.brand, requested_quantity: reqQty, package_unit: chem.package_unit || 'ขวด', remark: '' });
+
+            renderCart();
+            showToast(`เพิ่ม ${chem.name} (${reqQty} ${chem.package_unit || 'ขวด'}) ลงตะกร้าแล้ว`, 'info');
+
+            // Trigger Fly Effect
+            if (event) {
+                triggerFlyAnimation(event.currentTarget);
+            }
+        }
+
+        function triggerFlyAnimation(startBtn) {
+            const cartBtn = document.getElementById('header-cart-btn');
+            if (!startBtn || !cartBtn) return;
+
+            const startRect = startBtn.getBoundingClientRect();
+            const endRect = cartBtn.getBoundingClientRect();
+
+            const flyer = document.createElement('div');
+            flyer.className = 'flying-item bg-amber-500 text-slate-950 w-8 h-8 font-bold text-xs';
+            flyer.innerHTML = '<i class="fa-solid fa-vial"></i>';
+            flyer.style.left = `${startRect.left + startRect.width / 2 - 16}px`;
+            flyer.style.top = `${startRect.top + startRect.height / 2 - 16}px`;
+
+            document.body.appendChild(flyer);
+
+            setTimeout(() => {
+                flyer.style.left = `${endRect.left + endRect.width / 2 - 16}px`;
+                flyer.style.top = `${endRect.top + endRect.height / 2 - 16}px`;
+                flyer.style.transform = 'scale(0.3)';
+                flyer.style.opacity = '0.5';
+            }, 20);
+
+            setTimeout(() => {
+                flyer.remove();
+                cartBtn.classList.add('cart-bounce');
+                setTimeout(() => cartBtn.classList.remove('cart-bounce'), 400);
+            }, 700);
         }
 
         function renderCart() {
             document.getElementById('cart-badge').innerText = cart.length;
             const tbody = document.getElementById('cart-tbody');
             tbody.innerHTML = cart.length ? cart.map((item, idx) => `
-                <tr class="border-b">
+                <tr class="border-b border-slate-200/50 dark:border-slate-800/50">
                     <td class="py-2 px-2 font-bold">${item.name} (${item.brand || '-'})</td>
                     <td class="py-2 px-2">
-                        <input type="number" min="1" value="${item.requested_quantity}" onchange="cart[${idx}].requested_quantity=parseFloat(this.value)" class="w-16 p-1 border rounded text-center"> ${item.package_unit}
+                        <input type="number" min="1" value="${item.requested_quantity}" onchange="cart[${idx}].requested_quantity=parseFloat(this.value)" class="w-16 p-1 border rounded text-center bg-white/50 dark:bg-slate-800/50"> ${item.package_unit}
                     </td>
-                    <td class="py-2 px-2"><input type="text" placeholder="Remark..." value="${item.remark}" onchange="cart[${idx}].remark=this.value" class="w-full p-1 border rounded"></td>
+                    <td class="py-2 px-2"><input type="text" placeholder="Remark..." value="${item.remark}" onchange="cart[${idx}].remark=this.value" class="w-full p-1 border rounded bg-white/50 dark:bg-slate-800/50"></td>
                     <td class="py-2 px-2"><button onclick="cart.splice(${idx},1); renderCart();" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>
             `).join('') : '<tr><td colspan="4" class="text-center py-4 text-slate-400">ไม่มีสารในตะกร้า</td></tr>';
@@ -906,26 +1065,26 @@
         function addBatchRow() {
             const tbody = document.getElementById('batch-add-tbody');
             const row = document.createElement('tr');
-            row.className = 'border-b batch-row';
+            row.className = 'border-b border-slate-200/50 dark:border-slate-800/50 batch-row';
             row.innerHTML = `
-                <td class="p-1"><input type="text" required placeholder="ชื่อสาร..." class="w-full p-1 border rounded text-xs b-name"></td>
-                <td class="p-1"><input type="text" placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand"></td>
-                <td class="p-1"><input type="text" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas"></td>
+                <td class="p-1"><input type="text" required placeholder="ชื่อสาร..." class="w-full p-1 border rounded text-xs b-name bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><input type="text" placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><input type="text" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas bg-white/50 dark:bg-slate-800/50"></td>
                 <td class="p-1">
                     <div class="flex space-x-1">
-                        <input type="number" required placeholder="100" class="w-16 p-1 border rounded text-xs b-cap-val">
-                        <select class="p-1 border rounded text-xs b-cap-unit">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                        <input type="number" required placeholder="100" class="w-16 p-1 border rounded text-xs b-cap-val bg-white/50 dark:bg-slate-800/50">
+                        <select class="p-1 border rounded text-xs b-cap-unit bg-white/50 dark:bg-slate-800/50">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
                     </div>
                 </td>
                 <td class="p-1">
                     <div class="flex space-x-1">
-                        <input type="number" required placeholder="1" class="w-12 p-1 border rounded text-xs b-qty">
-                        <select class="p-1 border rounded text-xs b-pkg-unit">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                        <input type="number" required placeholder="1" class="w-12 p-1 border rounded text-xs b-qty bg-white/50 dark:bg-slate-800/50">
+                        <select class="p-1 border rounded text-xs b-pkg-unit bg-white/50 dark:bg-slate-800/50">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
                     </div>
                 </td>
-                <td class="p-1"><select class="w-full p-1 border rounded text-xs b-loc">${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}</select></td>
-                <td class="p-1"><input type="date" class="w-full p-1 border rounded text-xs b-exp"></td>
-                <td class="p-1"><input type="text" placeholder="Remark..." class="w-full p-1 border rounded text-xs b-remark"></td>
+                <td class="p-1"><select class="w-full p-1 border rounded text-xs b-loc bg-white/50 dark:bg-slate-800/50">${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}</select></td>
+                <td class="p-1"><input type="date" class="w-full p-1 border rounded text-xs b-exp bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><input type="text" placeholder="Remark..." class="w-full p-1 border rounded text-xs b-remark bg-white/50 dark:bg-slate-800/50"></td>
                 <td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></td>
             `;
             tbody.appendChild(row);
@@ -954,19 +1113,18 @@
             }).then(() => { hideLoading(); closeModal('modal-batch-add'); showToast('ส่งคำขอนำเข้าเรียบร้อยแล้ว!', 'success'); refreshData(); });
         }
 
-        /* --- STOREKEEPER LOGS FETCHING --- */
-
+        /* --- STOREKEEPER LOGS & ONLINE USERS --- */
         function fetchLoginLogs() {
             showLoading('กำลังดึงข้อมูล Log การเข้าใช้งาน...');
             fetch(`${BASE_URL}/logs/login`).then(r => r.json()).then(data => {
                 hideLoading();
                 const tbody = document.getElementById('login-logs-tbody');
                 tbody.innerHTML = (data.logs || []).map(l => `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                    <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                         <td class="py-2.5 px-3 font-mono text-[10px]">#${l.id}</td>
                         <td class="py-2.5 px-3 font-bold">${l.full_name}</td>
                         <td class="py-2.5 px-3">${l.username}</td>
-                        <td class="py-2.5 px-3"><span class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold">${l.role}</span></td>
+                        <td class="py-2.5 px-3"><span class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">${l.role}</span></td>
                         <td class="py-2.5 px-3 font-mono">${l.ip_address || 'Unknown'}</td>
                         <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${l.time_str}</td>
                     </tr>
@@ -1001,7 +1159,7 @@
                     durText = mins >= 60 ? `${Math.floor(mins/60)} ชม. ${mins%60} นาที` : `${mins} นาที`;
                 }
                 return `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                     <td class="py-2.5 px-3 font-bold">${t.type === 'IMPORT' ? '📥 นำเข้า' : '📤 เบิกออก'}</td>
                     <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${t.order_code}</td>
                     <td class="py-2.5 px-3">${t.requester_name}</td>
@@ -1009,7 +1167,7 @@
                     <td class="py-2.5 px-3 font-bold">${t.qty} ${t.unit || ''}</td>
                     <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${t.created_at_str || '-'}</td>
                     <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${t.approved_at_str || '-'}</td>
-                    <td class="py-2.5 px-3 font-bold text-indigo-600">${durText}</td>
+                    <td class="py-2.5 px-3 font-bold text-indigo-600 dark:text-indigo-400">${durText}</td>
                     <td class="py-2.5 px-3">${t.approved_by || 'Admin'}</td>
                     <td class="py-2.5 px-3"><span class="${t.status && t.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${t.status}</span></td>
                 </tr>`;
@@ -1024,20 +1182,39 @@
             }
         }
 
+        /* --- USERS STATUS WITH ONLINE / OFFLINE LOGIC --- */
         function fetchUsersStatus() {
-            showLoading('กำลังดึงข้อมูลสถานะผู้ใช้งาน...');
+            showLoading('กำลังดึงข้อมูลผู้ใช้งาน...');
             fetch(`${BASE_URL}/users/status`).then(r => r.json()).then(data => {
                 hideLoading();
                 const tbody = document.getElementById('users-status-tbody');
-                tbody.innerHTML = (data.users || []).map(u => `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                const now = new Date();
+
+                tbody.innerHTML = (data.users || []).map(u => {
+                    // Check if online (Last online within 5 mins)
+                    let isOnline = false;
+                    if (u.last_online_str) {
+                        const lastTime = new Date(u.last_online_str);
+                        if (!isNaN(lastTime)) {
+                            const diffMins = (now - lastTime) / (1000 * 60);
+                            isOnline = diffMins <= 5;
+                        }
+                    }
+
+                    const statusBadge = isOnline 
+                        ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1 animate-ping"></span>Online</span>'
+                        : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"><span class="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1"></span>Offline</span>';
+
+                    return `
+                    <tr class="hover:bg-white/40 dark:hover:bg-slate-800/40 border-b border-slate-200/50 dark:border-slate-800/50">
                         <td class="py-2.5 px-3 font-mono text-[10px]">#${u.id}</td>
+                        <td class="py-2.5 px-3">${statusBadge}</td>
                         <td class="py-2.5 px-3 font-bold">${u.full_name}</td>
-                        <td class="py-2.5 px-3">${u.username}</td>
-                        <td class="py-2.5 px-3"><span class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold">${u.role}</span></td>
-                        <td class="py-2.5 px-3 font-mono text-[11px] ${u.last_online_str ? 'text-emerald-600 font-bold' : 'text-slate-400'}">${u.last_online_str || 'ยังไม่เคย Online'}</td>
-                    </tr>
-                `).join('');
+                        <td class="py-2.5 px-3 font-mono">${u.username}</td>
+                        <td class="py-2.5 px-3"><span class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">${u.role}</span></td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${u.last_online_str || 'ยังไม่เคย Online'}</td>
+                    </tr>`;
+                }).join('');
             });
         }
 
