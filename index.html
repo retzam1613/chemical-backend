@@ -15,8 +15,11 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased">
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center text-white hidden">
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-2 max-w-sm w-full"></div>
+
+    <!-- LOADING OVERLAY -->
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex flex-col items-center justify-center text-white hidden">
         <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
         <p id="loading-text" class="text-sm font-bold tracking-wide">กำลังประมวลผล / Processing...</p>
     </div>
@@ -34,7 +37,7 @@
                 </div>
                 <button onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <nav class="p-4 space-y-2 flex-1">
+            <nav class="p-4 space-y-2 flex-1 overflow-y-auto">
                 <button onclick="switchTab('inv'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
                     <i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i><span data-i18n="menu_inv">คลังสารเคมี</span>
                 </button>
@@ -44,6 +47,21 @@
                 <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800 hidden">
                     <i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span>
                 </button>
+
+                <!-- STOREKEEPER EXCLUSIVE MENUS -->
+                <div id="storekeeper-menus" class="hidden space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase px-4">Storekeeper Functions</p>
+                    <button onclick="switchTab('login-logs'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-user-shield text-blue-500 text-base"></i><span>Log การเข้าสู่ระบบ</span>
+                    </button>
+                    <button onclick="switchTab('task-duration'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-stopwatch text-emerald-500 text-base"></i><span>Log ระยะเวลาดำเนินงาน</span>
+                    </button>
+                    <button onclick="switchTab('users-status'); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-users text-purple-500 text-base"></i><span>รายชื่อผู้ใช้งาน & สถานะ Online</span>
+                    </button>
+                </div>
+
                 <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-4 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-slate-800">
                     <i class="fa-solid fa-bug text-rose-500 text-base"></i><span data-i18n="btn_report_issue">แจ้งปัญหา</span>
                 </button>
@@ -56,7 +74,7 @@
         </div>
     </div>
 
-    <!-- AUTH SECTION -->
+    <!-- AUTH SECTION (LOGIN / REGISTER) -->
     <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-200 dark:bg-slate-900">
         <div class="bg-white dark:bg-slate-800 w-full max-w-md p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 space-y-6">
             <div class="text-center space-y-3">
@@ -69,6 +87,7 @@
                 </div>
             </div>
 
+            <!-- LOGIN FORM -->
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold mb-1">Username</label>
@@ -79,6 +98,33 @@
                     <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-slate-50 dark:bg-slate-700" placeholder="••••••••">
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 text-sm" data-i18n="btn_login">เข้าสู่ระบบ</button>
+                <p class="text-center text-xs text-slate-500">ยังไม่มีบัญชีผู้ใช้? <button type="button" onclick="toggleAuthMode('reg')" class="text-indigo-600 font-bold hover:underline">ลงทะเบียนที่นี่</button></p>
+            </form>
+
+            <!-- REGISTER FORM -->
+            <form id="reg-form" onsubmit="handleRegister(event)" class="space-y-3 hidden">
+                <div>
+                    <label class="block text-xs font-semibold mb-1">ชื่อ-นามสกุล *</label>
+                    <input type="text" id="reg-fullname" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1">อีเมล *</label>
+                    <input type="email" id="reg-email" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label>
+                    <input type="tel" id="reg-phone" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1">Username *</label>
+                    <input type="text" id="reg-username" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1">Password *</label>
+                    <input type="password" id="reg-password" required class="w-full px-3 py-2 rounded-xl text-xs border bg-slate-50 dark:bg-slate-700">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-lg text-xs">ยืนยันลงทะเบียน</button>
+                <p class="text-center text-xs text-slate-500">มีบัญชีผู้ใช้อยู่แล้ว? <button type="button" onclick="toggleAuthMode('login')" class="text-indigo-600 font-bold hover:underline">เข้าสู่ระบบ</button></p>
             </form>
         </div>
     </div>
@@ -170,9 +216,9 @@
             <section id="tab-inv" class="space-y-3">
                 <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs bg-white dark:bg-slate-800 border shadow-sm">
                 <div class="bg-white dark:bg-slate-900 rounded-2xl border overflow-hidden shadow-sm">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
                                 <tr>
                                     <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[200px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
@@ -201,9 +247,9 @@
                         </div>
                     </div>
 
-                    <div id="sub-tab-pending" class="overflow-x-auto">
+                    <div id="sub-tab-pending" class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
                                 <tr>
                                     <th class="py-3 px-3" data-i18n="th_type">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3" data-i18n="th_requester">ผู้ขอ</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_req_qty">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3" data-i18n="th_status">สถานะ</th><th class="py-3 px-3 text-center" data-i18n="th_action">อนุมัติ/ปฏิเสธ</th>
                                 </tr>
@@ -212,9 +258,9 @@
                         </table>
                     </div>
 
-                    <div id="sub-tab-history" class="overflow-x-auto hidden">
+                    <div id="sub-tab-history" class="overflow-x-auto max-h-[500px] overflow-y-auto hidden">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
                                 <tr>
                                     <th class="py-3 px-3" data-i18n="th_type">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3" data-i18n="th_requester">ผู้ขอ</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_req_qty">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3" data-i18n="th_status">สถานะ</th><th class="py-3 px-3" data-i18n="th_approver">ผู้อนุมัติ</th>
                                 </tr>
@@ -229,14 +275,72 @@
             <section id="tab-expiry" class="space-y-3 hidden">
                 <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm">
                     <h3 class="font-bold text-xs text-rose-500 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span></h3>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
                                 <tr>
                                     <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3" data-i18n="th_alert">ระดับการแจ้งเตือน</th>
                                 </tr>
                             </thead>
                             <tbody id="expiry-table-body" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: STOREKEEPER - LOGIN LOGS -->
+            <section id="tab-login-logs" class="space-y-3 hidden">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm">
+                    <h3 class="font-bold text-xs text-indigo-600 mb-3"><i class="fa-solid fa-user-shield mr-1.5"></i>Log การเข้าสู่ระบบ</h3>
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-xl">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                                <tr><th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">IP Address</th><th class="py-3 px-3">วัน-เวลา Login</th></tr>
+                            </thead>
+                            <tbody id="login-logs-tbody" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: STOREKEEPER - TASK DURATION LOGS WITH PAGINATION (50 ITEMS/PAGE) -->
+            <section id="tab-task-duration" class="space-y-3 hidden">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-xs text-emerald-600"><i class="fa-solid fa-stopwatch mr-1.5"></i>Log ระยะเวลาดำเนินงานสารเคมี</h3>
+                        <span id="duration-page-info" class="text-[11px] font-bold text-slate-500">หน้า 1 / 1</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-xl">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                                <tr>
+                                    <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order Code</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">สารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">เวลาสร้างคำขอ</th><th class="py-3 px-3">เวลาที่อนุมัติ</th><th class="py-3 px-3">ระยะเวลาที่ใช้</th><th class="py-3 px-3">ผู้อนุมัติ</th><th class="py-3 px-3">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="task-duration-tbody" class="divide-y"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- PAGINATION CONTROLS -->
+                    <div class="flex justify-between items-center pt-2">
+                        <button onclick="changeDurationPage(-1)" id="btn-prev-page" class="px-3 py-1.5 rounded-xl border font-bold text-xs bg-slate-50 dark:bg-slate-800">← หน้าก่อนหน้า</button>
+                        <span class="text-xs text-slate-400">แสดงผลครั้งละ 50 รายการ</span>
+                        <button onclick="changeDurationPage(1)" id="btn-next-page" class="px-3 py-1.5 rounded-xl border font-bold text-xs bg-slate-50 dark:bg-slate-800">หน้าถัดไป →</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 6: STOREKEEPER - USERS STATUS -->
+            <section id="tab-users-status" class="space-y-3 hidden">
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border shadow-sm">
+                    <h3 class="font-bold text-xs text-purple-600 mb-3"><i class="fa-solid fa-users mr-1.5"></i>รายชื่อผู้ใช้งานทั้งหมด & สถานะ Online ล่าสุด</h3>
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border rounded-xl">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold uppercase sticky top-0">
+                                <tr><th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">Online ล่าสุดเมื่อ</th></tr>
+                            </thead>
+                            <tbody id="users-status-tbody" class="divide-y"></tbody>
                         </table>
                     </div>
                 </div>
@@ -360,6 +464,7 @@
         let currentUser = JSON.parse(localStorage.getItem('LOGGED_USER')) || null;
         let currentLang = localStorage.getItem('CIMS_LANG') || 'TH';
         let allChemicals = [], cart = [], rawApprovalData = { pending: [], history: [] };
+        let taskDurationLogs = [], currentDurationPage = 1, pageSize = 50;
         let analyticsChartInstance = null;
 
         const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ขวด', 'หลอด', 'แกลลอน', 'ปอนด์'];
@@ -408,6 +513,28 @@
             setInterval(() => { if (currentUser) fetchNotifications(); }, 12000);
         });
 
+        function showLoading(msg = 'กำลังประมวลผล / Processing...') {
+            document.getElementById('loading-text').innerText = msg;
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+        function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-emerald-600 border-emerald-700 text-white',
+                error: 'bg-rose-600 border-rose-700 text-white',
+                warning: 'bg-amber-500 border-amber-600 text-white',
+                info: 'bg-indigo-600 border-indigo-700 text-white'
+            };
+            toast.className = `p-4 rounded-2xl shadow-2xl border flex items-center justify-between space-x-3 text-xs font-bold transform transition-all duration-300 translate-y-2 opacity-0 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
         function applyLanguage() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
@@ -423,6 +550,42 @@
             refreshData();
         }
 
+        function toggleAuthMode(mode) {
+            document.getElementById('login-form').classList.toggle('hidden', mode !== 'login');
+            document.getElementById('reg-form').classList.toggle('hidden', mode !== 'reg');
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            showLoading('กำลังลงทะเบียนผู้ใช้...');
+            const payload = {
+                full_name: document.getElementById('reg-fullname').value.trim(),
+                email: document.getElementById('reg-email').value.trim(),
+                phone: document.getElementById('reg-phone').value.trim(),
+                username: document.getElementById('reg-username').value.trim(),
+                password: document.getElementById('reg-password').value
+            };
+            fetch(`${BASE_URL}/auth/register`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(r => { hideLoading(); if (!r.ok) return r.json().then(d => { throw new Error(d.detail); }); return r.json(); })
+            .then(() => { showToast('ลงทะเบียนสำเร็จ! สามารถเข้าสู่ระบบได้ทันที', 'success'); toggleAuthMode('login'); })
+            .catch(err => { hideLoading(); showToast('❌ ' + err.message, 'error'); });
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            showLoading('กำลังเข้าสู่ระบบ...');
+            fetch(`${BASE_URL}/auth/login`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: document.getElementById('login-username').value.trim(), password: document.getElementById('login-password').value })
+            }).then(r => { hideLoading(); if (!r.ok) throw new Error('Username หรือ Password ไม่ถูกต้อง'); return r.json(); })
+            .then(d => { currentUser = d.user; localStorage.setItem('LOGGED_USER', JSON.stringify(currentUser)); document.getElementById('auth-section').classList.add('hidden'); initApp(); showToast(`ยินดีต้อนรับคุณ ${currentUser.full_name}`, 'success'); })
+            .catch(err => { hideLoading(); showToast('❌ ' + err.message, 'error'); });
+        }
+
+        function logout() { localStorage.removeItem('LOGGED_USER'); location.reload(); }
+
         function initApp() {
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('current-user-display').innerText = `${currentUser.full_name} (${currentUser.role})`;
@@ -430,6 +593,7 @@
                 document.getElementById('storekeeper-analytics-section').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.add('flex');
+                document.getElementById('storekeeper-menus').classList.remove('hidden');
             }
             refreshData();
         }
@@ -444,18 +608,6 @@
             html.classList.toggle('dark');
             document.getElementById('theme-icon').className = html.classList.contains('dark') ? 'fa-solid fa-sun text-amber-400 text-xs' : 'fa-solid fa-moon text-xs';
         }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            fetch(`${BASE_URL}/auth/login`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: document.getElementById('login-username').value.trim(), password: document.getElementById('login-password').value })
-            }).then(r => { if (!r.ok) throw new Error('Invalid username/password'); return r.json(); })
-            .then(d => { currentUser = d.user; localStorage.setItem('LOGGED_USER', JSON.stringify(currentUser)); document.getElementById('auth-section').classList.add('hidden'); initApp(); })
-            .catch(err => alert('❌ ' + err.message));
-        }
-
-        function logout() { localStorage.removeItem('LOGGED_USER'); location.reload(); }
 
         function fetchAnalyticsGraph() {
             fetch(`${BASE_URL}/dashboard/analytics`).then(r => r.json()).then(data => {
@@ -510,9 +662,19 @@
         }
 
         function switchTab(t) {
-            ['inv', 'approval', 'expiry'].forEach(x => { document.getElementById(`tab-${x}`).classList.toggle('hidden', x !== t); });
-            const titleMap = { inv: i18n[currentLang].menu_inv, approval: i18n[currentLang].menu_approval, expiry: i18n[currentLang].menu_expiry };
-            document.getElementById('active-tab-title').innerText = titleMap[t];
+            ['inv', 'approval', 'expiry', 'login-logs', 'task-duration', 'users-status'].forEach(x => {
+                const el = document.getElementById(`tab-${x}`);
+                if (el) el.classList.toggle('hidden', x !== t);
+            });
+            const titleMap = {
+                inv: i18n[currentLang].menu_inv, approval: i18n[currentLang].menu_approval, expiry: i18n[currentLang].menu_expiry,
+                'login-logs': 'Log การเข้าสู่ระบบ', 'task-duration': 'Log ระยะเวลาดำเนินงาน', 'users-status': 'รายชื่อผู้ใช้งาน & สถานะ Online'
+            };
+            document.getElementById('active-tab-title').innerText = titleMap[t] || 'CIMs';
+
+            if (t === 'login-logs') fetchLoginLogs();
+            if (t === 'task-duration') fetchTaskDurationLogs();
+            if (t === 'users-status') fetchUsersStatus();
         }
 
         function fetchChemicals() {
@@ -693,16 +855,17 @@
         function switchSubApproval(t) {
             document.getElementById('sub-tab-pending').classList.toggle('hidden', t !== 'pending');
             document.getElementById('sub-tab-history').classList.toggle('hidden', t !== 'history');
-            document.getElementById('sub-btn-pending').className = t === 'pending' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-600';
-            document.getElementById('sub-btn-history').className = t === 'history' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 text-slate-600';
+            document.getElementById('sub-btn-pending').className = t === 'pending' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+            document.getElementById('sub-btn-history').className = t === 'history' ? 'px-3 py-1.5 rounded-xl font-bold text-xs bg-indigo-600 text-white' : 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
         }
 
         function actionApproval(type, id, action) {
+            showLoading('กำลังบันทึกสถานะคำขอ...');
             const ep = type === 'IMPORT' ? `/chemicals/${id}/${action}-add` : `/requisitions/${id}/${action}`;
             fetch(`${BASE_URL}${ep}`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ admin_name: currentUser.full_name })
-            }).then(() => refreshData());
+            }).then(() => { hideLoading(); showToast('บันทึกสถานะเรียบร้อยแล้ว', 'success'); refreshData(); });
         }
 
         function addToCartFromRow(id) {
@@ -711,7 +874,7 @@
             const exist = cart.find(x => x.chemical_id === id);
             if (exist) exist.requested_quantity += 1;
             else cart.push({ chemical_id: id, name: chem.name, brand: chem.brand, requested_quantity: 1, package_unit: chem.package_unit || 'ขวด', remark: '' });
-            renderCart();
+            renderCart(); showToast(`เพิ่ม ${chem.name} ลงตะกร้าแล้ว`, 'info');
         }
 
         function renderCart() {
@@ -730,13 +893,14 @@
         }
 
         function submitCartRequisition() {
-            if (!cart.length) return alert('โปรดเลือกสารเคมีเข้าตะกร้าก่อน!');
+            if (!cart.length) return showToast('โปรดเลือกสารเคมีเข้าตะกร้าก่อน!', 'warning');
+            showLoading('กำลังส่งคำขอเบิกสารเคมี...');
             fetch(`${BASE_URL}/requisitions/basket`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: currentUser.id, requester_name: currentUser.full_name, items: cart })
-            }).then(r => { if (!r.ok) throw new Error('เกิดข้อผิดพลาด หรือยอดคงเหลือไม่พอ'); return r.json(); })
-            .then(() => { cart = []; renderCart(); closeModal('modal-cart'); alert('ส่งคำขอเบิกเรียบร้อยแล้ว!'); refreshData(); })
-            .catch(err => alert('❌ ' + err.message));
+            }).then(r => { hideLoading(); if (!r.ok) throw new Error('เกิดข้อผิดพลาด หรือยอดคงเหลือไม่พอ'); return r.json(); })
+            .then(() => { cart = []; renderCart(); closeModal('modal-cart'); showToast('ส่งคำขอเบิกเรียบร้อยแล้ว!', 'success'); refreshData(); })
+            .catch(err => { hideLoading(); showToast('❌ ' + err.message, 'error'); });
         }
 
         function addBatchRow() {
@@ -769,7 +933,7 @@
 
         function submitBatchAdd() {
             const rows = document.querySelectorAll('.batch-row');
-            if (!rows.length) return alert('โปรดเพิ่มอย่างน้อย 1 รายการ');
+            if (!rows.length) return showToast('โปรดเพิ่มอย่างน้อย 1 รายการ', 'warning');
             let items = [];
             rows.forEach(r => {
                 const name = r.querySelector('.b-name').value.trim();
@@ -782,11 +946,99 @@
                     created_by_name: currentUser.full_name, user_id: currentUser.id
                 });
             });
-            if (!items.length) return alert('โปรดระบุชื่อสารเคมี');
+            if (!items.length) return showToast('โปรดระบุชื่อสารเคมี', 'warning');
+            showLoading('กำลังส่งคำขอนำเข้าสารเคมี...');
             fetch(`${BASE_URL}/chemicals/batch`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items: items })
-            }).then(() => { closeModal('modal-batch-add'); alert('ส่งคำขอนำเข้าเรียบร้อยแล้ว!'); refreshData(); });
+            }).then(() => { hideLoading(); closeModal('modal-batch-add'); showToast('ส่งคำขอนำเข้าเรียบร้อยแล้ว!', 'success'); refreshData(); });
+        }
+
+        /* --- STOREKEEPER LOGS FETCHING --- */
+
+        function fetchLoginLogs() {
+            showLoading('กำลังดึงข้อมูล Log การเข้าใช้งาน...');
+            fetch(`${BASE_URL}/logs/login`).then(r => r.json()).then(data => {
+                hideLoading();
+                const tbody = document.getElementById('login-logs-tbody');
+                tbody.innerHTML = (data.logs || []).map(l => `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                        <td class="py-2.5 px-3 font-mono text-[10px]">#${l.id}</td>
+                        <td class="py-2.5 px-3 font-bold">${l.full_name}</td>
+                        <td class="py-2.5 px-3">${l.username}</td>
+                        <td class="py-2.5 px-3"><span class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold">${l.role}</span></td>
+                        <td class="py-2.5 px-3 font-mono">${l.ip_address || 'Unknown'}</td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${l.time_str}</td>
+                    </tr>
+                `).join('');
+            });
+        }
+
+        function fetchTaskDurationLogs() {
+            showLoading('กำลังดึงข้อมูล ระยะเวลาดำเนินงาน...');
+            fetch(`${BASE_URL}/logs/task-duration`).then(r => r.json()).then(data => {
+                hideLoading();
+                taskDurationLogs = data.logs || [];
+                currentDurationPage = 1;
+                renderTaskDurationPage();
+            });
+        }
+
+        function renderTaskDurationPage() {
+            const tbody = document.getElementById('task-duration-tbody');
+            const totalPages = Math.ceil(taskDurationLogs.length / pageSize) || 1;
+            const startIdx = (currentDurationPage - 1) * pageSize;
+            const pageData = taskDurationLogs.slice(startIdx, startIdx + pageSize);
+
+            document.getElementById('duration-page-info').innerText = `หน้า ${currentDurationPage} / ${totalPages}`;
+            document.getElementById('btn-prev-page').disabled = currentDurationPage === 1;
+            document.getElementById('btn-next-page').disabled = currentDurationPage === totalPages;
+
+            tbody.innerHTML = pageData.length ? pageData.map(t => {
+                let durText = '-';
+                if (t.duration_minutes !== null) {
+                    const mins = Math.round(t.duration_minutes);
+                    durText = mins >= 60 ? `${Math.floor(mins/60)} ชม. ${mins%60} นาที` : `${mins} นาที`;
+                }
+                return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                    <td class="py-2.5 px-3 font-bold">${t.type === 'IMPORT' ? '📥 นำเข้า' : '📤 เบิกออก'}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] font-bold">${t.order_code}</td>
+                    <td class="py-2.5 px-3">${t.requester_name}</td>
+                    <td class="py-2.5 px-3 font-bold">${t.chemical_name} (${t.brand || '-'})</td>
+                    <td class="py-2.5 px-3 font-bold">${t.qty} ${t.unit || ''}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${t.created_at_str || '-'}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${t.approved_at_str || '-'}</td>
+                    <td class="py-2.5 px-3 font-bold text-indigo-600">${durText}</td>
+                    <td class="py-2.5 px-3">${t.approved_by || 'Admin'}</td>
+                    <td class="py-2.5 px-3"><span class="${t.status && t.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${t.status}</span></td>
+                </tr>`;
+            }).join('') : '<tr><td colspan="10" class="text-center py-4 text-slate-400">ไม่มีข้อมูลระยะเวลาดำเนินงาน</td></tr>';
+        }
+
+        function changeDurationPage(dir) {
+            const totalPages = Math.ceil(taskDurationLogs.length / pageSize) || 1;
+            if (currentDurationPage + dir >= 1 && currentDurationPage + dir <= totalPages) {
+                currentDurationPage += dir;
+                renderTaskDurationPage();
+            }
+        }
+
+        function fetchUsersStatus() {
+            showLoading('กำลังดึงข้อมูลสถานะผู้ใช้งาน...');
+            fetch(`${BASE_URL}/users/status`).then(r => r.json()).then(data => {
+                hideLoading();
+                const tbody = document.getElementById('users-status-tbody');
+                tbody.innerHTML = (data.users || []).map(u => `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b">
+                        <td class="py-2.5 px-3 font-mono text-[10px]">#${u.id}</td>
+                        <td class="py-2.5 px-3 font-bold">${u.full_name}</td>
+                        <td class="py-2.5 px-3">${u.username}</td>
+                        <td class="py-2.5 px-3"><span class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold">${u.role}</span></td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] ${u.last_online_str ? 'text-emerald-600 font-bold' : 'text-slate-400'}">${u.last_online_str || 'ยังไม่เคย Online'}</td>
+                    </tr>
+                `).join('');
+            });
         }
 
         function openIssueModal() { document.getElementById('modal-issue').classList.remove('hidden'); }
@@ -796,7 +1048,7 @@
             fetch(`${BASE_URL}/issues/report`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user_id: currentUser.id, reporter_name: currentUser.full_name, issue_text: txt })
-            }).then(() => { closeModal('modal-issue'); alert('ส่งรายงานปัญหาเรียบร้อยแล้ว!'); refreshData(); });
+            }).then(() => { closeModal('modal-issue'); showToast('ส่งรายงานปัญหาเรียบร้อยแล้ว!', 'success'); });
         }
 
         function toggleSidebar() { document.getElementById('sidebar-drawer').classList.toggle('hidden'); }
