@@ -24,6 +24,8 @@
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS for Excel Import/Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
         body { 
@@ -94,6 +96,34 @@
         .cart-bounce {
             animation: cartBump 0.4s ease-in-out;
         }
+        /* Tooltip styling for badges */
+        .badge-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .badge-tooltip .tooltiptext {
+            visibility: hidden;
+            width: max-content;
+            max-width: 200px;
+            background-color: rgba(15, 23, 42, 0.95);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 4px 8px;
+            position: absolute;
+            z-index: 50;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .badge-tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased relative selection:bg-indigo-500 selection:text-white">
@@ -101,7 +131,7 @@
     <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
         <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
             <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>CIMs v2.5.0 (Auto CAS Fetch)</span>
+            <span>CIMs v2.6.0 (Type/Category & Excel Support)</span>
         </div>
     </div>
 
@@ -223,6 +253,14 @@
                     <label class="block text-xs font-semibold mb-1">Password *</label>
                     <input type="password" id="reg-password" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
                 </div>
+                <div>
+                    <label class="block text-xs font-semibold mb-1">ระดับสิทธิ์ผู้ใช้งาน (Role) *</label>
+                    <select id="reg-role" class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50 font-bold">
+                        <option value="user">User (ผู้ใช้งานทั่วไป)</option>
+                        <option value="storekeeper">Storekeeper (ผู้ดูแลคลัง)</option>
+                        <option value="admin">Admin (ผู้ดูแลระบบ)</option>
+                    </select>
+                </div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-lg text-xs transition-all active:scale-95">ยืนยันลงทะเบียน</button>
                 <p class="text-center text-xs text-slate-500">มีบัญชีผู้ใช้อยู่แล้ว? <button type="button" onclick="toggleAuthMode('login')" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">เข้าสู่ระบบ</button></p>
             </form>
@@ -313,22 +351,33 @@
                 <div class="w-full h-48 md:h-60 relative"><canvas id="analyticsChart"></canvas></div>
             </section>
 
-            <div class="flex justify-between items-center glass-card p-2.5 rounded-2xl">
+            <div class="flex flex-wrap justify-between items-center glass-card p-2.5 rounded-2xl gap-2">
                 <span id="active-tab-title" class="font-bold text-xs px-2" data-i18n="menu_inv">คลังสารเคมี</span>
                 
-                <button id="btn-batch-add-top" onclick="openBatchAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
-                    <i class="fa-solid fa-plus mr-1.5"></i><span data-i18n="btn_add_chem">เพิ่มสารเคมีเข้าคลัง</span>
-                </button>
+                <div class="flex items-center space-x-2">
+                    <!-- Excel Export Button -->
+                    <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
+                        <i class="fa-solid fa-file-excel mr-1.5"></i><span>Export Excel</span>
+                    </button>
+                    <!-- Excel Import Button (Storekeeper/Admin only) -->
+                    <label id="btn-import-excel" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all cursor-pointer active:scale-95 hidden">
+                        <i class="fa-solid fa-file-import mr-1.5"></i><span>Import Excel</span>
+                        <input type="file" accept=".xlsx, .xls, .csv" onchange="importFromExcel(event)" class="hidden">
+                    </label>
+                    <button id="btn-batch-add-top" onclick="openBatchAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
+                        <i class="fa-solid fa-plus mr-1.5"></i><span data-i18n="btn_add_chem">เพิ่มสารเคมีเข้าคลัง</span>
+                    </button>
+                </div>
             </div>
 
             <section id="tab-inv" class="space-y-3">
-                <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs glass-card border focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Type, Category, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs glass-card border focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 backdrop-blur-md text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3">Type & Category</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
                             </thead>
                             <tbody id="chemical-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -358,7 +407,7 @@
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm backdrop-blur-md">
                                 <tr>
-                                    <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3">สถานะ</th><th class="py-3 px-3 text-center">อนุมัติ/ปฏิเสธ</th>
+                                    <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">Timestamp (ICT)</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3">สถานะ</th><th class="py-3 px-3 text-center">อนุมัติ/ปฏิเสธ</th>
                                 </tr>
                             </thead>
                             <tbody id="pending-approval-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -369,7 +418,7 @@
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm backdrop-blur-md">
                                 <tr>
-                                    <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">Timestamp</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3">สถานะ</th><th class="py-3 px-3">ผู้อนุมัติ</th>
+                                    <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">Timestamp (ICT)</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3">สถานะ</th><th class="py-3 px-3">ผู้อนุมัติ</th>
                                 </tr>
                             </thead>
                             <tbody id="history-approval-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -396,11 +445,11 @@
 
             <section id="tab-login-logs" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4">
-                    <h3 class="font-bold text-xs text-indigo-600 dark:text-indigo-400 mb-3"><i class="fa-solid fa-user-shield mr-1.5"></i>Log การเข้าสู่ระบบ</h3>
+                    <h3 class="font-bold text-xs text-indigo-600 dark:text-indigo-400 mb-3"><i class="fa-solid fa-user-shield mr-1.5"></i>Log การเข้าสู่ระบบ (เวลาประเทศไทย UTC+7)</h3>
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-white/20 rounded-xl">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
-                                <tr><th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">IP Address</th><th class="py-3 px-3">วัน-เวลา Login</th></tr>
+                                <tr><th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">IP Address</th><th class="py-3 px-3">วัน-เวลา Login (ICT)</th></tr>
                             </thead>
                             <tbody id="login-logs-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
                         </table>
@@ -411,7 +460,7 @@
             <section id="tab-task-duration" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-xs text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-stopwatch mr-1.5"></i>Log ระยะเวลาดำเนินงานสารเคมี</h3>
+                        <h3 class="font-bold text-xs text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-stopwatch mr-1.5"></i>Log ระยะเวลาดำเนินงานสารเคมี (เวลาประเทศไทย UTC+7)</h3>
                         <span id="duration-page-info" class="text-[11px] font-bold text-slate-500">หน้า 1 / 1</span>
                     </div>
                     
@@ -419,7 +468,7 @@
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order Code</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">สารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">เวลาสร้างคำขอ</th><th class="py-3 px-3">เวลาที่อนุมัติ</th><th class="py-3 px-3">ระยะเวลาที่ใช้</th><th class="py-3 px-3">ผู้อนุมัติ</th><th class="py-3 px-3">สถานะ</th>
+                                    <th class="py-3 px-3">ประเภท</th><th class="py-3 px-3">Order Code</th><th class="py-3 px-3">ผู้ขอ</th><th class="py-3 px-3">สารเคมี (Brand)</th><th class="py-3 px-3">จำนวน</th><th class="py-3 px-3">เวลาสร้างคำขอ (ICT)</th><th class="py-3 px-3">เวลาที่อนุมัติ (ICT)</th><th class="py-3 px-3">ระยะเวลาที่ใช้</th><th class="py-3 px-3">ผู้อนุมัติ</th><th class="py-3 px-3">สถานะ</th>
                                 </tr>
                             </thead>
                             <tbody id="task-duration-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -441,7 +490,7 @@
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">ใช้งานล่าสุดเมื่อ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3">ชื่อ-นามสกุล</th><th class="py-3 px-3">Username</th><th class="py-3 px-3">Role</th><th class="py-3 px-3">ใช้งานล่าสุดเมื่อ (ICT)</th>
                                 </tr>
                             </thead>
                             <tbody id="users-status-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -471,6 +520,14 @@
                 <div>
                     <label class="block font-semibold mb-1">CAS Number</label>
                     <input type="text" id="edit-cas" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Type (ประเภทสาร)</label>
+                    <input type="text" id="edit-type" placeholder="เช่น Solvents, Acid..." class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
+                </div>
+                <div class="col-span-2">
+                    <label class="block font-semibold mb-1">Category (หมวดหมู่ - ใช้จุลภาคคั่นหลายหมวดหมู่ได้)</label>
+                    <input type="text" id="edit-category" placeholder="เช่น Flammable, Organic, Toxic..." class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">ปริมาณต่อหน่วย *</label>
@@ -521,7 +578,7 @@
     </div>
 
     <div id="modal-batch-add" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-5xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
+        <div class="glass-card w-full max-w-6xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm" data-i18n="btn_add_chem"><i class="fa-solid fa-plus-circle text-emerald-500 mr-2"></i>เพิ่มสารเคมีเข้าคลัง</h3>
                 <button onclick="closeModal('modal-batch-add')"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -530,7 +587,7 @@
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-200/50 dark:bg-slate-800/80 uppercase font-semibold">
                         <tr>
-                            <th class="p-2">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No. (Auto)</th><th class="p-2">ปริมาณ/หน่วย *</th><th class="p-2">จำนวน *</th><th class="p-2">สถานที่จัดเก็บ *</th><th class="p-2">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
+                            <th class="p-2">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No. (Auto)</th><th class="p-2">Type</th><th class="p-2">Category</th><th class="p-2">ปริมาณ/หน่วย *</th><th class="p-2">จำนวน *</th><th class="p-2">สถานที่จัดเก็บ *</th><th class="p-2">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
                         </tr>
                     </thead>
                     <tbody id="batch-add-tbody"></tbody>
@@ -568,8 +625,9 @@
         let analyticsChartInstance = null;
         let batchRowCounter = 0;
 
-        const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ขวด', 'หลอด', 'แกลลอน', 'ปอนด์'];
-        const PACKAGE_UNITS = ['ขวด', 'แกลลอน', 'กล่อง', 'ถัง', 'แพ็ค', 'หลอด', 'กระป๋อง'];
+        /* --- UPDATED UNITS --- */
+        const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ขวด', 'หลอด', 'แกลลอน', 'ปอนด์', 'ถัง', 'กระป๋อง', 'ชุด', 'กล่อง', 'ซอง', 'เม็ด'];
+        const PACKAGE_UNITS = ['ขวด', 'แกลลอน', 'กล่อง', 'ถัง', 'แพ็ค', 'หลอด', 'กระป๋อง', 'ซอง', 'ชุด', 'ชิ้น', 'อัน', 'หลอดทดลอง'];
 
         const i18n = {
             TH: {
@@ -599,6 +657,23 @@
                 modal_issue_title: "Report System Issue"
             }
         };
+
+        /* --- ICT / THAILAND TIMEZONE HELPER --- */
+        function formatICTDate(dateStr) {
+            if (!dateStr) return '-';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                return new Intl.DateTimeFormat('th-TH', {
+                    timeZone: 'Asia/Bangkok',
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false
+                }).format(date);
+            } catch (e) {
+                return dateStr;
+            }
+        }
 
         function generateLocations() {
             let locs = [];
@@ -700,7 +775,8 @@
                 email: document.getElementById('reg-email').value.trim(),
                 phone: document.getElementById('reg-phone').value.trim(),
                 username: document.getElementById('reg-username').value.trim(),
-                password: document.getElementById('reg-password').value
+                password: document.getElementById('reg-password').value,
+                role: document.getElementById('reg-role').value
             };
             fetch(`${BASE_URL}/auth/register`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -725,19 +801,27 @@
 
         function initApp() {
             document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('current-user-display').innerText = `${currentUser.full_name} (${currentUser.role})`;
-            if (currentUser.role === 'storekeeper') {
+            document.getElementById('current-user-display').innerText = `${currentUser.full_name} (${currentUser.role.toUpperCase()})`;
+            
+            /* --- ROLE-BASED UI CONTROLS --- */
+            if (currentUser.role === 'storekeeper' || currentUser.role === 'admin') {
                 document.getElementById('storekeeper-analytics-section').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.add('flex');
                 document.getElementById('storekeeper-menus').classList.remove('hidden');
+                document.getElementById('btn-import-excel').classList.remove('hidden');
+            } else {
+                document.getElementById('storekeeper-analytics-section').classList.add('hidden');
+                document.getElementById('menu-expiry-log').classList.add('hidden');
+                document.getElementById('storekeeper-menus').classList.add('hidden');
+                document.getElementById('btn-import-excel').classList.add('hidden');
             }
             refreshData();
         }
 
         function refreshData() {
             checkSystemHealth(); fetchNotifications(); fetchChemicals(); fetchAllApprovals();
-            if (currentUser.role === 'storekeeper') fetchAnalyticsGraph();
+            if (currentUser.role === 'storekeeper' || currentUser.role === 'admin') fetchAnalyticsGraph();
         }
 
         function toggleTheme() {
@@ -788,7 +872,7 @@
 
                     let htmls = [];
                     (data.activity_notifs || []).forEach(n => {
-                        htmls.push(`<div class="p-2.5 rounded-xl border border-indigo-200/80 bg-white dark:bg-slate-800 shadow-sm"><p class="font-bold text-xs text-slate-800 dark:text-slate-100">${n.message}</p><span class="text-[9px] text-slate-400 font-mono">${n.time_str}</span></div>`);
+                        htmls.push(`<div class="p-2.5 rounded-xl border border-indigo-200/80 bg-white dark:bg-slate-800 shadow-sm"><p class="font-bold text-xs text-slate-800 dark:text-slate-100">${n.message}</p><span class="text-[9px] text-slate-400 font-mono">${formatICTDate(n.time_str)}</span></div>`);
                     });
                     (data.expiry_notifs || []).forEach(n => {
                         let color = n.alert_level === 'EXPIRED' || n.alert_level === '1_DAY' ? 'text-rose-600 border-rose-300 bg-rose-50 dark:bg-rose-950/80' : 'text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/80';
@@ -843,6 +927,21 @@
             });
         }
 
+        /* --- RENDER BADGES FOR TYPE AND CATEGORIES --- */
+        function renderTypeAndCategoryBadges(typeStr, categoryStr) {
+            let badges = [];
+            if (typeStr) {
+                badges.push(`<span class="badge-tooltip bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Type: ${typeStr}<span class="tooltiptext">Chemical Type: ${typeStr}</span></span>`);
+            }
+            if (categoryStr) {
+                const cats = categoryStr.split(',').map(c => c.trim()).filter(c => c);
+                cats.forEach(c => {
+                    badges.push(`<span class="badge-tooltip bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Cat: ${c}<span class="tooltiptext">Category: ${c}</span></span>`);
+                });
+            }
+            return badges.length ? badges.join(' ') : '<span class="text-slate-400 text-[10px]">-</span>';
+        }
+
         function renderChemicals(data) {
             const tbody = document.getElementById('chemical-table-body');
             tbody.innerHTML = data.map(c => {
@@ -852,12 +951,15 @@
                 else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300 dark:border-amber-800">Exp 7 Days</span>';
                 else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300 dark:border-blue-800">Exp 30 Days</span>';
 
+                const typeAndCatUI = renderTypeAndCategoryBadges(c.type, c.category);
+
                 return `
                 <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors">
                     <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
                     <td class="py-3 px-3 font-bold">${c.name} ${statusBadge}</td>
                     <td class="py-3 px-3 text-indigo-500 dark:text-indigo-400 font-semibold">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
+                    <td class="py-3 px-3">${typeAndCatUI}</td>
                     <td class="py-3 px-3">${c.capacity_value ? c.capacity_value + ' ' + c.capacity_unit : c.unit || '-'}</td>
                     <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
                     <td class="py-3 px-3"><span class="bg-white/60 dark:bg-slate-800/60 px-2 py-0.5 rounded-lg text-[10px] border border-white/40 dark:border-slate-700">${c.location || '-'}</span></td>
@@ -875,7 +977,7 @@
                                 <i class="fa-solid fa-cart-plus"></i>
                             </button>
 
-                            ${currentUser.role === 'storekeeper' ? `
+                            ${(currentUser.role === 'storekeeper' || currentUser.role === 'admin') ? `
                                 <button onclick="openEditModal(${c.id})" title="แก้ไข" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-1.5 rounded-lg text-[11px] shadow-sm transition-all active:scale-90"><i class="fa-solid fa-pen"></i></button>
                                 <button onclick="deleteChem(${c.id})" title="ลบ" class="bg-rose-500 hover:bg-rose-600 text-white font-bold px-2 py-1.5 rounded-lg text-[11px] shadow-sm transition-all active:scale-90"><i class="fa-solid fa-trash"></i></button>
                             ` : ''}
@@ -921,6 +1023,8 @@
             document.getElementById('edit-name').value = c.name || '';
             document.getElementById('edit-brand').value = c.brand || '';
             document.getElementById('edit-cas').value = c.cas_number || '';
+            document.getElementById('edit-type').value = c.type || '';
+            document.getElementById('edit-category').value = c.category || '';
             document.getElementById('edit-cap-val').value = c.capacity_value || 0;
             document.getElementById('edit-qty').value = c.quantity || 0;
             document.getElementById('edit-exp').value = c.expiry_date || '';
@@ -942,7 +1046,8 @@
             const id = document.getElementById('edit-id').value;
             const payload = {
                 name: document.getElementById('edit-name').value, brand: document.getElementById('edit-brand').value,
-                cas_number: document.getElementById('edit-cas').value, capacity_value: parseFloat(document.getElementById('edit-cap-val').value) || 0,
+                cas_number: document.getElementById('edit-cas').value, type: document.getElementById('edit-type').value,
+                category: document.getElementById('edit-category').value, capacity_value: parseFloat(document.getElementById('edit-cap-val').value) || 0,
                 capacity_unit: document.getElementById('edit-cap-unit').value, quantity: parseFloat(document.getElementById('edit-qty').value) || 0,
                 package_unit: document.getElementById('edit-pkg-unit').value, location: document.getElementById('edit-loc').value,
                 expiry_date: document.getElementById('edit-exp').value, remark: document.getElementById('edit-remark').value
@@ -958,7 +1063,8 @@
             const q = document.getElementById('search-chem').value.toLowerCase();
             const filtered = allChemicals.filter(c =>
                 c.name.toLowerCase().includes(q) || (c.brand && c.brand.toLowerCase().includes(q)) ||
-                (c.cas_number && c.cas_number.toLowerCase().includes(q)) || (c.location && c.location.toLowerCase().includes(q))
+                (c.cas_number && c.cas_number.toLowerCase().includes(q)) || (c.location && c.location.toLowerCase().includes(q)) ||
+                (c.type && c.type.toLowerCase().includes(q)) || (c.category && c.category.toLowerCase().includes(q))
             );
             renderChemicals(filtered);
         }
@@ -990,11 +1096,11 @@
                     <td class="py-2.5 px-3">${item.requester_name}</td>
                     <td class="py-2.5 px-3 font-bold">${item.chemical_name} (${item.brand || '-'})</td>
                     <td class="py-2.5 px-3 font-bold">${item.qty} ${item.unit || ''}</td>
-                    <td class="py-2.5 px-3 text-[10px] font-mono">${item.created_at_str}</td>
+                    <td class="py-2.5 px-3 text-[10px] font-mono">${formatICTDate(item.created_at_str)}</td>
                     <td class="py-2.5 px-3">${item.remark || '-'}</td>
                     <td class="py-2.5 px-3"><span class="bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-bold text-[10px]">PENDING</span></td>
                     <td class="py-2.5 px-3 text-center">
-                        ${currentUser.role === 'storekeeper' ? `
+                        ${(currentUser.role === 'storekeeper' || currentUser.role === 'admin') ? `
                             <button onclick="actionApproval('${item.type}', ${item.id}, 'approve')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold mr-1 shadow-sm">อนุมัติ</button>
                             <button onclick="actionApproval('${item.type}', ${item.id}, 'reject')" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px] font-bold shadow-sm">ปฏิเสธ</button>
                         ` : '-'}
@@ -1009,7 +1115,7 @@
                     <td class="py-2.5 px-3">${item.requester_name}</td>
                     <td class="py-2.5 px-3 font-bold">${item.chemical_name} (${item.brand || '-'})</td>
                     <td class="py-2.5 px-3 font-bold">${item.qty} ${item.unit || ''}</td>
-                    <td class="py-2.5 px-3 text-[10px] font-mono">${item.approved_at_str || '-'}</td>
+                    <td class="py-2.5 px-3 text-[10px] font-mono">${formatICTDate(item.approved_at_str)}</td>
                     <td class="py-2.5 px-3">${item.remark || '-'}</td>
                     <td class="py-2.5 px-3"><span class="${item.status && item.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${item.status}</span></td>
                     <td class="py-2.5 px-3 text-slate-400 text-[10px]">${item.approved_by || '-'}</td>
@@ -1107,7 +1213,7 @@
             .catch(err => { hideLoading(); showToast('❌ ' + err.message, 'error'); });
         }
 
-        /* --- AUTO FETCH CAS NUMBER FROM PUBCHEM API --- */
+        /* --- AUTO FETCH CAS NUMBER, TYPE, AND CATEGORY FROM PUBCHEM API --- */
         function addBatchRow() {
             batchRowCounter++;
             const rowId = batchRowCounter;
@@ -1116,11 +1222,13 @@
             row.className = 'border-b border-slate-200/50 dark:border-slate-800/50 batch-row';
             row.innerHTML = `
                 <td class="p-1">
-                    <input type="text" required id="b-name-${rowId}" onblur="fetchCasNumber(${rowId})" placeholder="เช่น Ethanol..." class="w-full p-1 border rounded text-xs b-name bg-white/50 dark:bg-slate-800/50">
-                    <span id="cas-status-${rowId}" class="text-[9px] text-indigo-500 font-bold hidden">🔍 กำลังหา CAS...</span>
+                    <input type="text" required id="b-name-${rowId}" onblur="fetchCasAndClassifications(${rowId})" placeholder="เช่น Ethanol..." class="w-full p-1 border rounded text-xs b-name bg-white/50 dark:bg-slate-800/50">
+                    <span id="cas-status-${rowId}" class="text-[9px] text-indigo-500 font-bold hidden">🔍 Auto Fetching...</span>
                 </td>
                 <td class="p-1"><input type="text" placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand bg-white/50 dark:bg-slate-800/50"></td>
                 <td class="p-1"><input type="text" id="b-cas-${rowId}" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas bg-white/50 dark:bg-slate-800/50 font-mono"></td>
+                <td class="p-1"><input type="text" id="b-type-${rowId}" placeholder="Type..." class="w-full p-1 border rounded text-xs b-type bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><input type="text" id="b-category-${rowId}" placeholder="Category..." class="w-full p-1 border rounded text-xs b-category bg-white/50 dark:bg-slate-800/50"></td>
                 <td class="p-1">
                     <div class="flex space-x-1">
                         <input type="number" required placeholder="100" class="w-16 p-1 border rounded text-xs b-cap-val bg-white/50 dark:bg-slate-800/50">
@@ -1141,16 +1249,15 @@
             tbody.appendChild(row);
         }
 
-        async function fetchCasNumber(rowId) {
+        async function fetchCasAndClassifications(rowId) {
             const nameInput = document.getElementById(`b-name-${rowId}`);
             const casInput = document.getElementById(`b-cas-${rowId}`);
+            const typeInput = document.getElementById(`b-type-${rowId}`);
+            const categoryInput = document.getElementById(`b-category-${rowId}`);
             const statusSpan = document.getElementById(`cas-status-${rowId}`);
 
             if (!nameInput || !nameInput.value.trim()) return;
             const chemName = nameInput.value.trim();
-
-            // Skip if CAS already filled manually
-            if (casInput.value.trim() !== '') return;
 
             if (statusSpan) statusSpan.classList.remove('hidden');
 
@@ -1164,19 +1271,46 @@
                     const cid = data.PropertyTable.Properties[0].CID;
                     
                     // Fetch Synonyms/CAS Number from CID
-                    const synRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/synonyms/JSON`);
-                    const synData = await synRes.json();
-                    
-                    if (synData.InformationList && synData.InformationList.Information && synData.InformationList.Information[0].Synonym) {
-                        const synonyms = synData.InformationList.Information[0].Synonym;
-                        // Regex to match CAS Registry Number format (e.g. 64-17-5, 67-64-1)
-                        const casRegex = /^[0-9]{2,7}-[0-9]{2}-[0-9]$/;
-                        const foundCas = synonyms.find(syn => casRegex.test(syn.trim()));
+                    if (!casInput.value.trim()) {
+                        const synRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/synonyms/JSON`);
+                        const synData = await synRes.json();
+                        
+                        if (synData.InformationList && synData.InformationList.Information && synData.InformationList.Information[0].Synonym) {
+                            const synonyms = synData.InformationList.Information[0].Synonym;
+                            const casRegex = /^[0-9]{2,7}-[0-9]{2}-[0-9]$/;
+                            const foundCas = synonyms.find(syn => casRegex.test(syn.trim()));
 
-                        if (foundCas) {
-                            casInput.value = foundCas.trim();
-                            showToast(`พบเลข CAS: ${foundCas} สำหรับ ${chemName}`, 'success');
+                            if (foundCas) {
+                                casInput.value = foundCas.trim();
+                            }
                         }
+                    }
+
+                    // Auto-fill Type & Category heuristics based on synonyms/name
+                    if (!typeInput.value.trim() || !categoryInput.value.trim()) {
+                        const lname = chemName.toLowerCase();
+                        let inferredType = 'General Chemical';
+                        let inferredCats = [];
+
+                        if (lname.includes('acid')) inferredType = 'Acid';
+                        else if (lname.includes('ether') || lname.includes('anol') || lname.includes('ene') || lname.includes('one')) inferredType = 'Solvent';
+                        else if (lname.includes('hydroxide') || lname.includes('ammonia')) inferredType = 'Base';
+                        else if (lname.includes('chloride') || lname.includes('sulfate') || lname.includes('nitrate')) inferredType = 'Salt';
+
+                        if (lname.includes('ethanol') || lname.includes('acetone') || lname.includes('hexane') || lname.includes('methanol')) {
+                            inferredCats.push('Flammable', 'Organic');
+                        }
+                        if (lname.includes('acid') || lname.includes('hydroxide')) {
+                            inferredCats.push('Corrosive');
+                        }
+                        if (lname.includes('cyanide') || lname.includes('mercury') || lname.includes('lead')) {
+                            inferredCats.push('Toxic');
+                        }
+
+                        if (!typeInput.value.trim()) typeInput.value = inferredType;
+                        if (!categoryInput.value.trim() && inferredCats.length) categoryInput.value = inferredCats.join(', ');
+                        
+                        showToast(`ดึงข้อมูลอัตโนมัติสำเร็จสำหรับ ${chemName}`, 'success');
                     }
                 }
             } catch (err) {
@@ -1195,6 +1329,7 @@
                 if (!name) return;
                 items.push({
                     name: name, brand: r.querySelector('.b-brand').value.trim(), cas_number: r.querySelector('.b-cas').value.trim(),
+                    type: r.querySelector('.b-type').value.trim(), category: r.querySelector('.b-category').value.trim(),
                     capacity_value: parseFloat(r.querySelector('.b-cap-val').value) || 0, capacity_unit: r.querySelector('.b-cap-unit').value,
                     quantity: parseFloat(r.querySelector('.b-qty').value) || 1, package_unit: r.querySelector('.b-pkg-unit').value,
                     location: r.querySelector('.b-loc').value, expiry_date: r.querySelector('.b-exp').value, remark: r.querySelector('.b-remark').value.trim(),
@@ -1219,9 +1354,9 @@
                         <td class="py-2.5 px-3 font-mono text-[10px]">#${l.id}</td>
                         <td class="py-2.5 px-3 font-bold">${l.full_name}</td>
                         <td class="py-2.5 px-3">${l.username}</td>
-                        <td class="py-2.5 px-3"><span class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">${l.role}</span></td>
+                        <td class="py-2.5 px-3"><span class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">${l.role.toUpperCase()}</span></td>
                         <td class="py-2.5 px-3 font-mono">${l.ip_address || 'Unknown'}</td>
-                        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${l.time_str}</td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${formatICTDate(l.time_str)}</td>
                     </tr>
                 `).join('');
             });
@@ -1260,8 +1395,8 @@
                     <td class="py-2.5 px-3">${t.requester_name}</td>
                     <td class="py-2.5 px-3 font-bold">${t.chemical_name} (${t.brand || '-'})</td>
                     <td class="py-2.5 px-3 font-bold">${t.qty} ${t.unit || ''}</td>
-                    <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${t.created_at_str || '-'}</td>
-                    <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${t.approved_at_str || '-'}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${formatICTDate(t.created_at_str)}</td>
+                    <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${formatICTDate(t.approved_at_str)}</td>
                     <td class="py-2.5 px-3 font-bold text-indigo-600 dark:text-indigo-400">${durText}</td>
                     <td class="py-2.5 px-3">${t.approved_by || 'Admin'}</td>
                     <td class="py-2.5 px-3"><span class="${t.status && t.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${t.status}</span></td>
@@ -1287,11 +1422,99 @@
                         <td class="py-2.5 px-3 font-mono text-[10px]">#${u.id}</td>
                         <td class="py-2.5 px-3 font-bold">${u.full_name}</td>
                         <td class="py-2.5 px-3 font-mono">${u.username}</td>
-                        <td class="py-2.5 px-3"><span class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">${u.role}</span></td>
-                        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${u.last_online_str || 'ยังไม่เคย Online'}</td>
+                        <td class="py-2.5 px-3"><span class="bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold">${u.role.toUpperCase()}</span></td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-slate-500">${formatICTDate(u.last_online_str) || 'ยังไม่เคย Online'}</td>
                     </tr>
                 `).join('');
             });
+        }
+
+        /* --- EXPORT TO EXCEL --- */
+        function exportToExcel() {
+            if (!allChemicals.length) return showToast('ไม่มีข้อมูลสารเคมีสำหรับ Export', 'warning');
+            
+            const exportData = allChemicals.map(c => ({
+                'ID': c.id,
+                'ชื่อสารเคมี (Name)': c.name,
+                'แบรนด์ (Brand)': c.brand || '',
+                'CAS Number': c.cas_number || '',
+                'ประเภท (Type)': c.type || '',
+                'หมวดหมู่ (Category)': c.category || '',
+                'ปริมาณต่อหน่วย (Capacity)': c.capacity_value ? `${c.capacity_value} ${c.capacity_unit}` : (c.unit || ''),
+                'จำนวนคงเหลือ (Quantity)': c.quantity,
+                'หน่วยบรรจุภัณฑ์ (Package Unit)': c.package_unit || '',
+                'สถานที่จัดเก็บ (Location)': c.location || '',
+                'วันหมดอายุ (Expiry Date)': c.expiry_date || '',
+                'หมายเหตุ (Remark)': c.remark || ''
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Chemical_Inventory');
+            XLSX.writeFile(workbook, `Chemical_Inventory_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            showToast('ส่งออกไฟล์ Excel สำเร็จ!', 'success');
+        }
+
+        /* --- IMPORT FROM EXCEL --- */
+        function importFromExcel(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showLoading('กำลังอ่านไฟล์ Excel...');
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
+
+                    if (!json.length) {
+                        hideLoading();
+                        return showToast('ไม่พบข้อมูลในไฟล์ Excel', 'warning');
+                    }
+
+                    let items = json.map(row => ({
+                        name: row['ชื่อสารเคมี (Name)'] || row['Name'] || row['ชื่อสารเคมี'] || '',
+                        brand: row['แบรนด์ (Brand)'] || row['Brand'] || row['แบรนด์'] || '',
+                        cas_number: row['CAS Number'] || row['CAS'] || '',
+                        type: row['ประเภท (Type)'] || row['Type'] || row['ประเภท'] || '',
+                        category: row['หมวดหมู่ (Category)'] || row['Category'] || row['หมวดหมู่'] || '',
+                        capacity_value: parseFloat(row['Capacity Value'] || row['ปริมาณต่อหน่วย']) || 0,
+                        capacity_unit: row['Capacity Unit'] || row['หน่วยปริมาณ'] || 'ml',
+                        quantity: parseFloat(row['จำนวนคงเหลือ (Quantity)'] || row['Quantity'] || row['จำนวน']) || 1,
+                        package_unit: row['หน่วยบรรจุภัณฑ์ (Package Unit)'] || row['Package Unit'] || row['หน่วย'] || 'ขวด',
+                        location: row['สถานที่จัดเก็บ (Location)'] || row['Location'] || row['สถานที่จัดเก็บ'] || 'Shelf A1L',
+                        expiry_date: row['วันหมดอายุ (Expiry Date)'] || row['Expiry Date'] || row['วันหมดอายุ'] || '',
+                        remark: row['หมายเหตุ (Remark)'] || row['Remark'] || row['หมายเหตุ'] || '',
+                        created_by_name: currentUser.full_name,
+                        user_id: currentUser.id
+                    })).filter(i => i.name.trim() !== '');
+
+                    if (!items.length) {
+                        hideLoading();
+                        return showToast('กรุณาตรวจสอบหัวคอลัมน์ชื่อสารเคมีในไฟล์ Excel', 'error');
+                    }
+
+                    fetch(`${BASE_URL}/chemicals/batch`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items: items })
+                    }).then(() => {
+                        hideLoading();
+                        showToast(`นำเข้าข้อมูลสำเร็จ ${items.length} รายการ!`, 'success');
+                        refreshData();
+                    }).catch(err => {
+                        hideLoading();
+                        showToast('❌ นำเข้าข้อมูลล้มเหลว: ' + err.message, 'error');
+                    });
+
+                } catch (err) {
+                    hideLoading();
+                    showToast('❌ รูปแบบไฟล์ไม่ถูกต้อง', 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         function openIssueModal() { document.getElementById('modal-issue').classList.remove('hidden'); }
