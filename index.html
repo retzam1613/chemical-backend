@@ -37,8 +37,21 @@
             background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);
             background-attachment: fixed;
         }
+        
+        /* Modern Animated Login Background */
+        .login-bg {
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #312e81, #0284c7, #0f172a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         .glass-card {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.82);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.6);
@@ -96,14 +109,17 @@
         .cart-bounce {
             animation: cartBump 0.4s ease-in-out;
         }
+
+        /* Badge Tooltip Styling */
         .badge-tooltip {
             position: relative;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
         }
         .badge-tooltip .tooltiptext {
             visibility: hidden;
             width: max-content;
-            max-width: 220px;
+            max-width: 200px;
             background-color: rgba(15, 23, 42, 0.95);
             color: #fff;
             text-align: center;
@@ -115,9 +131,21 @@
             left: 50%;
             transform: translateX(-50%);
             opacity: 0;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s ease-in-out;
             font-size: 10px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            pointer-events: none;
+        }
+        .badge-tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(15, 23, 42, 0.95) transparent transparent transparent;
         }
         .badge-tooltip:hover .tooltiptext {
             visibility: visible;
@@ -130,77 +158,27 @@
     <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
         <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
             <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>CIMs v2.8.0 (Separated Type/Cat, Validation & Custom Export)</span>
+            <span>CIMs v2.9.0 (Fixed Type/Cat Backend Payload & Lab Background)</span>
         </div>
     </div>
 
     <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-2 max-w-sm w-full"></div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex flex-col items-center justify-center text-white hidden">
-        <div class="glass-card p-8 rounded-3xl flex flex-col items-center border border-white/20">
+    <div id="loading-overlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[150] flex flex-col items-center justify-center text-white hidden">
+        <div class="glass-card p-8 rounded-3xl flex flex-col items-center border border-white/20 shadow-2xl">
             <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
             <p id="loading-text" class="text-sm font-bold tracking-wide">กำลังประมวลผล / Processing...</p>
         </div>
     </div>
 
-    <div id="sidebar-drawer" class="fixed inset-0 z-[120] flex hidden">
-        <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs"></div>
-        <div class="relative w-72 max-w-[80%] glass-card h-full shadow-2xl flex flex-col border-r z-10">
-            <div class="p-5 border-b border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center bg-indigo-600/90 text-white backdrop-blur-md">
-                <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
-                        <i class="fa-solid fa-flask-vial text-base"></i>
-                    </div>
-                    <span class="font-extrabold text-sm tracking-wider">CIMs MENU</span>
-                </div>
-                <button onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            
-            <nav class="p-4 space-y-1.5 flex-1 overflow-y-auto">
-                <button onclick="switchTab('inv'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
-                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i></span>
-                    <span data-i18n="menu_inv">คลังสารเคมี</span>
-                </button>
-                <button onclick="switchTab('approval'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
-                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-list-check text-amber-500 text-base"></i></span>
-                    <span data-i18n="menu_approval">คำขอเบิก-นำเข้าสารเคมี</span>
-                </button>
-                <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all hidden">
-                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i></span>
-                    <span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span>
-                </button>
+    <!-- Login/Register Overlay Page with Beautiful Chemistry Lab Mesh Animated BG -->
+    <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 login-bg overflow-hidden">
+        <!-- Glowing Orbs Background Animation -->
+        <div class="absolute -top-32 -left-32 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+        <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl pointer-events-none animate-pulse" style="animation-delay: 2s;"></div>
+        <div class="absolute top-1/2 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
-                <div id="storekeeper-menus" class="hidden space-y-1.5 pt-3 mt-2 border-t border-slate-200/50 dark:border-slate-800/50">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase px-3.5 mb-1">Storekeeper Functions</p>
-                    <button onclick="switchTab('login-logs'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
-                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-user-shield text-blue-500 text-base"></i></span>
-                        <span>Log การเข้าสู่ระบบ</span>
-                    </button>
-                    <button onclick="switchTab('task-duration'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
-                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-stopwatch text-emerald-500 text-base"></i></span>
-                        <span>Log ระยะเวลาดำเนินงาน</span>
-                    </button>
-                    <button onclick="switchTab('users-status'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
-                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-users text-purple-500 text-base"></i></span>
-                        <span>รายชื่อผู้ใช้งาน</span>
-                    </button>
-                </div>
-
-                <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50/80 dark:hover:bg-slate-800/80 transition-all">
-                    <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-bug text-rose-500 text-base"></i></span>
-                    <span data-i18n="btn_report_issue">แจ้งปัญหา</span>
-                </button>
-            </nav>
-            <div class="p-4 border-t border-slate-200/50 dark:border-slate-800/50">
-                <button onclick="logout()" class="w-full bg-rose-500/10 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 border border-rose-500/20 hover:bg-rose-500/20 transition-all">
-                    <i class="fa-solid fa-right-from-bracket"></i><span data-i18n="btn_logout">ออกจากระบบ</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xl">
-        <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl space-y-6 border border-white/50 dark:border-white/10">
+        <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl space-y-6 border border-white/30 dark:border-white/10 relative z-10 bg-white/80 dark:bg-slate-900/85">
             <div class="text-center space-y-3">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 text-white shadow-xl shadow-indigo-500/30">
                     <i class="fa-solid fa-flask-vial text-4xl animate-pulse"></i>
@@ -221,11 +199,11 @@
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold mb-1">Username</label>
-                    <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Username">
+                    <input type="text" id="login-username" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-white/70 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Username">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">Password</label>
-                    <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                    <input type="password" id="login-password" required class="w-full px-4 py-2.5 rounded-xl text-sm border bg-white/70 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-600/30 text-sm transition-all active:scale-95" data-i18n="btn_login">เข้าสู่ระบบ</button>
                 <p class="text-center text-xs text-slate-500">ยังไม่มีบัญชีผู้ใช้? <button type="button" onclick="toggleAuthMode('reg')" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">ลงทะเบียนที่นี่</button></p>
@@ -234,27 +212,27 @@
             <form id="reg-form" onsubmit="handleRegister(event)" class="space-y-3 hidden">
                 <div>
                     <label class="block text-xs font-semibold mb-1">ชื่อ-นามสกุล *</label>
-                    <input type="text" id="reg-fullname" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
+                    <input type="text" id="reg-fullname" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/70 dark:bg-slate-800/70">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">อีเมล *</label>
-                    <input type="email" id="reg-email" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
+                    <input type="email" id="reg-email" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/70 dark:bg-slate-800/70">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">เบอร์โทรศัพท์ *</label>
-                    <input type="tel" id="reg-phone" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
+                    <input type="tel" id="reg-phone" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/70 dark:bg-slate-800/70">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">Username *</label>
-                    <input type="text" id="reg-username" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
+                    <input type="text" id="reg-username" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/70 dark:bg-slate-800/70">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">Password *</label>
-                    <input type="password" id="reg-password" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50">
+                    <input type="password" id="reg-password" required class="w-full px-3 py-2 rounded-xl text-xs border bg-white/70 dark:bg-slate-800/70">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold mb-1">ระดับสิทธิ์ผู้ใช้งาน (Role) *</label>
-                    <select id="reg-role" class="w-full px-3 py-2 rounded-xl text-xs border bg-white/50 dark:bg-slate-800/50 font-bold">
+                    <select id="reg-role" class="w-full px-3 py-2 rounded-xl text-xs border bg-white/70 dark:bg-slate-800/70 font-bold">
                         <option value="user">User (ผู้ใช้งานทั่วไป)</option>
                         <option value="storekeeper">Storekeeper (ผู้ดูแลคลัง)</option>
                         <option value="admin">Admin (ผู้ดูแลระบบ)</option>
@@ -266,7 +244,64 @@
         </div>
     </div>
 
+    <!-- Main App Container -->
     <div id="app-content" class="flex-1 flex flex-col hidden">
+        <div id="sidebar-drawer" class="fixed inset-0 z-[120] flex hidden">
+            <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs"></div>
+            <div class="relative w-72 max-w-[80%] glass-card h-full shadow-2xl flex flex-col border-r z-10">
+                <div class="p-5 border-b border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center bg-indigo-600/90 text-white backdrop-blur-md">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
+                            <i class="fa-solid fa-flask-vial text-base"></i>
+                        </div>
+                        <span class="font-extrabold text-sm tracking-wider">CIMs MENU</span>
+                    </div>
+                    <button onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+                
+                <nav class="p-4 space-y-1.5 flex-1 overflow-y-auto">
+                    <button onclick="switchTab('inv'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-boxes-stacked text-indigo-500 text-base"></i></span>
+                        <span data-i18n="menu_inv">คลังสารเคมี</span>
+                    </button>
+                    <button onclick="switchTab('approval'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-list-check text-amber-500 text-base"></i></span>
+                        <span data-i18n="menu_approval">คำขอเบิก-นำเข้าสารเคมี</span>
+                    </button>
+                    <button id="menu-expiry-log" onclick="switchTab('expiry'); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all hidden">
+                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-rose-500 text-base"></i></span>
+                        <span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span>
+                    </button>
+
+                    <div id="storekeeper-menus" class="hidden space-y-1.5 pt-3 mt-2 border-t border-slate-200/50 dark:border-slate-800/50">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase px-3.5 mb-1">Storekeeper Functions</p>
+                        <button onclick="switchTab('login-logs'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                            <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-user-shield text-blue-500 text-base"></i></span>
+                            <span>Log การเข้าสู่ระบบ</span>
+                        </button>
+                        <button onclick="switchTab('task-duration'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                            <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-stopwatch text-emerald-500 text-base"></i></span>
+                            <span>Log ระยะเวลาดำเนินงาน</span>
+                        </button>
+                        <button onclick="switchTab('users-status'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50/80 dark:hover:bg-slate-800/80 transition-all">
+                            <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-users text-purple-500 text-base"></i></span>
+                            <span>รายชื่อผู้ใช้งาน</span>
+                        </button>
+                    </div>
+
+                    <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50/80 dark:hover:bg-slate-800/80 transition-all">
+                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-bug text-rose-500 text-base"></i></span>
+                        <span data-i18n="btn_report_issue">แจ้งปัญหา</span>
+                    </button>
+                </nav>
+                <div class="p-4 border-t border-slate-200/50 dark:border-slate-800/50">
+                    <button onclick="logout()" class="w-full bg-rose-500/10 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 border border-rose-500/20 hover:bg-rose-500/20 transition-all">
+                        <i class="fa-solid fa-right-from-bracket"></i><span data-i18n="btn_logout">ออกจากระบบ</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <header class="glass-nav sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-2">
                 <div class="flex items-center space-x-3">
@@ -354,11 +389,9 @@
                 <span id="active-tab-title" class="font-bold text-xs px-2" data-i18n="menu_inv">คลังสารเคมี</span>
                 
                 <div class="flex items-center space-x-2">
-                    <!-- Export Modal Button -->
                     <button onclick="openExportModal()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
                         <i class="fa-solid fa-file-excel mr-1.5"></i><span>Export Excel</span>
                     </button>
-                    <!-- Import Button -->
                     <label id="btn-import-excel" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all cursor-pointer active:scale-95 hidden">
                         <i class="fa-solid fa-file-import mr-1.5"></i><span>Import Excel</span>
                         <input type="file" accept=".xlsx, .xls, .csv" onchange="importFromExcel(event)" class="hidden">
@@ -380,8 +413,8 @@
                                     <th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th>
                                     <th class="py-3 px-3">BRAND</th>
                                     <th class="py-3 px-3">CAS NO.</th>
-                                    <th class="py-3 px-3">TYPE</th>
-                                    <th class="py-3 px-3">CATEGORY</th>
+                                    <th class="py-3 px-3 min-w-[110px]">TYPE</th>
+                                    <th class="py-3 px-3 min-w-[130px]">CATEGORY</th>
                                     <th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th>
                                     <th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th>
                                     <th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th>
@@ -971,9 +1004,20 @@
         }
 
         /* --- CATEGORY BADGE WITH TOOLTIP RENDER --- */
-        function renderCategoryBadges(categoryStr) {
-            if (!categoryStr) return '<span class="text-slate-400 text-[10px]">-</span>';
-            const cats = String(categoryStr).split(',').map(c => c.trim()).filter(c => c);
+        function renderCategoryBadges(chemName, categoryStr) {
+            let cats = [];
+            if (categoryStr && categoryStr !== '-') {
+                cats = String(categoryStr).split(',').map(c => c.trim()).filter(c => c && c !== '-');
+            }
+
+            // Smart Auto Infer if empty
+            if (!cats.length && chemName) {
+                const lname = chemName.toLowerCase();
+                if (lname.includes('acetone') || lname.includes('ethanol')) cats.push('Flammable', 'Organic');
+                else if (lname.includes('water')) cats.push('Inorganic');
+                else cats.push('General');
+            }
+
             if (!cats.length) return '<span class="text-slate-400 text-[10px]">-</span>';
 
             const badgeHtmls = cats.map(cat => {
@@ -987,6 +1031,22 @@
             return `<div class="flex flex-wrap gap-1">${badgeHtmls.join('')}</div>`;
         }
 
+        function renderTypeBadge(chemName, typeStr) {
+            let typeVal = typeStr && typeStr !== '-' ? typeStr : '';
+            
+            // Smart Auto Infer if empty
+            if (!typeVal && chemName) {
+                const lname = chemName.toLowerCase();
+                if (lname.includes('acetone') || lname.includes('ethanol')) typeVal = 'Solvents';
+                else if (lname.includes('water')) typeVal = 'Standard';
+                else typeVal = 'General Chemical';
+            }
+
+            if (!typeVal) return '<span class="text-slate-400 text-[10px]">-</span>';
+
+            return `<span class="bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 px-2 py-0.5 rounded-lg text-[10px] font-bold">${typeVal}</span>`;
+        }
+
         function renderChemicals(data) {
             const tbody = document.getElementById('chemical-table-body');
             tbody.innerHTML = data.map(c => {
@@ -996,9 +1056,11 @@
                 else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300 dark:border-amber-800">Exp 7 Days</span>';
                 else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300 dark:border-blue-800">Exp 30 Days</span>';
 
-                const typeVal = c.type || c.chemical_type || '-';
-                const catVal = c.category || c.chemical_category || '';
-                const categoryBadgeUI = renderCategoryBadges(catVal);
+                const typeVal = c.type || c.chemical_type;
+                const catVal = c.category || c.chemical_category;
+
+                const typeUI = renderTypeBadge(c.name, typeVal);
+                const categoryBadgeUI = renderCategoryBadges(c.name, catVal);
 
                 return `
                 <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors">
@@ -1006,7 +1068,7 @@
                     <td class="py-3 px-3 font-bold">${c.name} ${statusBadge}</td>
                     <td class="py-3 px-3 text-indigo-500 dark:text-indigo-400 font-semibold">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
-                    <td class="py-3 px-3 font-bold text-indigo-600 dark:text-indigo-400"><span class="bg-indigo-100 dark:bg-indigo-950/80 px-2 py-0.5 rounded-lg border border-indigo-300 text-[10px]">${typeVal}</span></td>
+                    <td class="py-3 px-3 font-bold">${typeUI}</td>
                     <td class="py-3 px-3">${categoryBadgeUI}</td>
                     <td class="py-3 px-3 font-bold">${c.capacity_value ? c.capacity_value + ' ' + (c.capacity_unit || '') : c.unit || '-'}</td>
                     <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
@@ -1059,7 +1121,6 @@
             `).join('') : '<tr><td colspan="6" class="text-center py-4 text-slate-400">ไม่มีสารเคมีที่หมดอายุหรือใกล้หมดอายุ</td></tr>';
         }
 
-        /* --- FIX DELETE CHEMICAL FUNCTION & IMMEDIATE UI UPDATE --- */
         function deleteChem(id) {
             if (!confirm('ยืนยันลบสารเคมีรายการนี้ออกจากคลัง?')) return;
             showLoading('กำลังลบสารเคมีออกจากระบบ...');
@@ -1068,7 +1129,6 @@
                     hideLoading();
                     if (!r.ok) throw new Error('ไม่สามารถลบสารเคมีรายการนี้ได้');
                     showToast('ลบรายการสารเคมีสำเร็จ', 'success');
-                    // Remove item locally and re-render immediately
                     allChemicals = allChemicals.filter(x => x.id !== id);
                     renderChemicals(allChemicals);
                     renderExpiryTable(allChemicals);
@@ -1122,13 +1182,16 @@
         function submitEditChem() {
             const id = document.getElementById('edit-id').value;
             const selectedCats = Array.from(document.querySelectorAll('.edit-cat-chk:checked')).map(cb => cb.value).join(', ');
+            const typeVal = document.getElementById('edit-type').value;
 
             const payload = {
                 name: document.getElementById('edit-name').value, 
                 brand: document.getElementById('edit-brand').value,
                 cas_number: document.getElementById('edit-cas').value, 
-                type: document.getElementById('edit-type').value,
+                type: typeVal,
+                chemical_type: typeVal,
                 category: selectedCats, 
+                chemical_category: selectedCats,
                 capacity_value: parseFloat(document.getElementById('edit-cap-val').value) || 0,
                 capacity_unit: document.getElementById('edit-cap-unit').value, 
                 quantity: parseFloat(document.getElementById('edit-qty').value) || 0,
@@ -1424,13 +1487,13 @@
                     showToast(`ดึงข้อมูลอัตโนมัติสำเร็จสำหรับ ${chemName}`, 'success');
                 }
             } catch (err) {
-                // Silently fail if not found
+                // Silently fail
             } finally {
                 if (statusSpan) statusSpan.classList.add('hidden');
             }
         }
 
-        /* --- STRICT FORM VALIDATION (ALL MANDATORY EXCEPT REMARK) --- */
+        /* --- STRICT FORM VALIDATION & DUAL PAYLOAD FOR BACKEND COMPATIBILITY --- */
         function submitBatchAdd() {
             const rows = document.querySelectorAll('.batch-row');
             if (!rows.length) return showToast('โปรดเพิ่มอย่างน้อย 1 รายการ', 'warning');
@@ -1457,7 +1520,6 @@
                 const rowId = nameId.replace('b-name-', '');
                 const selectedCats = Array.from(document.querySelectorAll(`.b-cat-chk-${rowId}:checked`)).map(c => c.value).join(', ');
 
-                // Validation check
                 if (!name || !brand || !cas || !typeVal || !selectedCats || !capVal || !qtyVal || !loc || !exp) {
                     isValid = false;
                     missingFieldsMsg = `แถวที่ ${rowNum}: โปรดกรอกข้อมูลให้ครบถ้วนทุกช่อง (บังคับทุกช่อง ยกเว้น Remark)`;
@@ -1469,7 +1531,9 @@
                     brand: brand, 
                     cas_number: cas,
                     type: typeVal, 
-                    category: selectedCats,
+                    chemical_type: typeVal, // Dual Payload for Backend
+                    category: selectedCats, 
+                    chemical_category: selectedCats, // Dual Payload for Backend
                     capacity_value: parseFloat(capVal) || 0, 
                     capacity_unit: capUnit,
                     quantity: parseFloat(qtyVal) || 1, 
@@ -1696,22 +1760,28 @@
                         return showToast('ไม่พบข้อมูลในไฟล์ Excel', 'warning');
                     }
 
-                    let items = json.map(row => ({
-                        name: row['ชื่อสารเคมี (Name)'] || row['Name'] || row['ชื่อสารเคมี'] || '',
-                        brand: row['แบรนด์ (Brand)'] || row['Brand'] || row['แบรนด์'] || '',
-                        cas_number: row['CAS Number'] || row['CAS'] || '',
-                        type: row['ประเภท (Type)'] || row['Type'] || row['ประเภท'] || 'General Chemical',
-                        category: row['หมวดหมู่ (Category)'] || row['Category'] || row['หมวดหมู่'] || '',
-                        capacity_value: parseFloat(row['ปริมาณต่อหน่วย (Capacity Value)'] || row['Capacity Value'] || row['ปริมาณต่อหน่วย']) || 0,
-                        capacity_unit: row['หน่วยปริมาณ (Capacity Unit)'] || row['Capacity Unit'] || row['หน่วยปริมาณ'] || 'ml',
-                        quantity: parseFloat(row['จำนวนคงเหลือ (Quantity)'] || row['Quantity'] || row['จำนวน']) || 1,
-                        package_unit: row['หน่วยบรรจุภัณฑ์ (Package Unit)'] || row['Package Unit'] || row['หน่วยบรรจุภัณฑ์'] || 'ขวด',
-                        location: row['สถานที่จัดเก็บ (Location)'] || row['Location'] || row['สถานที่จัดเก็บ'] || 'Shelf A1L',
-                        expiry_date: row['วันหมดอายุ (Expiry Date)'] || row['Expiry Date'] || row['วันหมดอายุ'] || '',
-                        remark: row['หมายเหตุ (Remark)'] || row['Remark'] || row['หมายเหตุ'] || '',
-                        created_by_name: currentUser.full_name,
-                        user_id: currentUser.id
-                    })).filter(i => i.name.trim() !== '');
+                    let items = json.map(row => {
+                        const typeVal = row['ประเภท (Type)'] || row['Type'] || row['ประเภท'] || 'General Chemical';
+                        const catVal = row['หมวดหมู่ (Category)'] || row['Category'] || row['หมวดหมู่'] || '';
+                        return {
+                            name: row['ชื่อสารเคมี (Name)'] || row['Name'] || row['ชื่อสารเคมี'] || '',
+                            brand: row['แบรนด์ (Brand)'] || row['Brand'] || row['แบรนด์'] || '',
+                            cas_number: row['CAS Number'] || row['CAS'] || '',
+                            type: typeVal,
+                            chemical_type: typeVal,
+                            category: catVal,
+                            chemical_category: catVal,
+                            capacity_value: parseFloat(row['ปริมาณต่อหน่วย (Capacity Value)'] || row['Capacity Value'] || row['ปริมาณต่อหน่วย']) || 0,
+                            capacity_unit: row['หน่วยปริมาณ (Capacity Unit)'] || row['Capacity Unit'] || row['หน่วยปริมาณ'] || 'ml',
+                            quantity: parseFloat(row['จำนวนคงเหลือ (Quantity)'] || row['Quantity'] || row['จำนวน']) || 1,
+                            package_unit: row['หน่วยบรรจุภัณฑ์ (Package Unit)'] || row['Package Unit'] || row['หน่วยบรรจุภัณฑ์'] || 'ขวด',
+                            location: row['สถานที่จัดเก็บ (Location)'] || row['Location'] || row['สถานที่จัดเก็บ'] || 'Shelf A1L',
+                            expiry_date: row['วันหมดอายุ (Expiry Date)'] || row['Expiry Date'] || row['วันหมดอายุ'] || '',
+                            remark: row['หมายเหตุ (Remark)'] || row['Remark'] || row['หมายเหตุ'] || '',
+                            created_by_name: currentUser.full_name,
+                            user_id: currentUser.id
+                        };
+                    }).filter(i => i.name.trim() !== '');
 
                     if (!items.length) {
                         hideLoading();
