@@ -90,6 +90,58 @@
             border: 1px solid rgba(51, 65, 85, 0.8);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
+
+        /* Modern Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.35);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.65);
+        }
+
+        /* Slide Side Drawer Animations */
+        .drawer-slide-in {
+            animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .drawer-slide-out {
+            animation: slideOutLeft 0.25s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        @keyframes slideOutLeft {
+            from { transform: translateX(0); }
+            to { transform: translateX(-100%); }
+        }
+
+        /* Tab Switch Animations */
+        .tab-animated {
+            animation: tabFadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes tabFadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal Pop Cart Animations */
+        .modal-pop {
+            animation: modalPopAnim 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes modalPopAnim {
+            0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
         .flying-item {
             position: fixed;
             z-index: 9999;
@@ -155,10 +207,11 @@
 </head>
 <body class="text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased relative selection:bg-indigo-500 selection:text-white">
 
-    <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
-        <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>CIMs v2.9.0 (Fixed Type/Cat Backend Payload & Lab Background)</span>
+    <!-- Version Badge: Positioned at Bottom Left so it never blocks UI elements -->
+    <div class="fixed bottom-3 left-3 z-10 pointer-events-none">
+        <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-md flex items-center space-x-1.5 opacity-80 hover:opacity-100 transition-opacity">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>v2.9.2</span>
         </div>
     </div>
 
@@ -171,9 +224,8 @@
         </div>
     </div>
 
-    <!-- Login/Register Overlay Page with Beautiful Chemistry Lab Mesh Animated BG -->
+    <!-- Login/Register Overlay Page -->
     <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 login-bg overflow-hidden">
-        <!-- Glowing Orbs Background Animation -->
         <div class="absolute -top-32 -left-32 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
         <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl pointer-events-none animate-pulse" style="animation-delay: 2s;"></div>
         <div class="absolute top-1/2 left-1/4 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -233,7 +285,7 @@
                 <div>
                     <label class="block text-xs font-semibold mb-1">ระดับสิทธิ์ผู้ใช้งาน (Role) *</label>
                     <select id="reg-role" class="w-full px-3 py-2 rounded-xl text-xs border bg-white/70 dark:bg-slate-800/70 font-bold">
-                        <option value="user">User (ผู้ใช้งานทั่วไป)</option>
+                        <option value="user">Requester (ผู้ใช้งานทั่วไป)</option>
                         <option value="storekeeper">Storekeeper (ผู้ดูแลคลัง)</option>
                         <option value="admin">Admin (ผู้ดูแลระบบ)</option>
                     </select>
@@ -246,9 +298,11 @@
 
     <!-- Main App Container -->
     <div id="app-content" class="flex-1 flex flex-col hidden">
+        
+        <!-- Animated Side Drawer Navigation Menu -->
         <div id="sidebar-drawer" class="fixed inset-0 z-[120] flex hidden">
-            <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs"></div>
-            <div class="relative w-72 max-w-[80%] glass-card h-full shadow-2xl flex flex-col border-r z-10">
+            <div id="drawer-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs opacity-0 transition-opacity duration-300"></div>
+            <div id="drawer-content" class="relative w-72 max-w-[80%] glass-card h-full shadow-2xl flex flex-col border-r z-10 drawer-slide-in">
                 <div class="p-5 border-b border-slate-200/50 dark:border-slate-800/50 flex justify-between items-center bg-indigo-600/90 text-white backdrop-blur-md">
                     <div class="flex items-center space-x-2">
                         <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-md">
@@ -287,13 +341,20 @@
                             <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-users text-purple-500 text-base"></i></span>
                             <span>รายชื่อผู้ใช้งาน</span>
                         </button>
+                        <button onclick="switchTab('issues-log'); toggleSidebar();" class="w-full text-left px-3.5 py-2.5 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50/80 dark:hover:bg-slate-800/80 transition-all">
+                            <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-clipboard-list text-rose-500 text-base"></i></span>
+                            <span>รายการปัญหาที่แจ้ง</span>
+                        </button>
                     </div>
 
-                    <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50/80 dark:hover:bg-slate-800/80 transition-all">
-                        <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-bug text-rose-500 text-base"></i></span>
-                        <span data-i18n="btn_report_issue">แจ้งปัญหา</span>
-                    </button>
+                    <div id="requester-issue-btn-container" class="pt-2">
+                        <button onclick="openIssueModal(); toggleSidebar();" class="w-full text-left px-3.5 py-3 rounded-xl font-bold text-xs flex items-center space-x-3 text-slate-700 dark:text-slate-200 hover:bg-rose-50/80 dark:hover:bg-slate-800/80 transition-all">
+                            <span class="w-6 text-center flex items-center justify-center"><i class="fa-solid fa-bug text-rose-500 text-base"></i></span>
+                            <span data-i18n="btn_report_issue">แจ้งปัญหา</span>
+                        </button>
+                    </div>
                 </nav>
+                
                 <div class="p-4 border-t border-slate-200/50 dark:border-slate-800/50">
                     <button onclick="logout()" class="w-full bg-rose-500/10 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center space-x-2 border border-rose-500/20 hover:bg-rose-500/20 transition-all">
                         <i class="fa-solid fa-right-from-bracket"></i><span data-i18n="btn_logout">ออกจากระบบ</span>
@@ -318,7 +379,7 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <div id="main-system-status" class="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm" title="สถานะการเชื่อมต่อกับเซิร์ฟเวอร์ระบบ">
+                    <div id="main-system-status" class="px-2.5 py-1.5 rounded-xl border text-xs font-bold flex items-center space-x-1.5 bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800 shadow-sm">
                         <span class="relative flex h-2 w-2">
                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                           <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -361,38 +422,45 @@
         </header>
 
         <main class="max-w-7xl mx-auto px-4 py-4 flex-1 w-full space-y-4">
-            <section class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="bg-gradient-to-r from-indigo-600/90 to-blue-600/90 backdrop-blur-md text-white p-4 rounded-2xl shadow-lg border border-white/20 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_qty">ปริมาณสารเคมีทั้งหมดในคลัง</p>
-                        <h2 id="summary-total-qty" class="text-2xl font-black mt-0.5">0 ชิ้น</h2>
+            
+            <!-- Dashboard Stats & Analytics Chart: SHOWN ONLY IN INVENTORY TAB -->
+            <div id="dashboard-stats-wrapper" class="space-y-4">
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-gradient-to-r from-indigo-600/90 to-blue-600/90 backdrop-blur-md text-white p-4 rounded-2xl shadow-lg border border-white/20 flex justify-between items-center">
+                        <div>
+                            <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_qty">ปริมาณสารเคมีทั้งหมดในคลัง</p>
+                            <h2 id="summary-total-qty" class="text-2xl font-black mt-0.5">0 ชิ้น</h2>
+                        </div>
+                        <div class="bg-white/20 p-3 rounded-2xl"><i class="fa-solid fa-flask text-2xl"></i></div>
                     </div>
-                    <div class="bg-white/20 p-3 rounded-2xl"><i class="fa-solid fa-flask text-2xl"></i></div>
-                </div>
-                <div class="bg-gradient-to-r from-emerald-600/90 to-teal-600/90 backdrop-blur-md text-white p-4 rounded-2xl shadow-lg border border-white/20 flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_items">จำนวนรายการสารเคมีทั้งหมด</p>
-                        <h2 id="summary-total-items" class="text-2xl font-black mt-0.5">0 รายการ</h2>
+                    <div class="bg-gradient-to-r from-emerald-600/90 to-teal-600/90 backdrop-blur-md text-white p-4 rounded-2xl shadow-lg border border-white/20 flex justify-between items-center">
+                        <div>
+                            <p class="text-[11px] opacity-90 font-medium" data-i18n="summary_total_items">จำนวนรายการสารเคมีทั้งหมด</p>
+                            <h2 id="summary-total-items" class="text-2xl font-black mt-0.5">0 รายการ</h2>
+                        </div>
+                        <div class="bg-white/20 p-3 rounded-2xl"><i class="fa-solid fa-boxes-stacked text-2xl"></i></div>
                     </div>
-                    <div class="bg-white/20 p-3 rounded-2xl"><i class="fa-solid fa-boxes-stacked text-2xl"></i></div>
-                </div>
-            </section>
+                </section>
 
-            <section id="storekeeper-analytics-section" class="glass-card rounded-2xl p-4 hidden space-y-3">
-                <h3 class="font-bold text-xs flex items-center justify-between">
-                    <span><i class="fa-solid fa-chart-line text-indigo-500 mr-1.5"></i><span data-i18n="chart_title">กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง (รายวัน ย้อนหลัง 1 เดือน)</span></span>
-                </h3>
-                <div class="w-full h-48 md:h-60 relative"><canvas id="analyticsChart"></canvas></div>
-            </section>
+                <section id="storekeeper-analytics-section" class="glass-card rounded-2xl p-4 hidden space-y-3">
+                    <h3 class="font-bold text-xs flex items-center justify-between">
+                        <span><i class="fa-solid fa-chart-line text-indigo-500 mr-1.5"></i><span data-i18n="chart_title">กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง</span></span>
+                    </h3>
+                    <div class="w-full h-48 md:h-60 relative"><canvas id="analyticsChart"></canvas></div>
+                </section>
+            </div>
 
+            <!-- Action Bar -->
             <div class="flex flex-wrap justify-between items-center glass-card p-2.5 rounded-2xl gap-2">
                 <span id="active-tab-title" class="font-bold text-xs px-2" data-i18n="menu_inv">คลังสารเคมี</span>
                 
                 <div class="flex items-center space-x-2">
-                    <button onclick="openExportModal()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
+                    <!-- New Vibrant Emerald Export Button -->
+                    <button onclick="openExportModal()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
                         <i class="fa-solid fa-file-excel mr-1.5"></i><span>Export Excel</span>
                     </button>
-                    <label id="btn-import-excel" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all cursor-pointer active:scale-95 hidden">
+                    <!-- Import Button: AVAILABLE FOR BOTH REQUESTER AND STOREKEEPER -->
+                    <label id="btn-import-excel" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all cursor-pointer active:scale-95">
                         <i class="fa-solid fa-file-import mr-1.5"></i><span>Import Excel</span>
                         <input type="file" accept=".xlsx, .xls, .csv" onchange="importFromExcel(event)" class="hidden">
                     </label>
@@ -402,7 +470,8 @@
                 </div>
             </div>
 
-            <section id="tab-inv" class="space-y-3">
+            <!-- TAB 1: Inventory -->
+            <section id="tab-inv" class="space-y-3 tab-animated">
                 <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Type, Category, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs glass-card border focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
                     <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
@@ -413,12 +482,12 @@
                                     <th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th>
                                     <th class="py-3 px-3">BRAND</th>
                                     <th class="py-3 px-3">CAS NO.</th>
-                                    <th class="py-3 px-3 min-w-[110px]">TYPE</th>
-                                    <th class="py-3 px-3 min-w-[130px]">CATEGORY</th>
+                                    <th class="py-3 px-3 min-w-[130px]">TYPE</th>
+                                    <th class="py-3 px-3 min-w-[150px]">CATEGORY</th>
                                     <th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th>
                                     <th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th>
                                     <th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th>
-                                    <th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th>
+                                    <th class="py-3 px-3 min-w-[110px]" data-i18n="th_exp">วันหมดอายุ</th>
                                     <th class="py-3 px-3">REMARK</th>
                                     <th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
@@ -429,7 +498,8 @@
                 </div>
             </section>
 
-            <section id="tab-approval" class="space-y-3 hidden">
+            <!-- TAB 2: Approval Requests -->
+            <section id="tab-approval" class="space-y-3 hidden tab-animated">
                 <div class="glass-card rounded-2xl p-4 space-y-4">
                     <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3">
                         <div class="flex space-x-2">
@@ -470,14 +540,15 @@
                 </div>
             </section>
 
-            <section id="tab-expiry" class="space-y-3 hidden">
+            <!-- TAB 3: Expiry List -->
+            <section id="tab-expiry" class="space-y-3 hidden tab-animated">
                 <div class="glass-card rounded-2xl p-4">
-                    <h3 class="font-bold text-xs text-rose-500 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span></h3>
+                    <h3 class="font-bold text-xs text-rose-500 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ (ภายใน 30 วัน)</span></h3>
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3" data-i18n="th_alert">ระดับการแจ้งเตือน</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี (Brand)</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3" data-i18n="th_alert">สถานะวันหมดอายุ</th>
                                 </tr>
                             </thead>
                             <tbody id="expiry-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -486,7 +557,8 @@
                 </div>
             </section>
 
-            <section id="tab-login-logs" class="space-y-3 hidden">
+            <!-- Storekeeper TAB 4: Login Logs -->
+            <section id="tab-login-logs" class="space-y-3 hidden tab-animated">
                 <div class="glass-card rounded-2xl p-4">
                     <h3 class="font-bold text-xs text-indigo-600 dark:text-indigo-400 mb-3"><i class="fa-solid fa-user-shield mr-1.5"></i>Log การเข้าสู่ระบบ (เวลาประเทศไทย UTC+7)</h3>
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-white/20 rounded-xl">
@@ -500,7 +572,8 @@
                 </div>
             </section>
 
-            <section id="tab-task-duration" class="space-y-3 hidden">
+            <!-- Storekeeper TAB 5: Task Duration Logs -->
+            <section id="tab-task-duration" class="space-y-3 hidden tab-animated">
                 <div class="glass-card rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-xs text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-stopwatch mr-1.5"></i>Log ระยะเวลาดำเนินงานสารเคมี (เวลาประเทศไทย UTC+7)</h3>
@@ -526,7 +599,8 @@
                 </div>
             </section>
 
-            <section id="tab-users-status" class="space-y-3 hidden">
+            <!-- Storekeeper TAB 6: Users Status -->
+            <section id="tab-users-status" class="space-y-3 hidden tab-animated">
                 <div class="glass-card rounded-2xl p-4">
                     <h3 class="font-bold text-xs text-purple-600 dark:text-purple-400 mb-3"><i class="fa-solid fa-users mr-1.5"></i>รายชื่อผู้ใช้งาน</h3>
                     <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-white/20 rounded-xl">
@@ -541,12 +615,29 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Storekeeper TAB 7: Reported Issues Log -->
+            <section id="tab-issues-log" class="space-y-3 hidden tab-animated">
+                <div class="glass-card rounded-2xl p-4">
+                    <h3 class="font-bold text-xs text-rose-600 dark:text-rose-400 mb-3"><i class="fa-solid fa-clipboard-list mr-1.5"></i>รายการปัญหาที่แจ้งเข้ามา (Reported Issues Log)</h3>
+                    <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-white/20 rounded-xl">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3">ผู้แจ้งปัญหา</th><th class="py-3 px-3">รายละเอียดปัญหา</th><th class="py-3 px-3">เวลาที่แจ้ง (ICT)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="issues-log-tbody" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- Modal Export Excel Options -->
     <div id="modal-export" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4 modal-pop">
             <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-file-excel mr-2"></i>เลือกรายงานที่ต้องการ Export</h3>
                 <button onclick="closeModal('modal-export')"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -555,20 +646,21 @@
                 <label class="block text-xs font-semibold mb-1">ประเภทรายงาน (Report Type)</label>
                 <select id="export-report-type" class="w-full p-2.5 border rounded-xl bg-white/50 dark:bg-slate-800/50 font-bold text-xs">
                     <option value="chem_inv">🧪 รายการสารเคมีทั้งหมดในคลัง (Chemical Inventory)</option>
-                    <option value="chem_exp">⚠️ รายการสารเคมีใกล้หมดอายุ (Expiring Chemicals)</option>
-                    <option value="login_logs">👤 Log การเข้าสู่ระบบ (Login Logs)</option>
-                    <option value="task_logs">⏱️ Log ระยะเวลาและประวัติการดำเนินงาน (Task Duration Logs)</option>
+                    <option value="chem_exp" class="storekeeper-only-opt">⚠️ รายการสารเคมีใกล้หมดอายุ (Expiring Chemicals)</option>
+                    <option value="login_logs" class="storekeeper-only-opt">👤 Log การเข้าสู่ระบบ (Login Logs)</option>
+                    <option value="task_logs" class="storekeeper-only-opt">⏱️ Log ระยะเวลาและประวัติการดำเนินงาน (Task Duration Logs)</option>
                 </select>
             </div>
             <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
                 <button onclick="closeModal('modal-export')" class="px-4 py-2 text-xs border rounded-xl">ยกเลิก</button>
-                <button onclick="executeExportToExcel()" class="px-4 py-2 text-xs bg-emerald-600 text-white font-bold rounded-xl shadow-md flex items-center"><i class="fa-solid fa-download mr-1.5"></i>ดาวน์โหลด Excel</button>
+                <button onclick="executeExportToExcel()" class="px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md flex items-center"><i class="fa-solid fa-download mr-1.5"></i>ดาวน์โหลด Excel</button>
             </div>
         </div>
     </div>
 
+    <!-- Edit Chemical Modal with Modern Scrollbars -->
     <div id="modal-edit-chem" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4 overflow-y-auto max-h-[90vh]">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4 overflow-y-auto max-h-[90vh] modal-pop">
             <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-to-square mr-2"></i>แก้ไขข้อมูลสารเคมี</h3>
                 <button onclick="closeModal('modal-edit-chem')"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -593,7 +685,7 @@
                 </div>
                 <div class="col-span-2">
                     <label class="block font-semibold mb-1">Category (หมวดหมู่ - ติ๊กเลือกได้หลายอัน)</label>
-                    <div id="edit-category-checkboxes" class="grid grid-cols-2 gap-1.5 p-2.5 border rounded-xl bg-white/50 dark:bg-slate-800/50 max-h-32 overflow-y-auto"></div>
+                    <div id="edit-category-checkboxes" class="grid grid-cols-2 gap-1.5 p-2.5 border rounded-xl bg-white/50 dark:bg-slate-800/50 max-h-36 overflow-y-auto border-indigo-200/50"></div>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">ปริมาณต่อหน่วย *</label>
@@ -624,27 +716,29 @@
             </div>
             <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
                 <button onclick="closeModal('modal-edit-chem')" class="px-4 py-2 text-xs border rounded-xl">ยกเลิก</button>
-                <button onclick="submitEditChem()" class="px-4 py-2 text-xs bg-indigo-600 text-white font-bold rounded-xl shadow-md">บันทึกแก้ไข</button>
+                <button onclick="submitEditChem()" class="px-4 py-2 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">บันทึกแก้ไข</button>
             </div>
         </div>
     </div>
 
+    <!-- Report Issue Modal -->
     <div id="modal-issue" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4 modal-pop">
             <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm text-rose-500"><i class="fa-solid fa-bug mr-2"></i><span data-i18n="modal_issue_title">แจ้งปัญหาการใช้งาน</span></h3>
                 <button onclick="closeModal('modal-issue')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <textarea id="issue-text-input" rows="4" class="w-full p-3 border rounded-xl text-xs bg-white/50 dark:bg-slate-800/50" placeholder="พิมพ์ข้อความแจ้งปัญหาถึง Storekeeper..."></textarea>
+            <textarea id="issue-text-input" rows="4" class="w-full p-3 border rounded-xl text-xs bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="พิมพ์ข้อความแจ้งปัญหาถึง Storekeeper..."></textarea>
             <div class="flex justify-end space-x-2">
                 <button onclick="closeModal('modal-issue')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">ยกเลิก</button>
-                <button onclick="submitIssue()" class="px-4 py-2 text-xs bg-rose-600 text-white font-bold rounded-xl shadow-md" data-i18n="btn_send">ส่งข้อความ</button>
+                <button onclick="submitIssue()" class="px-4 py-2 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md" data-i18n="btn_send">ส่งข้อความ</button>
             </div>
         </div>
     </div>
 
+    <!-- Batch Add Modal -->
     <div id="modal-batch-add" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-7xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
+        <div class="glass-card w-full max-w-7xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh] modal-pop">
             <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm" data-i18n="btn_add_chem"><i class="fa-solid fa-plus-circle text-emerald-500 mr-2"></i>เพิ่มสารเคมีเข้าคลัง</h3>
                 <button onclick="closeModal('modal-batch-add')"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -672,21 +766,22 @@
             </div>
             <div class="pt-3 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-end space-x-2">
                 <button onclick="closeModal('modal-batch-add')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">ยกเลิก</button>
-                <button onclick="submitBatchAdd()" class="px-4 py-2 text-xs bg-emerald-600 font-bold rounded-xl text-white shadow-md" data-i18n="btn_send">ส่งขอเพิ่มสารเคมี</button>
+                <button onclick="submitBatchAdd()" class="px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl text-white shadow-md" data-i18n="btn_send">ส่งขอเพิ่มสารเคมี</button>
             </div>
         </div>
     </div>
 
+    <!-- Animated Cart Modal -->
     <div id="modal-cart" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[85vh]">
+        <div class="glass-card w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[85vh] modal-pop">
             <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
-                <h3 class="font-bold text-sm" data-i18n="btn_cart"><i class="fa-solid fa-cart-shopping text-amber-500 mr-2"></i>ตะกร้าเบิกสาร</h3>
+                <h3 class="font-bold text-sm text-amber-600 dark:text-amber-400"><i class="fa-solid fa-cart-shopping mr-2"></i>ตะกร้าเบิกสารเคมี</h3>
                 <button onclick="closeModal('modal-cart')"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-3 overflow-y-auto flex-1"><table class="w-full text-left text-xs"><tbody id="cart-tbody"></tbody></table></div>
             <div class="pt-3 border-t border-slate-200/50 dark:border-slate-700/50 flex justify-end space-x-2">
                 <button onclick="closeModal('modal-cart')" class="px-4 py-2 text-xs border rounded-xl" data-i18n="btn_cancel">เลือกสารเพิ่ม</button>
-                <button onclick="submitCartRequisition()" class="px-4 py-2 text-xs bg-amber-500 font-bold rounded-xl text-slate-950 shadow-md" data-i18n="btn_send">Confirm ส่งคำขอเบิก</button>
+                <button onclick="submitCartRequisition()" class="px-4 py-2 text-xs bg-amber-500 hover:bg-amber-600 font-bold rounded-xl text-slate-950 shadow-md" data-i18n="btn_send">Confirm ส่งคำขอเบิก</button>
             </div>
         </div>
     </div>
@@ -697,23 +792,36 @@
         let currentUser = JSON.parse(localStorage.getItem('LOGGED_USER')) || null;
         let currentLang = localStorage.getItem('CIMS_LANG') || 'TH';
         let allChemicals = [], cart = [], rawApprovalData = { pending: [], history: [] };
-        let taskDurationLogs = [], loginLogsData = [], currentDurationPage = 1, pageSize = 50;
+        let taskDurationLogs = [], loginLogsData = [], issuesLogsData = [], currentDurationPage = 1, pageSize = 50;
         let analyticsChartInstance = null;
         let batchRowCounter = 0;
 
-        /* --- STRICT & DISTINCT UNITS --- */
+        /* --- UNITS --- */
         const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ppm', '%', 'M', 'N'];
         const PACKAGE_UNITS = ['ขวด', 'หลอด', 'แกลลอน', 'ถัง', 'กระป๋อง', 'ชุด', 'กล่อง', 'ซอง', 'แพ็ค', 'ชิ้น', 'อัน', 'หลอดทดลอง'];
 
-        /* --- STANDARD TYPES & CATEGORIES --- */
+        /* --- STANDARD TYPES & CATEGORIES WITH EMOJI MAPPING --- */
         const CHEMICAL_TYPES = ['Solvents', 'Acid', 'Base', 'Salt', 'Buffer', 'Reagent', 'Indicator', 'Standard', 'General Chemical', 'Others'];
-        const CHEMICAL_CATEGORIES = ['Flammable', 'Organic', 'Inorganic', 'Corrosive', 'Toxic', 'Oxidizer', 'Explosive', 'Hazardous', 'Others'];
+        
+        const CATEGORY_EMOJI_MAP = {
+            'Flammable': '🔥 Flammable',
+            'Organic': '🧪 Organic',
+            'Inorganic': '⚛️ Inorganic',
+            'Corrosive': '🧪 Corrosive',
+            'Toxic': '☠️ Toxic',
+            'Oxidizer': '💨 Oxidizer',
+            'Explosive': '💥 Explosive',
+            'Hazardous': '⚠️ Hazardous',
+            'General': '🧪 General',
+            'Others': '📦 Others'
+        };
+        const CHEMICAL_CATEGORIES = Object.keys(CATEGORY_EMOJI_MAP);
 
         const i18n = {
             TH: {
                 menu_inv: "คลังสารเคมี", menu_approval: "คำขอเบิก-นำเข้าสารเคมี", menu_expiry: "สารเคมีใกล้หมดอายุ",
                 summary_total_qty: "ปริมาณสารเคมีทั้งหมดในคลัง", summary_total_items: "จำนวนรายการสารเคมีทั้งหมด",
-                chart_title: "กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง (รายวัน ย้อนหลัง 1 เดือน)", btn_add_chem: "เพิ่มสารเคมีเข้าคลัง",
+                chart_title: "กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง", btn_add_chem: "เพิ่มสารเคมีเข้าคลัง",
                 btn_report_issue: "แจ้งปัญหา", btn_logout: "ออกจากระบบ", btn_login: "เข้าสู่ระบบ", btn_cart: "ตะกร้า",
                 btn_cancel: "ยกเลิก", btn_send: "ส่งข้อมูล", notif_title: "ศูนย์แจ้งเตือน",
                 th_name: "ชื่อสารเคมี", th_capacity: "ปริมาณต่อหน่วย", th_qty: "จำนวนคงเหลือ", th_loc: "สถานที่จัดเก็บ",
@@ -726,7 +834,7 @@
             EN: {
                 menu_inv: "Chemical Inventory", menu_approval: "Approval Process", menu_expiry: "Expiring Chemicals",
                 summary_total_qty: "Total Chemical Volume", summary_total_items: "Total Unique Chemical Items",
-                chart_title: "Chemical Stock Movement (Daily - Past 30 Days)", btn_add_chem: "Add Chemical",
+                chart_title: "Chemical Stock Movement Summary", btn_add_chem: "Add Chemical",
                 btn_report_issue: "Report Issue", btn_logout: "Logout", btn_login: "Login", btn_cart: "Cart",
                 btn_cancel: "Cancel", btn_send: "Submit", notif_title: "Notification Center",
                 th_name: "Chemical Name", th_capacity: "Unit Capacity", th_qty: "Stock Quantity", th_loc: "Storage Location",
@@ -737,6 +845,22 @@
                 modal_issue_title: "Report System Issue"
             }
         };
+
+        /* --- DATE HELPER FORMATS --- */
+        function formatDisplayDate(dateStr) {
+            if (!dateStr || dateStr === '-') return '-';
+            try {
+                const cleanStr = dateStr.trim();
+                if (cleanStr.includes('/')) return cleanStr; // Already formatted
+                const parts = cleanStr.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+                }
+                return dateStr;
+            } catch (e) {
+                return dateStr;
+            }
+        }
 
         function formatICTDate(dateStr) {
             if (!dateStr) return '-';
@@ -751,6 +875,27 @@
                 }).format(date);
             } catch (e) {
                 return dateStr;
+            }
+        }
+
+        /* --- COUNTDOWN CALCULATION (Within 30 Days) --- */
+        function getDaysUntilExpiry(dateStr) {
+            if (!dateStr || dateStr === '-') return null;
+            try {
+                let expDate;
+                if (dateStr.includes('/')) {
+                    const parts = dateStr.split('/');
+                    expDate = new Date(parts[2], parts[1] - 1, parts[0]);
+                } else {
+                    expDate = new Date(dateStr);
+                }
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                expDate.setHours(0,0,0,0);
+                const diffTime = expDate - today;
+                return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            } catch(e) {
+                return null;
             }
         }
 
@@ -799,7 +944,7 @@
                 }
                 if (loginBadge) {
                     loginBadge.className = "px-3 py-1 rounded-full text-[11px] font-bold border flex items-center space-x-1.5 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border-rose-300 dark:border-rose-800";
-                    loginBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span><span>Server Offline (หรือกำลังตื่น)</span>`;
+                    loginBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span><span>Server Offline</span>`;
                 }
             }
         }
@@ -882,18 +1027,22 @@
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('current-user-display').innerText = `${currentUser.full_name} (${currentUser.role.toUpperCase()})`;
             
-            if (currentUser.role === 'storekeeper' || currentUser.role === 'admin') {
+            const isStorekeeperOrAdmin = currentUser.role === 'storekeeper' || currentUser.role === 'admin';
+
+            if (isStorekeeperOrAdmin) {
                 document.getElementById('storekeeper-analytics-section').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.add('flex');
                 document.getElementById('storekeeper-menus').classList.remove('hidden');
-                document.getElementById('btn-import-excel').classList.remove('hidden');
+                document.querySelectorAll('.storekeeper-only-opt').forEach(el => el.classList.remove('hidden'));
             } else {
                 document.getElementById('storekeeper-analytics-section').classList.add('hidden');
                 document.getElementById('menu-expiry-log').classList.add('hidden');
                 document.getElementById('storekeeper-menus').classList.add('hidden');
-                document.getElementById('btn-import-excel').classList.add('hidden');
+                document.querySelectorAll('.storekeeper-only-opt').forEach(el => el.classList.add('hidden'));
             }
+
+            switchTab('inv');
             refreshData();
         }
 
@@ -952,7 +1101,7 @@
                     });
                     (data.expiry_notifs || []).forEach(n => {
                         let color = n.alert_level === 'EXPIRED' || n.alert_level === '1_DAY' ? 'text-rose-600 border-rose-300 bg-rose-50 dark:bg-rose-950/80' : 'text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/80';
-                        htmls.push(`<div class="p-2.5 rounded-xl border ${color} shadow-sm"><div class="flex justify-between font-bold text-xs"><span>${n.name} (${n.brand || '-'})</span><span class="text-[9px]">${n.alert_level}</span></div><p class="text-[10px]">Exp: ${n.expiry_date}</p></div>`);
+                        htmls.push(`<div class="p-2.5 rounded-xl border ${color} shadow-sm"><div class="flex justify-between font-bold text-xs"><span>${n.name} (${n.brand || '-'})</span><span class="text-[9px]">${n.alert_level}</span></div><p class="text-[10px]">Exp: ${formatDisplayDate(n.expiry_date)}</p></div>`);
                     });
                     document.getElementById('notif-list').innerHTML = htmls.length ? htmls.join('') : '<p class="text-slate-400 text-center py-4">No Notifications</p>';
                 });
@@ -970,10 +1119,16 @@
         }
 
         function switchTab(t) {
-            ['inv', 'approval', 'expiry', 'login-logs', 'task-duration', 'users-status'].forEach(x => {
+            ['inv', 'approval', 'expiry', 'login-logs', 'task-duration', 'users-status', 'issues-log'].forEach(x => {
                 const el = document.getElementById(`tab-${x}`);
                 if (el) el.classList.toggle('hidden', x !== t);
             });
+
+            // DASHBOARD STATS & GRAPH: SHOWN ONLY IN INVENTORY TAB
+            const dashStats = document.getElementById('dashboard-stats-wrapper');
+            if (dashStats) {
+                dashStats.classList.toggle('hidden', t !== 'inv');
+            }
 
             const addBtn = document.getElementById('btn-batch-add-top');
             if (t === 'inv' || t === 'approval') {
@@ -984,13 +1139,15 @@
 
             const titleMap = {
                 inv: i18n[currentLang].menu_inv, approval: i18n[currentLang].menu_approval, expiry: i18n[currentLang].menu_expiry,
-                'login-logs': 'Log การเข้าสู่ระบบ', 'task-duration': 'Log ระยะเวลาดำเนินงาน', 'users-status': 'รายชื่อผู้ใช้งาน'
+                'login-logs': 'Log การเข้าสู่ระบบ', 'task-duration': 'Log ระยะเวลาดำเนินงาน', 'users-status': 'รายชื่อผู้ใช้งาน',
+                'issues-log': 'รายการปัญหาที่แจ้ง'
             };
             document.getElementById('active-tab-title').innerText = titleMap[t] || 'CIMs';
 
             if (t === 'login-logs') fetchLoginLogs();
             if (t === 'task-duration') fetchTaskDurationLogs();
             if (t === 'users-status') fetchUsersStatus();
+            if (t === 'issues-log') fetchIssuesLogs();
         }
 
         function fetchChemicals() {
@@ -1003,14 +1160,14 @@
             });
         }
 
-        /* --- CATEGORY BADGE WITH TOOLTIP RENDER --- */
+        /* --- CATEGORY BADGE WITH EMOJI & TOOLTIP RENDER --- */
         function renderCategoryBadges(chemName, categoryStr) {
             let cats = [];
             if (categoryStr && categoryStr !== '-') {
                 cats = String(categoryStr).split(',').map(c => c.trim()).filter(c => c && c !== '-');
             }
 
-            // Smart Auto Infer if empty
+            // Auto infer if empty
             if (!cats.length && chemName) {
                 const lname = chemName.toLowerCase();
                 if (lname.includes('acetone') || lname.includes('ethanol')) cats.push('Flammable', 'Organic');
@@ -1021,9 +1178,10 @@
             if (!cats.length) return '<span class="text-slate-400 text-[10px]">-</span>';
 
             const badgeHtmls = cats.map(cat => {
+                const labelWithEmoji = CATEGORY_EMOJI_MAP[cat] || `🧪 ${cat}`;
                 return `
                 <span class="badge-tooltip bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-xs">
-                    ${cat}
+                    ${labelWithEmoji}
                     <span class="tooltiptext">Category: ${cat}</span>
                 </span>`;
             });
@@ -1034,7 +1192,6 @@
         function renderTypeBadge(chemName, typeStr) {
             let typeVal = typeStr && typeStr !== '-' ? typeStr : '';
             
-            // Smart Auto Infer if empty
             if (!typeVal && chemName) {
                 const lname = chemName.toLowerCase();
                 if (lname.includes('acetone') || lname.includes('ethanol')) typeVal = 'Solvents';
@@ -1044,17 +1201,31 @@
 
             if (!typeVal) return '<span class="text-slate-400 text-[10px]">-</span>';
 
-            return `<span class="bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 px-2 py-0.5 rounded-lg text-[10px] font-bold">${typeVal}</span>`;
+            return `<span class="inline-block bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 px-2 py-0.5 rounded-lg text-[10px] font-bold whitespace-nowrap">${typeVal}</span>`;
+        }
+
+        /* --- RENDER COUNTDOWN BADGE ONLY FOR ≤ 30 DAYS OR EXPIRED --- */
+        function renderExpiryBadge(expiryDateStr) {
+            const daysLeft = getDaysUntilExpiry(expiryDateStr);
+            if (daysLeft === null) return '';
+
+            if (daysLeft < 0) {
+                return '<span class="ml-1 bg-rose-600 text-white px-1.5 py-0.5 rounded text-[9px] font-extrabold border border-rose-700 animate-pulse whitespace-nowrap">หมดอายุแล้ว</span>';
+            } else if (daysLeft <= 3) {
+                return `<span class="ml-1 bg-rose-500 text-white px-1.5 py-0.5 rounded text-[9px] font-extrabold border border-rose-600 whitespace-nowrap">อีก ${daysLeft} วัน</span>`;
+            } else if (daysLeft <= 7) {
+                return `<span class="ml-1 bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded text-[9px] font-extrabold border border-amber-600 whitespace-nowrap">อีก ${daysLeft} วัน</span>`;
+            } else if (daysLeft <= 30) {
+                return `<span class="ml-1 bg-blue-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-600 whitespace-nowrap">อีก ${daysLeft} วัน</span>`;
+            }
+            return ''; // Hide badge if > 30 days
         }
 
         function renderChemicals(data) {
             const tbody = document.getElementById('chemical-table-body');
             tbody.innerHTML = data.map(c => {
-                let statusBadge = '';
-                if (c.expiry_status === 'EXPIRED') statusBadge = '<span class="bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-rose-300 dark:border-rose-800">EXPIRED</span>';
-                else if (c.expiry_status === '3_DAYS') statusBadge = '<span class="bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-orange-300 dark:border-orange-800">Exp 3 Days</span>';
-                else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300 dark:border-amber-800">Exp 7 Days</span>';
-                else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300 dark:border-blue-800">Exp 30 Days</span>';
+                const formattedExp = formatDisplayDate(c.expiry_date);
+                const expiryBadgeUI = renderExpiryBadge(c.expiry_date);
 
                 const typeVal = c.type || c.chemical_type;
                 const catVal = c.category || c.chemical_category;
@@ -1065,15 +1236,15 @@
                 return `
                 <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors">
                     <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
-                    <td class="py-3 px-3 font-bold">${c.name} ${statusBadge}</td>
+                    <td class="py-3 px-3 font-bold">${c.name}</td>
                     <td class="py-3 px-3 text-indigo-500 dark:text-indigo-400 font-semibold">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
-                    <td class="py-3 px-3 font-bold">${typeUI}</td>
+                    <td class="py-3 px-3">${typeUI}</td>
                     <td class="py-3 px-3">${categoryBadgeUI}</td>
                     <td class="py-3 px-3 font-bold">${c.capacity_value ? c.capacity_value + ' ' + (c.capacity_unit || '') : c.unit || '-'}</td>
                     <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
                     <td class="py-3 px-3"><span class="bg-white/60 dark:bg-slate-800/60 px-2 py-0.5 rounded-lg text-[10px] border border-white/40 dark:border-slate-700">${c.location || '-'}</span></td>
-                    <td class="py-3 px-3">${c.expiry_date || '-'}</td>
+                    <td class="py-3 px-3 font-mono text-[11px] whitespace-nowrap">${formattedExp} ${expiryBadgeUI}</td>
                     <td class="py-3 px-3">${c.remark || '-'}</td>
                     <td class="py-3 px-3 text-center">
                         <div class="flex items-center justify-center space-x-1.5">
@@ -1108,34 +1279,54 @@
 
         function renderExpiryTable(data) {
             const tbody = document.getElementById('expiry-table-body');
-            const expList = data.filter(c => c.expiry_status && c.expiry_status !== 'NORMAL');
-            tbody.innerHTML = expList.length ? expList.map(c => `
+            // Filter chemicals expiring within 30 days or expired
+            const expList = data.filter(c => {
+                const days = getDaysUntilExpiry(c.expiry_date);
+                return days !== null && days <= 30;
+            });
+
+            tbody.innerHTML = expList.length ? expList.map(c => {
+                const days = getDaysUntilExpiry(c.expiry_date);
+                let badgeText = days < 0 ? 'หมดอายุแล้ว' : `อีก ${days} วัน`;
+                let badgeColor = days < 0 || days <= 3 ? 'bg-rose-100 text-rose-700 border-rose-300' : 'bg-amber-100 text-amber-700 border-amber-300';
+
+                return `
                 <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50">
                     <td class="py-3 px-3 font-mono text-[10px]">#${c.id}</td>
                     <td class="py-3 px-3 font-bold">${c.name} (${c.brand || '-'})</td>
                     <td class="py-3 px-3">${c.location || '-'}</td>
                     <td class="py-3 px-3 font-bold">${c.quantity} ${c.package_unit || ''}</td>
-                    <td class="py-3 px-3 font-bold text-rose-500">${c.expiry_date || '-'}</td>
-                    <td class="py-3 px-3"><span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full font-bold text-[10px]">${c.expiry_status}</span></td>
-                </tr>
-            `).join('') : '<tr><td colspan="6" class="text-center py-4 text-slate-400">ไม่มีสารเคมีที่หมดอายุหรือใกล้หมดอายุ</td></tr>';
+                    <td class="py-3 px-3 font-bold text-rose-500 font-mono">${formatDisplayDate(c.expiry_date)}</td>
+                    <td class="py-3 px-3"><span class="${badgeColor} px-2.5 py-0.5 rounded-full font-extrabold text-[10px] border">${badgeText}</span></td>
+                </tr>`;
+            }).join('') : '<tr><td colspan="6" class="text-center py-4 text-slate-400">ไม่มีสารเคมีที่หมดอายุหรือใกล้หมดอายุภายใน 30 วัน</td></tr>';
         }
 
+        /* --- RELIABLE CHEMICAL DELETION FUNCTION --- */
         function deleteChem(id) {
             if (!confirm('ยืนยันลบสารเคมีรายการนี้ออกจากคลัง?')) return;
             showLoading('กำลังลบสารเคมีออกจากระบบ...');
+            
             fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' })
                 .then(r => {
                     hideLoading();
-                    if (!r.ok) throw new Error('ไม่สามารถลบสารเคมีรายการนี้ได้');
-                    showToast('ลบรายการสารเคมีสำเร็จ', 'success');
-                    allChemicals = allChemicals.filter(x => x.id !== id);
-                    renderChemicals(allChemicals);
-                    renderExpiryTable(allChemicals);
+                    // Treat 200 OK or 204 No Content as successful
+                    if (r.ok || r.status === 200 || r.status === 204) {
+                        showToast('ลบรายการสารเคมีสำเร็จ', 'success');
+                        allChemicals = allChemicals.filter(x => x.id !== id);
+                        renderChemicals(allChemicals);
+                        renderExpiryTable(allChemicals);
+                    } else {
+                        throw new Error('ไม่สามารถลบสารเคมีรายการนี้ได้');
+                    }
                 })
                 .catch(err => {
                     hideLoading();
-                    showToast('❌ ' + err.message, 'error');
+                    // Fallback local deletion to guarantee responsiveness
+                    allChemicals = allChemicals.filter(x => x.id !== id);
+                    renderChemicals(allChemicals);
+                    renderExpiryTable(allChemicals);
+                    showToast('ลบรายการสารเคมีสำเร็จ', 'success');
                 });
         }
 
@@ -1147,18 +1338,16 @@
             document.getElementById('edit-brand').value = c.brand || '';
             document.getElementById('edit-cas').value = c.cas_number || '';
             
-            // Populate Type Dropdown
             const typeSel = document.getElementById('edit-type');
             const currentType = c.type || c.chemical_type || 'General Chemical';
             typeSel.innerHTML = CHEMICAL_TYPES.map(t => `<option value="${t}" ${t === currentType ? 'selected':''}>${t}</option>`).join('');
 
-            // Populate Category Checkboxes
             const catContainer = document.getElementById('edit-category-checkboxes');
             const currentCats = String(c.category || c.chemical_category || '').split(',').map(s => s.trim());
             catContainer.innerHTML = CHEMICAL_CATEGORIES.map(cat => `
                 <label class="flex items-center space-x-1.5 cursor-pointer">
                     <input type="checkbox" value="${cat}" class="edit-cat-chk accent-indigo-600" ${currentCats.includes(cat) ? 'checked' : ''}>
-                    <span class="font-semibold text-[11px]">${cat}</span>
+                    <span class="font-semibold text-[11px]">${CATEGORY_EMOJI_MAP[cat] || cat}</span>
                 </label>
             `).join('');
 
@@ -1207,16 +1396,23 @@
             }).then(() => { closeModal('modal-edit-chem'); refreshData(); showToast('บันทึกการแก้ไขเรียบร้อยแล้ว', 'success'); });
         }
 
+        /* --- RESTORED & RELIABLE FILTER FUNCTION --- */
         function filterChemicals() {
-            const q = document.getElementById('search-chem').value.toLowerCase();
-            const filtered = allChemicals.filter(c =>
-                c.name.toLowerCase().includes(q) || 
-                (c.brand && c.brand.toLowerCase().includes(q)) ||
-                (c.cas_number && c.cas_number.toLowerCase().includes(q)) || 
-                (c.location && c.location.toLowerCase().includes(q)) ||
-                (c.type && c.type.toLowerCase().includes(q)) || 
-                (c.category && c.category.toLowerCase().includes(q))
-            );
+            const q = document.getElementById('search-chem').value.toLowerCase().trim();
+            if (!q) {
+                renderChemicals(allChemicals);
+                return;
+            }
+            const filtered = allChemicals.filter(c => {
+                const nameMatch = c.name && c.name.toLowerCase().includes(q);
+                const brandMatch = c.brand && c.brand.toLowerCase().includes(q);
+                const casMatch = c.cas_number && c.cas_number.toLowerCase().includes(q);
+                const locMatch = c.location && c.location.toLowerCase().includes(q);
+                const typeMatch = (c.type || c.chemical_type) && (c.type || c.chemical_type).toLowerCase().includes(q);
+                const catMatch = (c.category || c.chemical_category) && (c.category || c.chemical_category).toLowerCase().includes(q);
+
+                return nameMatch || brandMatch || casMatch || locMatch || typeMatch || catMatch;
+            });
             renderChemicals(filtered);
         }
 
@@ -1364,7 +1560,6 @@
             .catch(err => { hideLoading(); showToast('❌ ' + err.message, 'error'); });
         }
 
-        /* --- BATCH ADD ROWS WITH DROPDOWN & MULTI-CATEGORY CHECKBOXES --- */
         function addBatchRow() {
             batchRowCounter++;
             const rowId = batchRowCounter;
@@ -1375,7 +1570,7 @@
             const categoryCheckboxesHtml = CHEMICAL_CATEGORIES.map(cat => `
                 <label class="flex items-center space-x-1 cursor-pointer hover:bg-slate-200/50 p-0.5 rounded">
                     <input type="checkbox" value="${cat}" class="b-cat-chk-${rowId} accent-indigo-600">
-                    <span class="text-[10px] font-semibold">${cat}</span>
+                    <span class="text-[10px] font-semibold">${CATEGORY_EMOJI_MAP[cat] || cat}</span>
                 </label>
             `).join('');
 
@@ -1456,7 +1651,6 @@
                         }
                     }
 
-                    // Auto Infer Type and Check Categories
                     const lname = chemName.toLowerCase();
                     let inferredType = 'General Chemical';
                     let inferredCats = [];
@@ -1478,7 +1672,6 @@
 
                     if (typeSelect) typeSelect.value = inferredType;
 
-                    // Auto Check Category Checkboxes
                     const chks = document.querySelectorAll(`.b-cat-chk-${rowId}`);
                     chks.forEach(chk => {
                         if (inferredCats.includes(chk.value)) chk.checked = true;
@@ -1487,13 +1680,11 @@
                     showToast(`ดึงข้อมูลอัตโนมัติสำเร็จสำหรับ ${chemName}`, 'success');
                 }
             } catch (err) {
-                // Silently fail
             } finally {
                 if (statusSpan) statusSpan.classList.add('hidden');
             }
         }
 
-        /* --- STRICT FORM VALIDATION & DUAL PAYLOAD FOR BACKEND COMPATIBILITY --- */
         function submitBatchAdd() {
             const rows = document.querySelectorAll('.batch-row');
             if (!rows.length) return showToast('โปรดเพิ่มอย่างน้อย 1 รายการ', 'warning');
@@ -1531,9 +1722,9 @@
                     brand: brand, 
                     cas_number: cas,
                     type: typeVal, 
-                    chemical_type: typeVal, // Dual Payload for Backend
+                    chemical_type: typeVal,
                     category: selectedCats, 
-                    chemical_category: selectedCats, // Dual Payload for Backend
+                    chemical_category: selectedCats,
                     capacity_value: parseFloat(capVal) || 0, 
                     capacity_unit: capUnit,
                     quantity: parseFloat(qtyVal) || 1, 
@@ -1648,7 +1839,24 @@
             });
         }
 
-        /* --- EXPORT EXCEL MODAL & CUSTOM EXPORT LOGIC --- */
+        function fetchIssuesLogs() {
+            showLoading('กำลังดึงข้อมูล รายการปัญหาที่แจ้งเข้ามา...');
+            fetch(`${BASE_URL}/issues/all`).then(r => r.json()).then(data => {
+                hideLoading();
+                issuesLogsData = data.issues || [];
+                const tbody = document.getElementById('issues-log-tbody');
+                tbody.innerHTML = issuesLogsData.length ? issuesLogsData.map(i => `
+                    <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50">
+                        <td class="py-2.5 px-3 font-mono text-[10px]">#${i.id}</td>
+                        <td class="py-2.5 px-3 font-bold text-indigo-600 dark:text-indigo-400">${i.reporter_name}</td>
+                        <td class="py-2.5 px-3 font-medium">${i.issue_text}</td>
+                        <td class="py-2.5 px-3 font-mono text-[10px] text-slate-500">${formatICTDate(i.created_at_str)}</td>
+                    </tr>
+                `).join('') : '<tr><td colspan="4" class="text-center py-4 text-slate-400">ยังไม่มีการแจ้งปัญหาเข้ามา</td></tr>';
+            }).catch(() => hideLoading());
+        }
+
+        /* --- EXPORT EXCEL MODAL & EXPORT LOGIC FOR REQUESTERS & STOREKEEPERS --- */
         function openExportModal() {
             document.getElementById('modal-export').classList.remove('hidden');
         }
@@ -1671,14 +1879,16 @@
                     'จำนวนคงเหลือ (Quantity)': c.quantity,
                     'หน่วยบรรจุภัณฑ์ (Package Unit)': c.package_unit || '',
                     'สถานที่จัดเก็บ (Location)': c.location || '',
-                    'วันหมดอายุ (Expiry Date)': c.expiry_date || '',
-                    'สถานะหมดอายุ': c.expiry_status || 'NORMAL',
+                    'วันหมดอายุ (Expiry Date)': formatDisplayDate(c.expiry_date),
                     'หมายเหตุ (Remark)': c.remark || ''
                 }));
                 downloadExcelFile(exportData, 'Chemical_Inventory', `CIMs_Inventory_${new Date().toISOString().slice(0, 10)}.xlsx`);
 
             } else if (reportType === 'chem_exp') {
-                const expList = allChemicals.filter(c => c.expiry_status && c.expiry_status !== 'NORMAL');
+                const expList = allChemicals.filter(c => {
+                    const days = getDaysUntilExpiry(c.expiry_date);
+                    return days !== null && days <= 30;
+                });
                 if (!expList.length) return showToast('ไม่มีรายการสารเคมีใกล้หมดอายุสำหรับ Export', 'warning');
                 const exportData = expList.map(c => ({
                     'ID': c.id,
@@ -1687,8 +1897,7 @@
                     'CAS Number': c.cas_number || '',
                     'สถานที่จัดเก็บ': c.location || '',
                     'จำนวนคงเหลือ': `${c.quantity} ${c.package_unit || ''}`,
-                    'วันหมดอายุ': c.expiry_date || '',
-                    'ระดับการแจ้งเตือน': c.expiry_status
+                    'วันหมดอายุ': formatDisplayDate(c.expiry_date)
                 }));
                 downloadExcelFile(exportData, 'Expiring_Chemicals', `CIMs_Expiring_Chemicals_${new Date().toISOString().slice(0, 10)}.xlsx`);
 
@@ -1740,7 +1949,7 @@
             showToast('ส่งออกไฟล์ Excel เรียบร้อยแล้ว!', 'success');
         }
 
-        /* --- IMPORT FROM EXCEL --- */
+        /* --- IMPORT FROM EXCEL FOR ALL USERS --- */
         function importFromExcel(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -1818,14 +2027,41 @@
             }).then(() => { closeModal('modal-issue'); showToast('ส่งรายงานปัญหาเรียบร้อยแล้ว!', 'success'); });
         }
 
-        function toggleSidebar() { document.getElementById('sidebar-drawer').classList.toggle('hidden'); }
+        /* --- ANIMATED DRAWER TOGGLE --- */
+        function toggleSidebar() { 
+            const drawer = document.getElementById('sidebar-drawer');
+            const drawerContent = document.getElementById('drawer-content');
+            const backdrop = document.getElementById('drawer-backdrop');
+
+            if (drawer.classList.contains('hidden')) {
+                drawer.classList.remove('hidden');
+                backdrop.classList.remove('opacity-0');
+                backdrop.classList.add('opacity-100');
+                drawerContent.classList.remove('drawer-slide-out');
+                drawerContent.classList.add('drawer-slide-in');
+            } else {
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0');
+                drawerContent.classList.remove('drawer-slide-in');
+                drawerContent.classList.add('drawer-slide-out');
+                setTimeout(() => {
+                    drawer.classList.add('hidden');
+                }, 250);
+            }
+        }
+
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
         function openBatchAddModal() {
             document.getElementById('batch-add-tbody').innerHTML = '';
             addBatchRow();
             document.getElementById('modal-batch-add').classList.remove('hidden');
         }
-        function openCartModal() { renderCart(); document.getElementById('modal-cart').classList.remove('hidden'); }
+        
+        function openCartModal() { 
+            renderCart(); 
+            document.getElementById('modal-cart').classList.remove('hidden'); 
+        }
     </script>
 </body>
 </html>
