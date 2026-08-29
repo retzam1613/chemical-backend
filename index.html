@@ -35,7 +35,6 @@
             background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);
             background-attachment: fixed;
         }
-        /* Liquid Glass FX */
         .glass-card {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(20px);
@@ -62,7 +61,6 @@
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        /* Solid Dropdown Box to prevent text overlap */
         .dropdown-card {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(25px);
@@ -77,7 +75,6 @@
             border: 1px solid rgba(51, 65, 85, 0.8);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
         }
-        /* Fly Animation for Cart */
         .flying-item {
             position: fixed;
             z-index: 9999;
@@ -101,18 +98,15 @@
 </head>
 <body class="text-slate-800 dark:text-slate-100 min-h-screen flex flex-col antialiased relative selection:bg-indigo-500 selection:text-white">
 
-    <!-- VERSION BADGE (BOTTOM RIGHT) -->
     <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
         <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
             <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>CIMs v2.4.1 (Fixed Layout)</span>
+            <span>CIMs v2.5.0 (Auto CAS Fetch)</span>
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-2 max-w-sm w-full"></div>
 
-    <!-- LOADING OVERLAY -->
     <div id="loading-overlay" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex flex-col items-center justify-center text-white hidden">
         <div class="glass-card p-8 rounded-3xl flex flex-col items-center border border-white/20">
             <i class="fa-solid fa-flask-vial animate-bounce text-5xl text-indigo-400 mb-4"></i>
@@ -120,7 +114,6 @@
         </div>
     </div>
 
-    <!-- SIDEBAR DRAWER -->
     <div id="sidebar-drawer" class="fixed inset-0 z-[120] flex hidden">
         <div onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs"></div>
         <div class="relative w-72 max-w-[80%] glass-card h-full shadow-2xl flex flex-col border-r z-10">
@@ -177,7 +170,6 @@
         </div>
     </div>
 
-    <!-- AUTH SECTION -->
     <div id="auth-section" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-xl">
         <div class="glass-card w-full max-w-md p-8 rounded-3xl shadow-2xl space-y-6 border border-white/50 dark:border-white/10">
             <div class="text-center space-y-3">
@@ -237,7 +229,6 @@
         </div>
     </div>
 
-    <!-- MAIN APP -->
     <div id="app-content" class="flex-1 flex flex-col hidden">
         <header class="glass-nav sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center gap-2">
@@ -269,14 +260,12 @@
                     <button onclick="refreshData()" class="p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 text-indigo-600 dark:text-indigo-400 border border-white/40 dark:border-slate-700"><i class="fa-solid fa-rotate-right text-xs"></i></button>
                     <button onclick="toggleTheme()" class="p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 border border-white/40 dark:border-slate-700"><i id="theme-icon" class="fa-solid fa-moon text-xs"></i></button>
                     
-                    <!-- NOTIFICATION CONTAINER WITH HIGH Z-INDEX & OPAQUE CARD -->
                     <div class="relative z-[110]">
                         <button onclick="toggleNotifs()" class="p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 relative border border-white/40 dark:border-slate-700">
                             <i class="fa-solid fa-bell text-xs"></i>
                             <span id="notif-badge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center animate-pulse hidden">!</span>
                         </button>
                         
-                        <!-- FIXED SOLID BACKGROUND DROPDOWN -->
                         <div id="notif-dropdown" class="fixed inset-x-4 top-16 md:absolute md:inset-auto md:right-0 md:top-10 md:w-80 dropdown-card rounded-2xl p-4 z-[110] hidden border">
                             <div class="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-700 mb-3">
                                 <h4 class="font-bold text-xs text-slate-800 dark:text-slate-100" data-i18n="notif_title">ศูนย์แจ้งเตือน</h4>
@@ -300,7 +289,6 @@
         </header>
 
         <main class="max-w-7xl mx-auto px-4 py-4 flex-1 w-full space-y-4">
-            <!-- SUMMARY CARDS -->
             <section class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div class="bg-gradient-to-r from-indigo-600/90 to-blue-600/90 backdrop-blur-md text-white p-4 rounded-2xl shadow-lg border border-white/20 flex justify-between items-center">
                     <div>
@@ -318,7 +306,6 @@
                 </div>
             </section>
 
-            <!-- LINE CHART -->
             <section id="storekeeper-analytics-section" class="glass-card rounded-2xl p-4 hidden space-y-3">
                 <h3 class="font-bold text-xs flex items-center justify-between">
                     <span><i class="fa-solid fa-chart-line text-indigo-500 mr-1.5"></i><span data-i18n="chart_title">กราฟสรุปปริมาณการนำสารเข้า-ออกคลัง (รายวัน ย้อนหลัง 1 เดือน)</span></span>
@@ -326,7 +313,6 @@
                 <div class="w-full h-48 md:h-60 relative"><canvas id="analyticsChart"></canvas></div>
             </section>
 
-            <!-- ACTION BAR -->
             <div class="flex justify-between items-center glass-card p-2.5 rounded-2xl">
                 <span id="active-tab-title" class="font-bold text-xs px-2" data-i18n="menu_inv">คลังสารเคมี</span>
                 
@@ -335,7 +321,6 @@
                 </button>
             </div>
 
-            <!-- TAB 1: INVENTORY TABLE -->
             <section id="tab-inv" class="space-y-3">
                 <input type="text" id="search-chem" oninput="filterChemicals()" placeholder="🔍 ค้นหาด้วยชื่อสารเคมี, Brand, CAS Number, Location..." class="w-full px-4 py-2.5 rounded-2xl text-xs glass-card border focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <div class="glass-card rounded-2xl overflow-hidden shadow-sm">
@@ -352,7 +337,6 @@
                 </div>
             </section>
 
-            <!-- TAB 2: MERGED APPROVAL & HISTORY PROCESS -->
             <section id="tab-approval" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4 space-y-4">
                     <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-200/50 dark:border-slate-800/50 pb-3">
@@ -370,7 +354,6 @@
                         </div>
                     </div>
 
-                    <!-- FIXED PENDING TABLE HEADER OVERLAY -->
                     <div id="sub-tab-pending" class="overflow-x-auto max-h-[500px] overflow-y-auto">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm backdrop-blur-md">
@@ -382,7 +365,6 @@
                         </table>
                     </div>
 
-                    <!-- FIXED HISTORY TABLE HEADER OVERLAY -->
                     <div id="sub-tab-history" class="overflow-x-auto max-h-[500px] overflow-y-auto hidden">
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm backdrop-blur-md">
@@ -396,7 +378,6 @@
                 </div>
             </section>
 
-            <!-- TAB 3: EXPIRY LOG -->
             <section id="tab-expiry" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4">
                     <h3 class="font-bold text-xs text-rose-500 mb-3"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i><span data-i18n="menu_expiry">สารเคมีใกล้หมดอายุ</span></h3>
@@ -413,7 +394,6 @@
                 </div>
             </section>
 
-            <!-- TAB 4: STOREKEEPER - LOGIN LOGS -->
             <section id="tab-login-logs" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4">
                     <h3 class="font-bold text-xs text-indigo-600 dark:text-indigo-400 mb-3"><i class="fa-solid fa-user-shield mr-1.5"></i>Log การเข้าสู่ระบบ</h3>
@@ -428,7 +408,6 @@
                 </div>
             </section>
 
-            <!-- TAB 5: STOREKEEPER - TASK DURATION LOGS WITH PAGINATION -->
             <section id="tab-task-duration" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4 space-y-3">
                     <div class="flex justify-between items-center">
@@ -455,7 +434,6 @@
                 </div>
             </section>
 
-            <!-- TAB 6: STOREKEEPER - USERS STATUS -->
             <section id="tab-users-status" class="space-y-3 hidden">
                 <div class="glass-card rounded-2xl p-4">
                     <h3 class="font-bold text-xs text-purple-600 dark:text-purple-400 mb-3"><i class="fa-solid fa-users mr-1.5"></i>รายชื่อผู้ใช้งาน</h3>
@@ -474,7 +452,6 @@
         </main>
     </div>
 
-    <!-- EDIT CHEMICAL MODAL -->
     <div id="modal-edit-chem" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
         <div class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4">
             <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
@@ -529,7 +506,6 @@
         </div>
     </div>
 
-    <!-- ISSUE REPORT MODAL -->
     <div id="modal-issue" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
         <div class="glass-card w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4">
             <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
@@ -544,7 +520,6 @@
         </div>
     </div>
 
-    <!-- BATCH ADD MODAL -->
     <div id="modal-batch-add" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
         <div class="glass-card w-full max-w-5xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
@@ -555,7 +530,7 @@
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-200/50 dark:bg-slate-800/80 uppercase font-semibold">
                         <tr>
-                            <th class="p-2">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No.</th><th class="p-2">ปริมาณ/หน่วย *</th><th class="p-2">จำนวน *</th><th class="p-2">สถานที่จัดเก็บ *</th><th class="p-2">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
+                            <th class="p-2">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No. (Auto)</th><th class="p-2">ปริมาณ/หน่วย *</th><th class="p-2">จำนวน *</th><th class="p-2">สถานที่จัดเก็บ *</th><th class="p-2">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
                         </tr>
                     </thead>
                     <tbody id="batch-add-tbody"></tbody>
@@ -569,7 +544,6 @@
         </div>
     </div>
 
-    <!-- CART MODAL -->
     <div id="modal-cart" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
         <div class="glass-card w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[85vh]">
             <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
@@ -592,6 +566,7 @@
         let allChemicals = [], cart = [], rawApprovalData = { pending: [], history: [] };
         let taskDurationLogs = [], currentDurationPage = 1, pageSize = 50;
         let analyticsChartInstance = null;
+        let batchRowCounter = 0;
 
         const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ขวด', 'หลอด', 'แกลลอน', 'ปอนด์'];
         const PACKAGE_UNITS = ['ขวด', 'แกลลอน', 'กล่อง', 'ถัง', 'แพ็ค', 'หลอด', 'กระป๋อง'];
@@ -1132,14 +1107,20 @@
             .catch(err => { hideLoading(); showToast('❌ ' + err.message, 'error'); });
         }
 
+        /* --- AUTO FETCH CAS NUMBER FROM PUBCHEM API --- */
         function addBatchRow() {
+            batchRowCounter++;
+            const rowId = batchRowCounter;
             const tbody = document.getElementById('batch-add-tbody');
             const row = document.createElement('tr');
             row.className = 'border-b border-slate-200/50 dark:border-slate-800/50 batch-row';
             row.innerHTML = `
-                <td class="p-1"><input type="text" required placeholder="ชื่อสาร..." class="w-full p-1 border rounded text-xs b-name bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1">
+                    <input type="text" required id="b-name-${rowId}" onblur="fetchCasNumber(${rowId})" placeholder="เช่น Ethanol..." class="w-full p-1 border rounded text-xs b-name bg-white/50 dark:bg-slate-800/50">
+                    <span id="cas-status-${rowId}" class="text-[9px] text-indigo-500 font-bold hidden">🔍 กำลังหา CAS...</span>
+                </td>
                 <td class="p-1"><input type="text" placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand bg-white/50 dark:bg-slate-800/50"></td>
-                <td class="p-1"><input type="text" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><input type="text" id="b-cas-${rowId}" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas bg-white/50 dark:bg-slate-800/50 font-mono"></td>
                 <td class="p-1">
                     <div class="flex space-x-1">
                         <input type="number" required placeholder="100" class="w-16 p-1 border rounded text-xs b-cap-val bg-white/50 dark:bg-slate-800/50">
@@ -1158,6 +1139,51 @@
                 <td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></td>
             `;
             tbody.appendChild(row);
+        }
+
+        async function fetchCasNumber(rowId) {
+            const nameInput = document.getElementById(`b-name-${rowId}`);
+            const casInput = document.getElementById(`b-cas-${rowId}`);
+            const statusSpan = document.getElementById(`cas-status-${rowId}`);
+
+            if (!nameInput || !nameInput.value.trim()) return;
+            const chemName = nameInput.value.trim();
+
+            // Skip if CAS already filled manually
+            if (casInput.value.trim() !== '') return;
+
+            if (statusSpan) statusSpan.classList.remove('hidden');
+
+            try {
+                // Query PubChem API for Compound CID
+                const response = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(chemName)}/property/IUPACName,Title/JSON`);
+                if (!response.ok) throw new Error('Not found');
+                const data = await response.json();
+                
+                if (data.PropertyTable && data.PropertyTable.Properties && data.PropertyTable.Properties.length > 0) {
+                    const cid = data.PropertyTable.Properties[0].CID;
+                    
+                    // Fetch Synonyms/CAS Number from CID
+                    const synRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/synonyms/JSON`);
+                    const synData = await synRes.json();
+                    
+                    if (synData.InformationList && synData.InformationList.Information && synData.InformationList.Information[0].Synonym) {
+                        const synonyms = synData.InformationList.Information[0].Synonym;
+                        // Regex to match CAS Registry Number format (e.g. 64-17-5, 67-64-1)
+                        const casRegex = /^[0-9]{2,7}-[0-9]{2}-[0-9]$/;
+                        const foundCas = synonyms.find(syn => casRegex.test(syn.trim()));
+
+                        if (foundCas) {
+                            casInput.value = foundCas.trim();
+                            showToast(`พบเลข CAS: ${foundCas} สำหรับ ${chemName}`, 'success');
+                        }
+                    }
+                }
+            } catch (err) {
+                // Silently fail if not found so user can input manually
+            } finally {
+                if (statusSpan) statusSpan.classList.add('hidden');
+            }
         }
 
         function submitBatchAdd() {
