@@ -130,7 +130,7 @@
     <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
         <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
             <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>CIMs v2.7.0 (Enhanced Type, Multi-Category & Excel)</span>
+            <span>CIMs v2.8.0 (Separated Type/Cat, Validation & Custom Export)</span>
         </div>
     </div>
 
@@ -354,11 +354,11 @@
                 <span id="active-tab-title" class="font-bold text-xs px-2" data-i18n="menu_inv">คลังสารเคมี</span>
                 
                 <div class="flex items-center space-x-2">
-                    <!-- Excel Export Button -->
-                    <button onclick="exportToExcel()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
+                    <!-- Export Modal Button -->
+                    <button onclick="openExportModal()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all active:scale-95">
                         <i class="fa-solid fa-file-excel mr-1.5"></i><span>Export Excel</span>
                     </button>
-                    <!-- Excel Import Button (Storekeeper/Admin only) -->
+                    <!-- Import Button -->
                     <label id="btn-import-excel" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center shadow-md transition-all cursor-pointer active:scale-95 hidden">
                         <i class="fa-solid fa-file-import mr-1.5"></i><span>Import Excel</span>
                         <input type="file" accept=".xlsx, .xls, .csv" onchange="importFromExcel(event)" class="hidden">
@@ -376,7 +376,18 @@
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 backdrop-blur-md text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS No.</th><th class="py-3 px-3">Type & Category</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
+                                    <th class="py-3 px-3">ID</th>
+                                    <th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th>
+                                    <th class="py-3 px-3">BRAND</th>
+                                    <th class="py-3 px-3">CAS NO.</th>
+                                    <th class="py-3 px-3">TYPE</th>
+                                    <th class="py-3 px-3">CATEGORY</th>
+                                    <th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th>
+                                    <th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th>
+                                    <th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th>
+                                    <th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th>
+                                    <th class="py-3 px-3">REMARK</th>
+                                    <th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
                             </thead>
                             <tbody id="chemical-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -500,6 +511,29 @@
         </main>
     </div>
 
+    <!-- Modal Export Excel Options -->
+    <div id="modal-export" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
+        <div class="glass-card w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
+                <h3 class="font-bold text-sm text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-file-excel mr-2"></i>เลือกรายงานที่ต้องการ Export</h3>
+                <button onclick="closeModal('modal-export')"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="space-y-3">
+                <label class="block text-xs font-semibold mb-1">ประเภทรายงาน (Report Type)</label>
+                <select id="export-report-type" class="w-full p-2.5 border rounded-xl bg-white/50 dark:bg-slate-800/50 font-bold text-xs">
+                    <option value="chem_inv">🧪 รายการสารเคมีทั้งหมดในคลัง (Chemical Inventory)</option>
+                    <option value="chem_exp">⚠️ รายการสารเคมีใกล้หมดอายุ (Expiring Chemicals)</option>
+                    <option value="login_logs">👤 Log การเข้าสู่ระบบ (Login Logs)</option>
+                    <option value="task_logs">⏱️ Log ระยะเวลาและประวัติการดำเนินงาน (Task Duration Logs)</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200/50 dark:border-slate-700/50">
+                <button onclick="closeModal('modal-export')" class="px-4 py-2 text-xs border rounded-xl">ยกเลิก</button>
+                <button onclick="executeExportToExcel()" class="px-4 py-2 text-xs bg-emerald-600 text-white font-bold rounded-xl shadow-md flex items-center"><i class="fa-solid fa-download mr-1.5"></i>ดาวน์โหลด Excel</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-edit-chem" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
         <div class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4 overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
@@ -586,7 +620,17 @@
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-200/50 dark:bg-slate-800/80 uppercase font-semibold">
                         <tr>
-                            <th class="p-2 min-w-[140px]">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No.</th><th class="p-2 min-w-[120px]">Type</th><th class="p-2 min-w-[160px]">Category</th><th class="p-2 min-w-[130px]">ปริมาณ/หน่วย *</th><th class="p-2 min-w-[120px]">จำนวน *</th><th class="p-2 min-w-[120px]">สถานที่จัดเก็บ *</th><th class="p-2 min-w-[110px]">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
+                            <th class="p-2 min-w-[140px]">ชื่อสารเคมี *</th>
+                            <th class="p-2 min-w-[100px]">Brand *</th>
+                            <th class="p-2 min-w-[100px]">CAS No. *</th>
+                            <th class="p-2 min-w-[120px]">Type *</th>
+                            <th class="p-2 min-w-[160px]">Category *</th>
+                            <th class="p-2 min-w-[130px]">ปริมาณ/หน่วย *</th>
+                            <th class="p-2 min-w-[120px]">จำนวน *</th>
+                            <th class="p-2 min-w-[120px]">สถานที่จัดเก็บ *</th>
+                            <th class="p-2 min-w-[110px]">วันหมดอายุ *</th>
+                            <th class="p-2 min-w-[100px]">Remark</th>
+                            <th class="p-2 text-center">ลบ</th>
                         </tr>
                     </thead>
                     <tbody id="batch-add-tbody"></tbody>
@@ -620,7 +664,7 @@
         let currentUser = JSON.parse(localStorage.getItem('LOGGED_USER')) || null;
         let currentLang = localStorage.getItem('CIMS_LANG') || 'TH';
         let allChemicals = [], cart = [], rawApprovalData = { pending: [], history: [] };
-        let taskDurationLogs = [], currentDurationPage = 1, pageSize = 50;
+        let taskDurationLogs = [], loginLogsData = [], currentDurationPage = 1, pageSize = 50;
         let analyticsChartInstance = null;
         let batchRowCounter = 0;
 
@@ -854,9 +898,7 @@
                         plugins: {
                             legend: {
                                 position: 'top',
-                                labels: {
-                                    font: { family: 'Sarabun', size: 11, weight: 'bold' }
-                                }
+                                labels: { font: { family: 'Sarabun', size: 11, weight: 'bold' } }
                             }
                         }
                     }
@@ -928,22 +970,21 @@
             });
         }
 
-        /* --- RELIABLE BADGE RENDER FOR TYPE & CATEGORY --- */
-        function renderTypeAndCategoryBadges(item) {
-            const typeVal = item.type || item.chemical_type || '';
-            const categoryVal = item.category || item.chemical_category || '';
-            
-            let badges = [];
-            if (typeVal) {
-                badges.push(`<span class="badge-tooltip bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Type: ${typeVal}<span class="tooltiptext">Type: ${typeVal}</span></span>`);
-            }
-            if (categoryVal) {
-                const cats = String(categoryVal).split(',').map(c => c.trim()).filter(c => c);
-                cats.forEach(c => {
-                    badges.push(`<span class="badge-tooltip bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Cat: ${c}<span class="tooltiptext">Category: ${c}</span></span>`);
-                });
-            }
-            return badges.length ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : '<span class="text-slate-400 text-[10px]">-</span>';
+        /* --- CATEGORY BADGE WITH TOOLTIP RENDER --- */
+        function renderCategoryBadges(categoryStr) {
+            if (!categoryStr) return '<span class="text-slate-400 text-[10px]">-</span>';
+            const cats = String(categoryStr).split(',').map(c => c.trim()).filter(c => c);
+            if (!cats.length) return '<span class="text-slate-400 text-[10px]">-</span>';
+
+            const badgeHtmls = cats.map(cat => {
+                return `
+                <span class="badge-tooltip bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800 px-2 py-0.5 rounded-lg text-[10px] font-bold shadow-xs">
+                    ${cat}
+                    <span class="tooltiptext">Category: ${cat}</span>
+                </span>`;
+            });
+
+            return `<div class="flex flex-wrap gap-1">${badgeHtmls.join('')}</div>`;
         }
 
         function renderChemicals(data) {
@@ -955,7 +996,9 @@
                 else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300 dark:border-amber-800">Exp 7 Days</span>';
                 else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300 dark:border-blue-800">Exp 30 Days</span>';
 
-                const typeAndCatUI = renderTypeAndCategoryBadges(c);
+                const typeVal = c.type || c.chemical_type || '-';
+                const catVal = c.category || c.chemical_category || '';
+                const categoryBadgeUI = renderCategoryBadges(catVal);
 
                 return `
                 <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors">
@@ -963,7 +1006,8 @@
                     <td class="py-3 px-3 font-bold">${c.name} ${statusBadge}</td>
                     <td class="py-3 px-3 text-indigo-500 dark:text-indigo-400 font-semibold">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
-                    <td class="py-3 px-3">${typeAndCatUI}</td>
+                    <td class="py-3 px-3 font-bold text-indigo-600 dark:text-indigo-400"><span class="bg-indigo-100 dark:bg-indigo-950/80 px-2 py-0.5 rounded-lg border border-indigo-300 text-[10px]">${typeVal}</span></td>
+                    <td class="py-3 px-3">${categoryBadgeUI}</td>
                     <td class="py-3 px-3 font-bold">${c.capacity_value ? c.capacity_value + ' ' + (c.capacity_unit || '') : c.unit || '-'}</td>
                     <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
                     <td class="py-3 px-3"><span class="bg-white/60 dark:bg-slate-800/60 px-2 py-0.5 rounded-lg text-[10px] border border-white/40 dark:border-slate-700">${c.location || '-'}</span></td>
@@ -1015,9 +1059,24 @@
             `).join('') : '<tr><td colspan="6" class="text-center py-4 text-slate-400">ไม่มีสารเคมีที่หมดอายุหรือใกล้หมดอายุ</td></tr>';
         }
 
+        /* --- FIX DELETE CHEMICAL FUNCTION & IMMEDIATE UI UPDATE --- */
         function deleteChem(id) {
             if (!confirm('ยืนยันลบสารเคมีรายการนี้ออกจากคลัง?')) return;
-            fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' }).then(() => fetchChemicals());
+            showLoading('กำลังลบสารเคมีออกจากระบบ...');
+            fetch(`${BASE_URL}/chemicals/${id}`, { method: 'DELETE' })
+                .then(r => {
+                    hideLoading();
+                    if (!r.ok) throw new Error('ไม่สามารถลบสารเคมีรายการนี้ได้');
+                    showToast('ลบรายการสารเคมีสำเร็จ', 'success');
+                    // Remove item locally and re-render immediately
+                    allChemicals = allChemicals.filter(x => x.id !== id);
+                    renderChemicals(allChemicals);
+                    renderExpiryTable(allChemicals);
+                })
+                .catch(err => {
+                    hideLoading();
+                    showToast('❌ ' + err.message, 'error');
+                });
         }
 
         function openEditModal(id) {
@@ -1262,17 +1321,17 @@
                     <input type="text" required id="b-name-${rowId}" onblur="fetchCasAndClassifications(${rowId})" placeholder="เช่น Ethanol..." class="w-full p-1 border rounded text-xs b-name bg-white/50 dark:bg-slate-800/50">
                     <span id="cas-status-${rowId}" class="text-[9px] text-indigo-500 font-bold hidden">🔍 Auto Fetching...</span>
                 </td>
-                <td class="p-1"><input type="text" placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand bg-white/50 dark:bg-slate-800/50"></td>
-                <td class="p-1"><input type="text" id="b-cas-${rowId}" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas bg-white/50 dark:bg-slate-800/50 font-mono"></td>
+                <td class="p-1"><input type="text" required placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><input type="text" required id="b-cas-${rowId}" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas bg-white/50 dark:bg-slate-800/50 font-mono"></td>
                 <td class="p-1">
-                    <select id="b-type-${rowId}" class="w-full p-1 border rounded text-xs b-type bg-white/50 dark:bg-slate-800/50 font-semibold">
+                    <select id="b-type-${rowId}" required class="w-full p-1 border rounded text-xs b-type bg-white/50 dark:bg-slate-800/50 font-semibold">
                         ${CHEMICAL_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
                     </select>
                 </td>
                 <td class="p-1">
                     <details class="relative">
                         <summary class="bg-white/50 dark:bg-slate-800/50 border p-1 rounded cursor-pointer text-[11px] font-semibold flex justify-between items-center">
-                            <span>เลือก Categories</span>
+                            <span>เลือก Categories *</span>
                             <i class="fa-solid fa-chevron-down text-[9px]"></i>
                         </summary>
                         <div class="absolute left-0 z-30 bg-white dark:bg-slate-900 border rounded-xl p-2 shadow-xl grid grid-cols-2 gap-1 w-48 max-h-36 overflow-y-auto">
@@ -1283,18 +1342,18 @@
                 <td class="p-1">
                     <div class="flex space-x-1">
                         <input type="number" required placeholder="100" class="w-16 p-1 border rounded text-xs b-cap-val bg-white/50 dark:bg-slate-800/50">
-                        <select class="p-1 border rounded text-xs b-cap-unit bg-white/50 dark:bg-slate-800/50 font-bold">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                        <select required class="p-1 border rounded text-xs b-cap-unit bg-white/50 dark:bg-slate-800/50 font-bold">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
                     </div>
                 </td>
                 <td class="p-1">
                     <div class="flex space-x-1">
                         <input type="number" required placeholder="1" class="w-12 p-1 border rounded text-xs b-qty bg-white/50 dark:bg-slate-800/50">
-                        <select class="p-1 border rounded text-xs b-pkg-unit bg-white/50 dark:bg-slate-800/50 font-bold">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                        <select required class="p-1 border rounded text-xs b-pkg-unit bg-white/50 dark:bg-slate-800/50 font-bold">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
                     </div>
                 </td>
-                <td class="p-1"><select class="w-full p-1 border rounded text-xs b-loc bg-white/50 dark:bg-slate-800/50">${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}</select></td>
-                <td class="p-1"><input type="date" class="w-full p-1 border rounded text-xs b-exp bg-white/50 dark:bg-slate-800/50"></td>
-                <td class="p-1"><input type="text" placeholder="Remark..." class="w-full p-1 border rounded text-xs b-remark bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><select required class="w-full p-1 border rounded text-xs b-loc bg-white/50 dark:bg-slate-800/50">${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}</select></td>
+                <td class="p-1"><input type="date" required class="w-full p-1 border rounded text-xs b-exp bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1"><input type="text" placeholder="Remark (Optional)..." class="w-full p-1 border rounded text-xs b-remark bg-white/50 dark:bg-slate-800/50"></td>
                 <td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-rose-500"><i class="fa-solid fa-trash"></i></button></td>
             `;
             tbody.appendChild(row);
@@ -1371,50 +1430,81 @@
             }
         }
 
+        /* --- STRICT FORM VALIDATION (ALL MANDATORY EXCEPT REMARK) --- */
         function submitBatchAdd() {
             const rows = document.querySelectorAll('.batch-row');
             if (!rows.length) return showToast('โปรดเพิ่มอย่างน้อย 1 รายการ', 'warning');
+            
             let items = [];
+            let isValid = true;
+            let missingFieldsMsg = '';
+
             rows.forEach((r, idx) => {
+                const rowNum = idx + 1;
                 const name = r.querySelector('.b-name').value.trim();
-                if (!name) return;
-                
-                // Get row index ID from b-name ID
+                const brand = r.querySelector('.b-brand').value.trim();
+                const cas = r.querySelector('.b-cas').value.trim();
+                const typeVal = r.querySelector('.b-type').value;
+                const capVal = r.querySelector('.b-cap-val').value.trim();
+                const capUnit = r.querySelector('.b-cap-unit').value;
+                const qtyVal = r.querySelector('.b-qty').value.trim();
+                const pkgUnit = r.querySelector('.b-pkg-unit').value;
+                const loc = r.querySelector('.b-loc').value;
+                const exp = r.querySelector('.b-exp').value;
+                const remark = r.querySelector('.b-remark').value.trim();
+
                 const nameId = r.querySelector('.b-name').id;
                 const rowId = nameId.replace('b-name-', '');
                 const selectedCats = Array.from(document.querySelectorAll(`.b-cat-chk-${rowId}:checked`)).map(c => c.value).join(', ');
 
+                // Validation check
+                if (!name || !brand || !cas || !typeVal || !selectedCats || !capVal || !qtyVal || !loc || !exp) {
+                    isValid = false;
+                    missingFieldsMsg = `แถวที่ ${rowNum}: โปรดกรอกข้อมูลให้ครบถ้วนทุกช่อง (บังคับทุกช่อง ยกเว้น Remark)`;
+                    return;
+                }
+
                 items.push({
                     name: name, 
-                    brand: r.querySelector('.b-brand').value.trim(), 
-                    cas_number: r.querySelector('.b-cas').value.trim(),
-                    type: r.querySelector('.b-type').value, 
+                    brand: brand, 
+                    cas_number: cas,
+                    type: typeVal, 
                     category: selectedCats,
-                    capacity_value: parseFloat(r.querySelector('.b-cap-val').value) || 0, 
-                    capacity_unit: r.querySelector('.b-cap-unit').value,
-                    quantity: parseFloat(r.querySelector('.b-qty').value) || 1, 
-                    package_unit: r.querySelector('.b-pkg-unit').value,
-                    location: r.querySelector('.b-loc').value, 
-                    expiry_date: r.querySelector('.b-exp').value, 
-                    remark: r.querySelector('.b-remark').value.trim(),
+                    capacity_value: parseFloat(capVal) || 0, 
+                    capacity_unit: capUnit,
+                    quantity: parseFloat(qtyVal) || 1, 
+                    package_unit: pkgUnit,
+                    location: loc, 
+                    expiry_date: exp, 
+                    remark: remark,
                     created_by_name: currentUser.full_name, 
                     user_id: currentUser.id
                 });
             });
-            if (!items.length) return showToast('โปรดระบุชื่อสารเคมี', 'warning');
+
+            if (!isValid) {
+                return showToast('⚠️ ' + missingFieldsMsg, 'warning');
+            }
+
             showLoading('กำลังส่งคำขอนำเข้าสารเคมี...');
             fetch(`${BASE_URL}/chemicals/batch`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ items: items })
-            }).then(() => { hideLoading(); closeModal('modal-batch-add'); showToast('ส่งคำขอนำเข้าเรียบร้อยแล้ว!', 'success'); refreshData(); });
+            }).then(() => { 
+                hideLoading(); 
+                closeModal('modal-batch-add'); 
+                showToast('ส่งคำขอนำเข้าเรียบร้อยแล้ว!', 'success'); 
+                refreshData(); 
+            });
         }
 
         function fetchLoginLogs() {
             showLoading('กำลังดึงข้อมูล Log การเข้าใช้งาน...');
             fetch(`${BASE_URL}/logs/login`).then(r => r.json()).then(data => {
                 hideLoading();
+                loginLogsData = data.logs || [];
                 const tbody = document.getElementById('login-logs-tbody');
-                tbody.innerHTML = (data.logs || []).map(l => `
+                tbody.innerHTML = loginLogsData.map(l => `
                     <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50">
                         <td class="py-2.5 px-3 font-mono text-[10px]">#${l.id}</td>
                         <td class="py-2.5 px-3 font-bold">${l.full_name}</td>
@@ -1494,30 +1584,95 @@
             });
         }
 
-        /* --- ACCURATE & DETAILED EXCEL EXPORT --- */
-        function exportToExcel() {
-            if (!allChemicals.length) return showToast('ไม่มีข้อมูลสารเคมีสำหรับ Export', 'warning');
-            
-            const exportData = allChemicals.map(c => ({
-                'ID': c.id,
-                'ชื่อสารเคมี (Name)': c.name,
-                'แบรนด์ (Brand)': c.brand || '',
-                'CAS Number': c.cas_number || '',
-                'ประเภท (Type)': c.type || c.chemical_type || '',
-                'หมวดหมู่ (Category)': c.category || c.chemical_category || '',
-                'ปริมาณต่อหน่วย (Capacity Value)': c.capacity_value || '',
-                'หน่วยปริมาณ (Capacity Unit)': c.capacity_unit || '',
-                'จำนวนคงเหลือ (Quantity)': c.quantity,
-                'หน่วยบรรจุภัณฑ์ (Package Unit)': c.package_unit || '',
-                'สถานที่จัดเก็บ (Location)': c.location || '',
-                'วันหมดอายุ (Expiry Date)': c.expiry_date || '',
-                'หมายเหตุ (Remark)': c.remark || ''
-            }));
+        /* --- EXPORT EXCEL MODAL & CUSTOM EXPORT LOGIC --- */
+        function openExportModal() {
+            document.getElementById('modal-export').classList.remove('hidden');
+        }
 
-            const worksheet = XLSX.utils.json_to_sheet(exportData);
+        function executeExportToExcel() {
+            const reportType = document.getElementById('export-report-type').value;
+            closeModal('modal-export');
+
+            if (reportType === 'chem_inv') {
+                if (!allChemicals.length) return showToast('ไม่มีข้อมูลสารเคมีสำหรับ Export', 'warning');
+                const exportData = allChemicals.map(c => ({
+                    'ID': c.id,
+                    'ชื่อสารเคมี (Name)': c.name,
+                    'แบรนด์ (Brand)': c.brand || '',
+                    'CAS Number': c.cas_number || '',
+                    'ประเภท (Type)': c.type || c.chemical_type || '',
+                    'หมวดหมู่ (Category)': c.category || c.chemical_category || '',
+                    'ปริมาณต่อหน่วย (Capacity Value)': c.capacity_value || '',
+                    'หน่วยปริมาณ (Capacity Unit)': c.capacity_unit || '',
+                    'จำนวนคงเหลือ (Quantity)': c.quantity,
+                    'หน่วยบรรจุภัณฑ์ (Package Unit)': c.package_unit || '',
+                    'สถานที่จัดเก็บ (Location)': c.location || '',
+                    'วันหมดอายุ (Expiry Date)': c.expiry_date || '',
+                    'สถานะหมดอายุ': c.expiry_status || 'NORMAL',
+                    'หมายเหตุ (Remark)': c.remark || ''
+                }));
+                downloadExcelFile(exportData, 'Chemical_Inventory', `CIMs_Inventory_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+            } else if (reportType === 'chem_exp') {
+                const expList = allChemicals.filter(c => c.expiry_status && c.expiry_status !== 'NORMAL');
+                if (!expList.length) return showToast('ไม่มีรายการสารเคมีใกล้หมดอายุสำหรับ Export', 'warning');
+                const exportData = expList.map(c => ({
+                    'ID': c.id,
+                    'ชื่อสารเคมี': c.name,
+                    'แบรนด์': c.brand || '',
+                    'CAS Number': c.cas_number || '',
+                    'สถานที่จัดเก็บ': c.location || '',
+                    'จำนวนคงเหลือ': `${c.quantity} ${c.package_unit || ''}`,
+                    'วันหมดอายุ': c.expiry_date || '',
+                    'ระดับการแจ้งเตือน': c.expiry_status
+                }));
+                downloadExcelFile(exportData, 'Expiring_Chemicals', `CIMs_Expiring_Chemicals_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+            } else if (reportType === 'login_logs') {
+                showLoading('กำลังดึงข้อมูล Log การเข้าสู่ระบบเพื่อ Export...');
+                fetch(`${BASE_URL}/logs/login`).then(r => r.json()).then(data => {
+                    hideLoading();
+                    const logs = data.logs || [];
+                    if (!logs.length) return showToast('ไม่มีข้อมูล Log การเข้าสู่ระบบ', 'warning');
+                    const exportData = logs.map(l => ({
+                        'ID': l.id,
+                        'ชื่อ-นามสกุล': l.full_name,
+                        'Username': l.username,
+                        'Role': l.role,
+                        'IP Address': l.ip_address || 'Unknown',
+                        'เวลา Login (ICT)': formatICTDate(l.time_str)
+                    }));
+                    downloadExcelFile(exportData, 'Login_Logs', `CIMs_Login_Logs_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                });
+
+            } else if (reportType === 'task_logs') {
+                showLoading('กำลังดึงข้อมูล Log ระยะเวลาดำเนินงานเพื่อ Export...');
+                fetch(`${BASE_URL}/logs/task-duration`).then(r => r.json()).then(data => {
+                    hideLoading();
+                    const logs = data.logs || [];
+                    if (!logs.length) return showToast('ไม่มีข้อมูล Log ระยะเวลาดำเนินงาน', 'warning');
+                    const exportData = logs.map(t => ({
+                        'ประเภทรายการ': t.type,
+                        'Order Code': t.order_code,
+                        'ผู้ร้องขอ': t.requester_name,
+                        'ชื่อสารเคมี (Brand)': `${t.chemical_name} (${t.brand || '-'})`,
+                        'จำนวน': `${t.qty} ${t.unit || ''}`,
+                        'เวลาสร้างคำขอ (ICT)': formatICTDate(t.created_at_str),
+                        'เวลาอนุมัติ (ICT)': formatICTDate(t.approved_at_str),
+                        'ระยะเวลา (นาที)': t.duration_minutes || 0,
+                        'ผู้อนุมัติ': t.approved_by || '',
+                        'สถานะ': t.status
+                    }));
+                    downloadExcelFile(exportData, 'Task_Duration_Logs', `CIMs_Task_Duration_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                });
+            }
+        }
+
+        function downloadExcelFile(data, sheetName, fileName) {
+            const worksheet = XLSX.utils.json_to_sheet(data);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Chemical_Inventory');
-            XLSX.writeFile(workbook, `CIMs_Chemical_Inventory_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+            XLSX.writeFile(workbook, fileName);
             showToast('ส่งออกไฟล์ Excel เรียบร้อยแล้ว!', 'success');
         }
 
