@@ -96,7 +96,6 @@
         .cart-bounce {
             animation: cartBump 0.4s ease-in-out;
         }
-        /* Tooltip styling for badges */
         .badge-tooltip {
             position: relative;
             display: inline-block;
@@ -104,7 +103,7 @@
         .badge-tooltip .tooltiptext {
             visibility: hidden;
             width: max-content;
-            max-width: 200px;
+            max-width: 220px;
             background-color: rgba(15, 23, 42, 0.95);
             color: #fff;
             text-align: center;
@@ -131,7 +130,7 @@
     <div class="fixed bottom-3 right-3 z-30 pointer-events-none">
         <div class="glass-card px-2.5 py-1 rounded-full text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 border shadow-lg flex items-center space-x-1">
             <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span>CIMs v2.6.0 (Type/Category & Excel Support)</span>
+            <span>CIMs v2.7.0 (Enhanced Type, Multi-Category & Excel)</span>
         </div>
     </div>
 
@@ -377,7 +376,7 @@
                         <table class="w-full text-left text-xs border-collapse">
                             <thead class="bg-slate-200/90 dark:bg-slate-800/90 backdrop-blur-md text-[10px] font-bold uppercase sticky top-0 z-10 shadow-sm">
                                 <tr>
-                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS Number</th><th class="py-3 px-3">Type & Category</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
+                                    <th class="py-3 px-3">ID</th><th class="py-3 px-3" data-i18n="th_name">ชื่อสารเคมี</th><th class="py-3 px-3">Brand</th><th class="py-3 px-3">CAS No.</th><th class="py-3 px-3">Type & Category</th><th class="py-3 px-3" data-i18n="th_capacity">ปริมาณต่อหน่วย</th><th class="py-3 px-3" data-i18n="th_qty">จำนวนคงเหลือ</th><th class="py-3 px-3" data-i18n="th_loc">สถานที่จัดเก็บ</th><th class="py-3 px-3" data-i18n="th_exp">วันหมดอายุ</th><th class="py-3 px-3">Remark</th><th class="py-3 px-3 text-center min-w-[220px]" data-i18n="th_action">ดำเนินการ</th>
                                 </tr>
                             </thead>
                             <tbody id="chemical-table-body" class="divide-y divide-slate-200/50 dark:divide-slate-800/50"></tbody>
@@ -502,7 +501,7 @@
     </div>
 
     <div id="modal-edit-chem" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4">
+        <div class="glass-card w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4 overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center pb-2 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-pen-to-square mr-2"></i>แก้ไขข้อมูลสารเคมี</h3>
                 <button onclick="closeModal('modal-edit-chem')"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -518,29 +517,29 @@
                     <input type="text" id="edit-brand" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
-                    <label class="block font-semibold mb-1">CAS Number</label>
+                    <label class="block font-semibold mb-1">CAS No.</label>
                     <input type="text" id="edit-cas" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">Type (ประเภทสาร)</label>
-                    <input type="text" id="edit-type" placeholder="เช่น Solvents, Acid..." class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
+                    <select id="edit-type" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50 font-bold"></select>
                 </div>
                 <div class="col-span-2">
-                    <label class="block font-semibold mb-1">Category (หมวดหมู่ - ใช้จุลภาคคั่นหลายหมวดหมู่ได้)</label>
-                    <input type="text" id="edit-category" placeholder="เช่น Flammable, Organic, Toxic..." class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
+                    <label class="block font-semibold mb-1">Category (หมวดหมู่ - ติ๊กเลือกได้หลายอัน)</label>
+                    <div id="edit-category-checkboxes" class="grid grid-cols-2 gap-1.5 p-2.5 border rounded-xl bg-white/50 dark:bg-slate-800/50 max-h-32 overflow-y-auto"></div>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">ปริมาณต่อหน่วย *</label>
                     <div class="flex space-x-1">
                         <input type="number" id="edit-cap-val" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
-                        <select id="edit-cap-unit" class="p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50"></select>
+                        <select id="edit-cap-unit" class="p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50 font-bold"></select>
                     </div>
                 </div>
                 <div>
                     <label class="block font-semibold mb-1">จำนวนคงเหลือ *</label>
                     <div class="flex space-x-1">
                         <input type="number" id="edit-qty" class="w-full p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50">
-                        <select id="edit-pkg-unit" class="p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50"></select>
+                        <select id="edit-pkg-unit" class="p-2 border rounded-xl bg-white/50 dark:bg-slate-800/50 font-bold"></select>
                     </div>
                 </div>
                 <div>
@@ -578,7 +577,7 @@
     </div>
 
     <div id="modal-batch-add" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[150] flex items-center justify-center p-4 hidden">
-        <div class="glass-card w-full max-w-6xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
+        <div class="glass-card w-full max-w-7xl rounded-3xl p-6 shadow-2xl border flex flex-col max-h-[90vh]">
             <div class="flex justify-between items-center pb-3 border-b border-slate-200/50 dark:border-slate-700/50">
                 <h3 class="font-bold text-sm" data-i18n="btn_add_chem"><i class="fa-solid fa-plus-circle text-emerald-500 mr-2"></i>เพิ่มสารเคมีเข้าคลัง</h3>
                 <button onclick="closeModal('modal-batch-add')"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -587,7 +586,7 @@
                 <table class="w-full text-left text-xs">
                     <thead class="bg-slate-200/50 dark:bg-slate-800/80 uppercase font-semibold">
                         <tr>
-                            <th class="p-2">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No. (Auto)</th><th class="p-2">Type</th><th class="p-2">Category</th><th class="p-2">ปริมาณ/หน่วย *</th><th class="p-2">จำนวน *</th><th class="p-2">สถานที่จัดเก็บ *</th><th class="p-2">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
+                            <th class="p-2 min-w-[140px]">ชื่อสารเคมี *</th><th class="p-2">Brand</th><th class="p-2">CAS No.</th><th class="p-2 min-w-[120px]">Type</th><th class="p-2 min-w-[160px]">Category</th><th class="p-2 min-w-[130px]">ปริมาณ/หน่วย *</th><th class="p-2 min-w-[120px]">จำนวน *</th><th class="p-2 min-w-[120px]">สถานที่จัดเก็บ *</th><th class="p-2 min-w-[110px]">วันหมดอายุ</th><th class="p-2">Remark</th><th class="p-2 text-center">ลบ</th>
                         </tr>
                     </thead>
                     <tbody id="batch-add-tbody"></tbody>
@@ -625,9 +624,13 @@
         let analyticsChartInstance = null;
         let batchRowCounter = 0;
 
-        /* --- UPDATED UNITS --- */
-        const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ขวด', 'หลอด', 'แกลลอน', 'ปอนด์', 'ถัง', 'กระป๋อง', 'ชุด', 'กล่อง', 'ซอง', 'เม็ด'];
-        const PACKAGE_UNITS = ['ขวด', 'แกลลอน', 'กล่อง', 'ถัง', 'แพ็ค', 'หลอด', 'กระป๋อง', 'ซอง', 'ชุด', 'ชิ้น', 'อัน', 'หลอดทดลอง'];
+        /* --- STRICT & DISTINCT UNITS --- */
+        const CAPACITY_UNITS = ['ml', 'L', 'µL', 'g', 'kg', 'mg', 'ppm', '%', 'M', 'N'];
+        const PACKAGE_UNITS = ['ขวด', 'หลอด', 'แกลลอน', 'ถัง', 'กระป๋อง', 'ชุด', 'กล่อง', 'ซอง', 'แพ็ค', 'ชิ้น', 'อัน', 'หลอดทดลอง'];
+
+        /* --- STANDARD TYPES & CATEGORIES --- */
+        const CHEMICAL_TYPES = ['Solvents', 'Acid', 'Base', 'Salt', 'Buffer', 'Reagent', 'Indicator', 'Standard', 'General Chemical', 'Others'];
+        const CHEMICAL_CATEGORIES = ['Flammable', 'Organic', 'Inorganic', 'Corrosive', 'Toxic', 'Oxidizer', 'Explosive', 'Hazardous', 'Others'];
 
         const i18n = {
             TH: {
@@ -658,7 +661,6 @@
             }
         };
 
-        /* --- ICT / THAILAND TIMEZONE HELPER --- */
         function formatICTDate(dateStr) {
             if (!dateStr) return '-';
             try {
@@ -803,7 +805,6 @@
             document.getElementById('app-content').classList.remove('hidden');
             document.getElementById('current-user-display').innerText = `${currentUser.full_name} (${currentUser.role.toUpperCase()})`;
             
-            /* --- ROLE-BASED UI CONTROLS --- */
             if (currentUser.role === 'storekeeper' || currentUser.role === 'admin') {
                 document.getElementById('storekeeper-analytics-section').classList.remove('hidden');
                 document.getElementById('menu-expiry-log').classList.remove('hidden');
@@ -927,19 +928,22 @@
             });
         }
 
-        /* --- RENDER BADGES FOR TYPE AND CATEGORIES --- */
-        function renderTypeAndCategoryBadges(typeStr, categoryStr) {
+        /* --- RELIABLE BADGE RENDER FOR TYPE & CATEGORY --- */
+        function renderTypeAndCategoryBadges(item) {
+            const typeVal = item.type || item.chemical_type || '';
+            const categoryVal = item.category || item.chemical_category || '';
+            
             let badges = [];
-            if (typeStr) {
-                badges.push(`<span class="badge-tooltip bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Type: ${typeStr}<span class="tooltiptext">Chemical Type: ${typeStr}</span></span>`);
+            if (typeVal) {
+                badges.push(`<span class="badge-tooltip bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Type: ${typeVal}<span class="tooltiptext">Type: ${typeVal}</span></span>`);
             }
-            if (categoryStr) {
-                const cats = categoryStr.split(',').map(c => c.trim()).filter(c => c);
+            if (categoryVal) {
+                const cats = String(categoryVal).split(',').map(c => c.trim()).filter(c => c);
                 cats.forEach(c => {
                     badges.push(`<span class="badge-tooltip bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-300 dark:border-cyan-800 px-1.5 py-0.5 rounded text-[9px] font-bold">Cat: ${c}<span class="tooltiptext">Category: ${c}</span></span>`);
                 });
             }
-            return badges.length ? badges.join(' ') : '<span class="text-slate-400 text-[10px]">-</span>';
+            return badges.length ? `<div class="flex flex-wrap gap-1">${badges.join('')}</div>` : '<span class="text-slate-400 text-[10px]">-</span>';
         }
 
         function renderChemicals(data) {
@@ -951,7 +955,7 @@
                 else if (c.expiry_status === '7_DAYS') statusBadge = '<span class="bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-amber-300 dark:border-amber-800">Exp 7 Days</span>';
                 else if (c.expiry_status === '30_DAYS') statusBadge = '<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded text-[9px] font-bold border border-blue-300 dark:border-blue-800">Exp 30 Days</span>';
 
-                const typeAndCatUI = renderTypeAndCategoryBadges(c.type, c.category);
+                const typeAndCatUI = renderTypeAndCategoryBadges(c);
 
                 return `
                 <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50 dark:border-slate-800/50 transition-colors">
@@ -960,7 +964,7 @@
                     <td class="py-3 px-3 text-indigo-500 dark:text-indigo-400 font-semibold">${c.brand || '-'}</td>
                     <td class="py-3 px-3 font-mono text-[11px]">${c.cas_number || '-'}</td>
                     <td class="py-3 px-3">${typeAndCatUI}</td>
-                    <td class="py-3 px-3">${c.capacity_value ? c.capacity_value + ' ' + c.capacity_unit : c.unit || '-'}</td>
+                    <td class="py-3 px-3 font-bold">${c.capacity_value ? c.capacity_value + ' ' + (c.capacity_unit || '') : c.unit || '-'}</td>
                     <td class="py-3 px-3 font-bold ${c.quantity <= 0 ? 'text-rose-500' : 'text-emerald-500'}">${c.quantity} ${c.package_unit || ''}</td>
                     <td class="py-3 px-3"><span class="bg-white/60 dark:bg-slate-800/60 px-2 py-0.5 rounded-lg text-[10px] border border-white/40 dark:border-slate-700">${c.location || '-'}</span></td>
                     <td class="py-3 px-3">${c.expiry_date || '-'}</td>
@@ -1023,8 +1027,22 @@
             document.getElementById('edit-name').value = c.name || '';
             document.getElementById('edit-brand').value = c.brand || '';
             document.getElementById('edit-cas').value = c.cas_number || '';
-            document.getElementById('edit-type').value = c.type || '';
-            document.getElementById('edit-category').value = c.category || '';
+            
+            // Populate Type Dropdown
+            const typeSel = document.getElementById('edit-type');
+            const currentType = c.type || c.chemical_type || 'General Chemical';
+            typeSel.innerHTML = CHEMICAL_TYPES.map(t => `<option value="${t}" ${t === currentType ? 'selected':''}>${t}</option>`).join('');
+
+            // Populate Category Checkboxes
+            const catContainer = document.getElementById('edit-category-checkboxes');
+            const currentCats = String(c.category || c.chemical_category || '').split(',').map(s => s.trim());
+            catContainer.innerHTML = CHEMICAL_CATEGORIES.map(cat => `
+                <label class="flex items-center space-x-1.5 cursor-pointer">
+                    <input type="checkbox" value="${cat}" class="edit-cat-chk accent-indigo-600" ${currentCats.includes(cat) ? 'checked' : ''}>
+                    <span class="font-semibold text-[11px]">${cat}</span>
+                </label>
+            `).join('');
+
             document.getElementById('edit-cap-val').value = c.capacity_value || 0;
             document.getElementById('edit-qty').value = c.quantity || 0;
             document.getElementById('edit-exp').value = c.expiry_date || '';
@@ -1044,27 +1062,38 @@
 
         function submitEditChem() {
             const id = document.getElementById('edit-id').value;
+            const selectedCats = Array.from(document.querySelectorAll('.edit-cat-chk:checked')).map(cb => cb.value).join(', ');
+
             const payload = {
-                name: document.getElementById('edit-name').value, brand: document.getElementById('edit-brand').value,
-                cas_number: document.getElementById('edit-cas').value, type: document.getElementById('edit-type').value,
-                category: document.getElementById('edit-category').value, capacity_value: parseFloat(document.getElementById('edit-cap-val').value) || 0,
-                capacity_unit: document.getElementById('edit-cap-unit').value, quantity: parseFloat(document.getElementById('edit-qty').value) || 0,
-                package_unit: document.getElementById('edit-pkg-unit').value, location: document.getElementById('edit-loc').value,
-                expiry_date: document.getElementById('edit-exp').value, remark: document.getElementById('edit-remark').value
+                name: document.getElementById('edit-name').value, 
+                brand: document.getElementById('edit-brand').value,
+                cas_number: document.getElementById('edit-cas').value, 
+                type: document.getElementById('edit-type').value,
+                category: selectedCats, 
+                capacity_value: parseFloat(document.getElementById('edit-cap-val').value) || 0,
+                capacity_unit: document.getElementById('edit-cap-unit').value, 
+                quantity: parseFloat(document.getElementById('edit-qty').value) || 0,
+                package_unit: document.getElementById('edit-pkg-unit').value, 
+                location: document.getElementById('edit-loc').value,
+                expiry_date: document.getElementById('edit-exp').value, 
+                remark: document.getElementById('edit-remark').value
             };
 
             fetch(`${BASE_URL}/chemicals/${id}`, {
                 method: 'PUT', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            }).then(() => { closeModal('modal-edit-chem'); refreshData(); });
+            }).then(() => { closeModal('modal-edit-chem'); refreshData(); showToast('บันทึกการแก้ไขเรียบร้อยแล้ว', 'success'); });
         }
 
         function filterChemicals() {
             const q = document.getElementById('search-chem').value.toLowerCase();
             const filtered = allChemicals.filter(c =>
-                c.name.toLowerCase().includes(q) || (c.brand && c.brand.toLowerCase().includes(q)) ||
-                (c.cas_number && c.cas_number.toLowerCase().includes(q)) || (c.location && c.location.toLowerCase().includes(q)) ||
-                (c.type && c.type.toLowerCase().includes(q)) || (c.category && c.category.toLowerCase().includes(q))
+                c.name.toLowerCase().includes(q) || 
+                (c.brand && c.brand.toLowerCase().includes(q)) ||
+                (c.cas_number && c.cas_number.toLowerCase().includes(q)) || 
+                (c.location && c.location.toLowerCase().includes(q)) ||
+                (c.type && c.type.toLowerCase().includes(q)) || 
+                (c.category && c.category.toLowerCase().includes(q))
             );
             renderChemicals(filtered);
         }
@@ -1213,13 +1242,21 @@
             .catch(err => { hideLoading(); showToast('❌ ' + err.message, 'error'); });
         }
 
-        /* --- AUTO FETCH CAS NUMBER, TYPE, AND CATEGORY FROM PUBCHEM API --- */
+        /* --- BATCH ADD ROWS WITH DROPDOWN & MULTI-CATEGORY CHECKBOXES --- */
         function addBatchRow() {
             batchRowCounter++;
             const rowId = batchRowCounter;
             const tbody = document.getElementById('batch-add-tbody');
             const row = document.createElement('tr');
             row.className = 'border-b border-slate-200/50 dark:border-slate-800/50 batch-row';
+            
+            const categoryCheckboxesHtml = CHEMICAL_CATEGORIES.map(cat => `
+                <label class="flex items-center space-x-1 cursor-pointer hover:bg-slate-200/50 p-0.5 rounded">
+                    <input type="checkbox" value="${cat}" class="b-cat-chk-${rowId} accent-indigo-600">
+                    <span class="text-[10px] font-semibold">${cat}</span>
+                </label>
+            `).join('');
+
             row.innerHTML = `
                 <td class="p-1">
                     <input type="text" required id="b-name-${rowId}" onblur="fetchCasAndClassifications(${rowId})" placeholder="เช่น Ethanol..." class="w-full p-1 border rounded text-xs b-name bg-white/50 dark:bg-slate-800/50">
@@ -1227,18 +1264,32 @@
                 </td>
                 <td class="p-1"><input type="text" placeholder="Brand..." class="w-full p-1 border rounded text-xs b-brand bg-white/50 dark:bg-slate-800/50"></td>
                 <td class="p-1"><input type="text" id="b-cas-${rowId}" placeholder="CAS No..." class="w-full p-1 border rounded text-xs b-cas bg-white/50 dark:bg-slate-800/50 font-mono"></td>
-                <td class="p-1"><input type="text" id="b-type-${rowId}" placeholder="Type..." class="w-full p-1 border rounded text-xs b-type bg-white/50 dark:bg-slate-800/50"></td>
-                <td class="p-1"><input type="text" id="b-category-${rowId}" placeholder="Category..." class="w-full p-1 border rounded text-xs b-category bg-white/50 dark:bg-slate-800/50"></td>
+                <td class="p-1">
+                    <select id="b-type-${rowId}" class="w-full p-1 border rounded text-xs b-type bg-white/50 dark:bg-slate-800/50 font-semibold">
+                        ${CHEMICAL_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+                    </select>
+                </td>
+                <td class="p-1">
+                    <details class="relative">
+                        <summary class="bg-white/50 dark:bg-slate-800/50 border p-1 rounded cursor-pointer text-[11px] font-semibold flex justify-between items-center">
+                            <span>เลือก Categories</span>
+                            <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                        </summary>
+                        <div class="absolute left-0 z-30 bg-white dark:bg-slate-900 border rounded-xl p-2 shadow-xl grid grid-cols-2 gap-1 w-48 max-h-36 overflow-y-auto">
+                            ${categoryCheckboxesHtml}
+                        </div>
+                    </details>
+                </td>
                 <td class="p-1">
                     <div class="flex space-x-1">
                         <input type="number" required placeholder="100" class="w-16 p-1 border rounded text-xs b-cap-val bg-white/50 dark:bg-slate-800/50">
-                        <select class="p-1 border rounded text-xs b-cap-unit bg-white/50 dark:bg-slate-800/50">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                        <select class="p-1 border rounded text-xs b-cap-unit bg-white/50 dark:bg-slate-800/50 font-bold">${CAPACITY_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
                     </div>
                 </td>
                 <td class="p-1">
                     <div class="flex space-x-1">
                         <input type="number" required placeholder="1" class="w-12 p-1 border rounded text-xs b-qty bg-white/50 dark:bg-slate-800/50">
-                        <select class="p-1 border rounded text-xs b-pkg-unit bg-white/50 dark:bg-slate-800/50">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
+                        <select class="p-1 border rounded text-xs b-pkg-unit bg-white/50 dark:bg-slate-800/50 font-bold">${PACKAGE_UNITS.map(u => `<option value="${u}">${u}</option>`).join('')}</select>
                     </div>
                 </td>
                 <td class="p-1"><select class="w-full p-1 border rounded text-xs b-loc bg-white/50 dark:bg-slate-800/50">${LOCATIONS.map(l => `<option value="${l}">${l}</option>`).join('')}</select></td>
@@ -1252,8 +1303,7 @@
         async function fetchCasAndClassifications(rowId) {
             const nameInput = document.getElementById(`b-name-${rowId}`);
             const casInput = document.getElementById(`b-cas-${rowId}`);
-            const typeInput = document.getElementById(`b-type-${rowId}`);
-            const categoryInput = document.getElementById(`b-category-${rowId}`);
+            const typeSelect = document.getElementById(`b-type-${rowId}`);
             const statusSpan = document.getElementById(`cas-status-${rowId}`);
 
             if (!nameInput || !nameInput.value.trim()) return;
@@ -1262,7 +1312,6 @@
             if (statusSpan) statusSpan.classList.remove('hidden');
 
             try {
-                // Query PubChem API for Compound CID
                 const response = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(chemName)}/property/IUPACName,Title/JSON`);
                 if (!response.ok) throw new Error('Not found');
                 const data = await response.json();
@@ -1270,7 +1319,6 @@
                 if (data.PropertyTable && data.PropertyTable.Properties && data.PropertyTable.Properties.length > 0) {
                     const cid = data.PropertyTable.Properties[0].CID;
                     
-                    // Fetch Synonyms/CAS Number from CID
                     if (!casInput.value.trim()) {
                         const synRes = await fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/${cid}/synonyms/JSON`);
                         const synData = await synRes.json();
@@ -1286,35 +1334,38 @@
                         }
                     }
 
-                    // Auto-fill Type & Category heuristics based on synonyms/name
-                    if (!typeInput.value.trim() || !categoryInput.value.trim()) {
-                        const lname = chemName.toLowerCase();
-                        let inferredType = 'General Chemical';
-                        let inferredCats = [];
+                    // Auto Infer Type and Check Categories
+                    const lname = chemName.toLowerCase();
+                    let inferredType = 'General Chemical';
+                    let inferredCats = [];
 
-                        if (lname.includes('acid')) inferredType = 'Acid';
-                        else if (lname.includes('ether') || lname.includes('anol') || lname.includes('ene') || lname.includes('one')) inferredType = 'Solvent';
-                        else if (lname.includes('hydroxide') || lname.includes('ammonia')) inferredType = 'Base';
-                        else if (lname.includes('chloride') || lname.includes('sulfate') || lname.includes('nitrate')) inferredType = 'Salt';
+                    if (lname.includes('acid')) inferredType = 'Acid';
+                    else if (lname.includes('ether') || lname.includes('anol') || lname.includes('ene') || lname.includes('one')) inferredType = 'Solvents';
+                    else if (lname.includes('hydroxide') || lname.includes('ammonia')) inferredType = 'Base';
+                    else if (lname.includes('chloride') || lname.includes('sulfate') || lname.includes('nitrate')) inferredType = 'Salt';
 
-                        if (lname.includes('ethanol') || lname.includes('acetone') || lname.includes('hexane') || lname.includes('methanol')) {
-                            inferredCats.push('Flammable', 'Organic');
-                        }
-                        if (lname.includes('acid') || lname.includes('hydroxide')) {
-                            inferredCats.push('Corrosive');
-                        }
-                        if (lname.includes('cyanide') || lname.includes('mercury') || lname.includes('lead')) {
-                            inferredCats.push('Toxic');
-                        }
-
-                        if (!typeInput.value.trim()) typeInput.value = inferredType;
-                        if (!categoryInput.value.trim() && inferredCats.length) categoryInput.value = inferredCats.join(', ');
-                        
-                        showToast(`ดึงข้อมูลอัตโนมัติสำเร็จสำหรับ ${chemName}`, 'success');
+                    if (lname.includes('ethanol') || lname.includes('acetone') || lname.includes('hexane') || lname.includes('methanol')) {
+                        inferredCats.push('Flammable', 'Organic');
                     }
+                    if (lname.includes('acid') || lname.includes('hydroxide')) {
+                        inferredCats.push('Corrosive');
+                    }
+                    if (lname.includes('cyanide') || lname.includes('mercury') || lname.includes('lead')) {
+                        inferredCats.push('Toxic');
+                    }
+
+                    if (typeSelect) typeSelect.value = inferredType;
+
+                    // Auto Check Category Checkboxes
+                    const chks = document.querySelectorAll(`.b-cat-chk-${rowId}`);
+                    chks.forEach(chk => {
+                        if (inferredCats.includes(chk.value)) chk.checked = true;
+                    });
+
+                    showToast(`ดึงข้อมูลอัตโนมัติสำเร็จสำหรับ ${chemName}`, 'success');
                 }
             } catch (err) {
-                // Silently fail if not found so user can input manually
+                // Silently fail if not found
             } finally {
                 if (statusSpan) statusSpan.classList.add('hidden');
             }
@@ -1324,16 +1375,30 @@
             const rows = document.querySelectorAll('.batch-row');
             if (!rows.length) return showToast('โปรดเพิ่มอย่างน้อย 1 รายการ', 'warning');
             let items = [];
-            rows.forEach(r => {
+            rows.forEach((r, idx) => {
                 const name = r.querySelector('.b-name').value.trim();
                 if (!name) return;
+                
+                // Get row index ID from b-name ID
+                const nameId = r.querySelector('.b-name').id;
+                const rowId = nameId.replace('b-name-', '');
+                const selectedCats = Array.from(document.querySelectorAll(`.b-cat-chk-${rowId}:checked`)).map(c => c.value).join(', ');
+
                 items.push({
-                    name: name, brand: r.querySelector('.b-brand').value.trim(), cas_number: r.querySelector('.b-cas').value.trim(),
-                    type: r.querySelector('.b-type').value.trim(), category: r.querySelector('.b-category').value.trim(),
-                    capacity_value: parseFloat(r.querySelector('.b-cap-val').value) || 0, capacity_unit: r.querySelector('.b-cap-unit').value,
-                    quantity: parseFloat(r.querySelector('.b-qty').value) || 1, package_unit: r.querySelector('.b-pkg-unit').value,
-                    location: r.querySelector('.b-loc').value, expiry_date: r.querySelector('.b-exp').value, remark: r.querySelector('.b-remark').value.trim(),
-                    created_by_name: currentUser.full_name, user_id: currentUser.id
+                    name: name, 
+                    brand: r.querySelector('.b-brand').value.trim(), 
+                    cas_number: r.querySelector('.b-cas').value.trim(),
+                    type: r.querySelector('.b-type').value, 
+                    category: selectedCats,
+                    capacity_value: parseFloat(r.querySelector('.b-cap-val').value) || 0, 
+                    capacity_unit: r.querySelector('.b-cap-unit').value,
+                    quantity: parseFloat(r.querySelector('.b-qty').value) || 1, 
+                    package_unit: r.querySelector('.b-pkg-unit').value,
+                    location: r.querySelector('.b-loc').value, 
+                    expiry_date: r.querySelector('.b-exp').value, 
+                    remark: r.querySelector('.b-remark').value.trim(),
+                    created_by_name: currentUser.full_name, 
+                    user_id: currentUser.id
                 });
             });
             if (!items.length) return showToast('โปรดระบุชื่อสารเคมี', 'warning');
@@ -1429,7 +1494,7 @@
             });
         }
 
-        /* --- EXPORT TO EXCEL --- */
+        /* --- ACCURATE & DETAILED EXCEL EXPORT --- */
         function exportToExcel() {
             if (!allChemicals.length) return showToast('ไม่มีข้อมูลสารเคมีสำหรับ Export', 'warning');
             
@@ -1438,9 +1503,10 @@
                 'ชื่อสารเคมี (Name)': c.name,
                 'แบรนด์ (Brand)': c.brand || '',
                 'CAS Number': c.cas_number || '',
-                'ประเภท (Type)': c.type || '',
-                'หมวดหมู่ (Category)': c.category || '',
-                'ปริมาณต่อหน่วย (Capacity)': c.capacity_value ? `${c.capacity_value} ${c.capacity_unit}` : (c.unit || ''),
+                'ประเภท (Type)': c.type || c.chemical_type || '',
+                'หมวดหมู่ (Category)': c.category || c.chemical_category || '',
+                'ปริมาณต่อหน่วย (Capacity Value)': c.capacity_value || '',
+                'หน่วยปริมาณ (Capacity Unit)': c.capacity_unit || '',
                 'จำนวนคงเหลือ (Quantity)': c.quantity,
                 'หน่วยบรรจุภัณฑ์ (Package Unit)': c.package_unit || '',
                 'สถานที่จัดเก็บ (Location)': c.location || '',
@@ -1451,8 +1517,8 @@
             const worksheet = XLSX.utils.json_to_sheet(exportData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Chemical_Inventory');
-            XLSX.writeFile(workbook, `Chemical_Inventory_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            showToast('ส่งออกไฟล์ Excel สำเร็จ!', 'success');
+            XLSX.writeFile(workbook, `CIMs_Chemical_Inventory_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            showToast('ส่งออกไฟล์ Excel เรียบร้อยแล้ว!', 'success');
         }
 
         /* --- IMPORT FROM EXCEL --- */
@@ -1479,12 +1545,12 @@
                         name: row['ชื่อสารเคมี (Name)'] || row['Name'] || row['ชื่อสารเคมี'] || '',
                         brand: row['แบรนด์ (Brand)'] || row['Brand'] || row['แบรนด์'] || '',
                         cas_number: row['CAS Number'] || row['CAS'] || '',
-                        type: row['ประเภท (Type)'] || row['Type'] || row['ประเภท'] || '',
+                        type: row['ประเภท (Type)'] || row['Type'] || row['ประเภท'] || 'General Chemical',
                         category: row['หมวดหมู่ (Category)'] || row['Category'] || row['หมวดหมู่'] || '',
-                        capacity_value: parseFloat(row['Capacity Value'] || row['ปริมาณต่อหน่วย']) || 0,
-                        capacity_unit: row['Capacity Unit'] || row['หน่วยปริมาณ'] || 'ml',
+                        capacity_value: parseFloat(row['ปริมาณต่อหน่วย (Capacity Value)'] || row['Capacity Value'] || row['ปริมาณต่อหน่วย']) || 0,
+                        capacity_unit: row['หน่วยปริมาณ (Capacity Unit)'] || row['Capacity Unit'] || row['หน่วยปริมาณ'] || 'ml',
                         quantity: parseFloat(row['จำนวนคงเหลือ (Quantity)'] || row['Quantity'] || row['จำนวน']) || 1,
-                        package_unit: row['หน่วยบรรจุภัณฑ์ (Package Unit)'] || row['Package Unit'] || row['หน่วย'] || 'ขวด',
+                        package_unit: row['หน่วยบรรจุภัณฑ์ (Package Unit)'] || row['Package Unit'] || row['หน่วยบรรจุภัณฑ์'] || 'ขวด',
                         location: row['สถานที่จัดเก็บ (Location)'] || row['Location'] || row['สถานที่จัดเก็บ'] || 'Shelf A1L',
                         expiry_date: row['วันหมดอายุ (Expiry Date)'] || row['Expiry Date'] || row['วันหมดอายุ'] || '',
                         remark: row['หมายเหตุ (Remark)'] || row['Remark'] || row['หมายเหตุ'] || '',
