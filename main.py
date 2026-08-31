@@ -17,13 +17,15 @@ LINE_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 # Password Hashing Setup
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password: str, hashed_password: Optional[str]) -> bool:
+    if not hashed_password:
+        return False
     # รองรับทั้งแบบ Plaintext เก่าและ Hashed ใหม่
     if not hashed_password.startswith("$2b$"):
         return plain_password == hashed_password
     return pwd_context.verify(plain_password, hashed_password)
 
-def get_password_hash(password):
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 def get_db():
@@ -115,27 +117,31 @@ def send_line(msg: str):
         print("LINE Notify Error:", e)
 
 def add_notif(user_id: Optional[int], role: Optional[str], msg: str):
+    conn = None
     try:
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("INSERT INTO user_notifications (user_id, role_target, message) VALUES (%s, %s, %s);", (user_id, role, msg))
         cursor.close()
-        conn.close()
     except Exception as e:
         print("Notif Error:", e)
+    finally:
+        if conn: conn.close()
 
 def gen_code(prefix: str):
     conn = get_db()
     cursor = conn.cursor()
-    today = datetime.now().strftime("%Y%m%d")
-    pat = f"{prefix}-{today}-%"
-    tbl = "chemicals" if prefix == "IN" else "requisitions"
-    cursor.execute(f"SELECT order_code FROM {tbl} WHERE order_code LIKE %s ORDER BY id DESC LIMIT 1;", (pat,))
-    row = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    num = int(row["order_code"].split("-")[-1]) + 1 if row and row.get("order_code") else 1
-    return f"{prefix}-{today}-{num:03d}"
+    try:
+        today = datetime.now().strftime("%Y%m%d")
+        pat = f"{prefix}-{today}-%"
+        tbl = "chemicals" if prefix == "IN" else "requisitions"
+        cursor.execute(f"SELECT order_code FROM {tbl} WHERE order_code LIKE %s ORDER BY id DESC LIMIT 1;", (pat,))
+        row = cursor.fetchone()
+        num = int(row["order_code"].split("-")[-1]) + 1 if row and row.get("order_code") else 1
+        return f"{prefix}-{today}-{num:03d}"
+    finally:
+        cursor.close()
+        conn.close()
 
 # --- Pydantic Data Models ---
 class UserReg(BaseModel):
@@ -243,7 +249,7 @@ def login(u: UserLog, req: Request):
         cursor.execute("SELECT id, full_name, username, role, password FROM users WHERE username = %s", (u.username,))
         user = cursor.fetchone()
         
-        if not user or not verify_password(u.password, user["password"]):
+        if not user or not verify_password(u.password, user.get("password")):
             raise HTTPException(401, "Username หรือ Password ไม่ถูกต้อง")
 
         ip = req.client.host if req.client else "Unknown"
@@ -261,280 +267,312 @@ def login(u: UserLog, req: Request):
 def analytics():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as day_key, COALESCE(SUM(quantity), 0) as total FROM chemicals WHERE (status = 'APPROVED' OR status IS NULL) AND created_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY day_key ORDER BY day_key ASC;")
-    imp = cursor.fetchall()
-    cursor.execute("SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as day_key, COALESCE(SUM(requested_quantity), 0) as total FROM requisitions WHERE status = 'APPROVED' AND created_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY day_key ORDER BY day_key ASC;")
-    exp = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return {"imports": [dict(r) for r in imp], "exports": [dict(r) for r in exp]}
+    try:
+        cursor.execute("SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as day_key, COALESCE(SUM(quantity), 0) as total FROM chemicals WHERE (status = 'APPROVED' OR status IS NULL) AND created_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY day_key ORDER BY day_key ASC;")
+        imp = cursor.fetchall()
+        cursor.execute("SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as day_key, COALESCE(SUM(requested_quantity), 0) as total FROM requisitions WHERE status = 'APPROVED' AND created_at >= CURRENT_DATE - INTERVAL '30 days' GROUP BY day_key ORDER BY day_key ASC;")
+        exp = cursor.fetchall()
+        return {"imports": [dict(r) for r in imp], "exports": [dict(r) for r in exp]}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.get("/notifications/user/{user_id}")
 def get_notifs(user_id: int, role: str):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, brand, location, expiry_date, CASE WHEN expiry_date < CURRENT_DATE THEN 'EXPIRED' WHEN expiry_date <= CURRENT_DATE + INTERVAL '1 day' THEN '1_DAY' WHEN expiry_date <= CURRENT_DATE + INTERVAL '3 days' THEN '3_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '7 days' THEN '7_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '30 days' THEN '30_DAYS' END as alert_level FROM chemicals WHERE (status = 'APPROVED' OR status IS NULL) AND expiry_date IS NOT NULL AND expiry_date <= CURRENT_DATE + INTERVAL '30 days' ORDER BY expiry_date ASC;")
-    exp = [dict(r) for r in cursor.fetchall()]
-    cursor.execute("SELECT id, message, is_read, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI') as time_str FROM user_notifications WHERE (user_id = %s OR role_target = %s) ORDER BY id DESC LIMIT 20;", (user_id, role))
-    act = [dict(r) for r in cursor.fetchall()]
-    cursor.close()
-    conn.close()
-    unread = sum(1 for n in act if not n['is_read']) + len(exp)
-    return {"expiry_notifs": exp, "activity_notifs": act, "unread_count": unread}
+    try:
+        cursor.execute("SELECT id, name, brand, location, expiry_date, CASE WHEN expiry_date < CURRENT_DATE THEN 'EXPIRED' WHEN expiry_date <= CURRENT_DATE + INTERVAL '1 day' THEN '1_DAY' WHEN expiry_date <= CURRENT_DATE + INTERVAL '3 days' THEN '3_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '7 days' THEN '7_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '30 days' THEN '30_DAYS' END as alert_level FROM chemicals WHERE (status = 'APPROVED' OR status IS NULL) AND expiry_date IS NOT NULL AND expiry_date <= CURRENT_DATE + INTERVAL '30 days' ORDER BY expiry_date ASC;")
+        exp = [dict(r) for r in cursor.fetchall()]
+        cursor.execute("SELECT id, message, is_read, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI') as time_str FROM user_notifications WHERE (user_id = %s OR role_target = %s) ORDER BY id DESC LIMIT 20;", (user_id, role))
+        act = [dict(r) for r in cursor.fetchall()]
+        unread = sum(1 for n in act if not n['is_read']) + len(exp)
+        return {"expiry_notifs": exp, "activity_notifs": act, "unread_count": unread}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/notifications/read")
 def read_notifs(p: dict):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE user_notifications SET is_read = TRUE WHERE user_id = %s OR role_target = %s;", (p.get("user_id"), p.get("role")))
-    cursor.close()
-    conn.close()
-    return {"status": "ok"}
+    try:
+        cursor.execute("UPDATE user_notifications SET is_read = TRUE WHERE user_id = %s OR role_target = %s;", (p.get("user_id"), p.get("role")))
+        return {"status": "ok"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.get("/chemicals")
 def chemicals():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT *, CASE WHEN expiry_date < CURRENT_DATE THEN 'EXPIRED' WHEN expiry_date <= CURRENT_DATE + INTERVAL '3 days' THEN '3_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '7 days' THEN '7_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '30 days' THEN '30_DAYS' ELSE 'NORMAL' END as expiry_status FROM chemicals WHERE status = 'APPROVED' OR status IS NULL ORDER BY id ASC;")
-    items = cursor.fetchall()
-    cursor.execute("SELECT COALESCE(SUM(quantity), 0) as total_qty, COUNT(id) as total_count FROM chemicals WHERE status = 'APPROVED' OR status IS NULL;")
-    sum_data = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return {"items": [dict(r) for r in items], "total_quantity": sum_data["total_qty"] if sum_data else 0, "total_items": sum_data["total_count"] if sum_data else 0}
+    try:
+        cursor.execute("SELECT *, CASE WHEN expiry_date < CURRENT_DATE THEN 'EXPIRED' WHEN expiry_date <= CURRENT_DATE + INTERVAL '3 days' THEN '3_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '7 days' THEN '7_DAYS' WHEN expiry_date <= CURRENT_DATE + INTERVAL '30 days' THEN '30_DAYS' ELSE 'NORMAL' END as expiry_status FROM chemicals WHERE status = 'APPROVED' OR status IS NULL ORDER BY id ASC;")
+        items = cursor.fetchall()
+        cursor.execute("SELECT COALESCE(SUM(quantity), 0) as total_qty, COUNT(id) as total_count FROM chemicals WHERE status = 'APPROVED' OR status IS NULL;")
+        sum_data = cursor.fetchone()
+        return {"items": [dict(r) for r in items], "total_quantity": sum_data["total_qty"] if sum_data else 0, "total_items": sum_data["total_count"] if sum_data else 0}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/chemicals/batch")
 def add_batch(b: ChemBatch):
+    code = gen_code("IN")
     conn = get_db()
     cursor = conn.cursor()
-    code = gen_code("IN")
-    for item in b.items:
-        exp = item.expiry_date.strip() if item.expiry_date and item.expiry_date.strip() else None
-        cursor.execute(
-            """INSERT INTO chemicals 
-               (item_type, name, brand, cas_number, type, category, capacity_value, capacity_unit, quantity, unit, package_unit, location, expiry_date, remark, status, created_by_name, order_code) 
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'PENDING_ADD',%s,%s)""",
-            (item.item_type or 'CHEMICAL', item.name.strip(), item.brand, item.cas_number, item.type, item.category, item.capacity_value, item.capacity_unit, item.quantity, f"{item.capacity_value} {item.capacity_unit}/{item.package_unit}", item.package_unit, item.location, exp, item.remark, item.created_by_name, code)
-        )
-    cursor.close()
-    conn.close()
-    msg = f"📥 [คำขอนำเข้าใหม่] Order #{code} โดยคุณ {b.items[0].created_by_name}"
-    add_notif(None, "storekeeper", msg)
-    send_line(msg)
-    return {"message": "Success", "order_code": code}
+    try:
+        for item in b.items:
+            exp = item.expiry_date.strip() if item.expiry_date and item.expiry_date.strip() else None
+            cursor.execute(
+                """INSERT INTO chemicals 
+                   (item_type, name, brand, cas_number, type, category, capacity_value, capacity_unit, quantity, unit, package_unit, location, expiry_date, remark, status, created_by_name, order_code) 
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'PENDING_ADD',%s,%s)""",
+                (item.item_type or 'CHEMICAL', item.name.strip(), item.brand, item.cas_number, item.type, item.category, item.capacity_value, item.capacity_unit, item.quantity, f"{item.capacity_value} {item.capacity_unit}/{item.package_unit}", item.package_unit, item.location, exp, item.remark, item.created_by_name, code)
+            )
+        msg = f"📥 [คำขอนำเข้าใหม่] Order #{code} โดยคุณ {b.items[0].created_by_name}"
+        add_notif(None, "storekeeper", msg)
+        send_line(msg)
+        return {"message": "Success", "order_code": code}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.put("/chemicals/{cid}")
 def upd_chem(cid: int, c: ChemUpd):
     conn = get_db()
     cursor = conn.cursor()
-    exp = c.expiry_date.strip() if c.expiry_date and c.expiry_date.strip() else None
-    cursor.execute(
-        """UPDATE chemicals 
-           SET item_type=%s, name=%s, brand=%s, cas_number=%s, type=%s, category=%s, capacity_value=%s, capacity_unit=%s, quantity=%s, unit=%s, package_unit=%s, location=%s, expiry_date=%s, remark=%s 
-           WHERE id=%s""",
-        (c.item_type or 'CHEMICAL', c.name.strip(), c.brand, c.cas_number, c.type, c.category, c.capacity_value, c.capacity_unit, c.quantity, f"{c.capacity_value} {c.capacity_unit}/{c.package_unit}", c.package_unit, c.location, exp, c.remark, cid)
-    )
-    cursor.close()
-    conn.close()
-    return {"message": "Updated"}
+    try:
+        exp = c.expiry_date.strip() if c.expiry_date and c.expiry_date.strip() else None
+        cursor.execute(
+            """UPDATE chemicals 
+               SET item_type=%s, name=%s, brand=%s, cas_number=%s, type=%s, category=%s, capacity_value=%s, capacity_unit=%s, quantity=%s, unit=%s, package_unit=%s, location=%s, expiry_date=%s, remark=%s 
+               WHERE id=%s""",
+            (c.item_type or 'CHEMICAL', c.name.strip(), c.brand, c.cas_number, c.type, c.category, c.capacity_value, c.capacity_unit, c.quantity, f"{c.capacity_value} {c.capacity_unit}/{c.package_unit}", c.package_unit, c.location, exp, c.remark, cid)
+        )
+        return {"message": "Updated"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.patch("/chemicals/{cid}/adjust")
 def adjust_qty(cid: int, payload: QtyAdj):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE chemicals SET quantity = GREATEST(0, quantity + %s) WHERE id = %s RETURNING quantity;", (payload.quantity_change, cid))
-    res = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return {"message": "Success", "new_quantity": res["quantity"] if res else 0}
+    try:
+        cursor.execute("UPDATE chemicals SET quantity = GREATEST(0, quantity + %s) WHERE id = %s RETURNING quantity;", (payload.quantity_change, cid))
+        res = cursor.fetchone()
+        return {"message": "Success", "new_quantity": res["quantity"] if res else 0}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.delete("/chemicals/{cid}")
 def del_chem(cid: int):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM chemicals WHERE id = %s", (cid,))
-    cursor.close()
-    conn.close()
-    return {"message": "Deleted"}
+    try:
+        cursor.execute("DELETE FROM chemicals WHERE id = %s", (cid,))
+        return {"message": "Deleted"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.get("/all-approvals")
 def get_all_approvals():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, 
-               COALESCE(created_by_name, 'ไม่ระบุ') as requester_name, name as chemical_name, brand, cas_number, category,
-               quantity as qty, package_unit as unit, COALESCE(status, 'PENDING_ADD') as status, remark, location,
-               TO_CHAR(COALESCE(created_at, CURRENT_TIMESTAMP), 'DD/MM/YYYY HH24:MI') as created_at_str
-        FROM chemicals WHERE status = 'PENDING_ADD'
-        UNION ALL
-        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, 
-               COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, c.cas_number, c.category,
-               r.requested_quantity as qty, c.package_unit as unit, COALESCE(r.status, 'PENDING') as status, r.remark, c.location,
-               TO_CHAR(COALESCE(r.created_at, CURRENT_TIMESTAMP), 'DD/MM/YYYY HH24:MI') as created_at_str
-        FROM requisitions r 
-        LEFT JOIN users u ON r.user_id = u.id 
-        JOIN chemicals c ON r.chemical_id = c.id 
-        WHERE r.status = 'PENDING' OR r.status IS NULL
-        ORDER BY id DESC;
-    """)
-    pending = cursor.fetchall()
-    
-    cursor.execute("""
-        SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, 
-               COALESCE(created_by_name, 'ไม่ระบุ') as requester_name, name as chemical_name, brand, cas_number, category,
-               quantity as qty, package_unit as unit, COALESCE(status, 'APPROVED') as status, 
-               COALESCE(approved_by, 'Admin') as approved_by, remark, location,
-               TO_CHAR(COALESCE(approved_at, created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
-        FROM chemicals WHERE status IN ('APPROVED', 'REJECTED_ADD')
-        UNION ALL
-        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, 
-               COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, c.cas_number, c.category,
-               r.requested_quantity as qty, c.package_unit as unit, r.status, 
-               COALESCE(r.approved_by, 'Admin') as approved_by, r.remark, COALESCE(r.assigned_location, c.location) as location,
-               TO_CHAR(COALESCE(r.approved_at, r.created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
-        FROM requisitions r 
-        LEFT JOIN users u ON r.user_id = u.id 
-        JOIN chemicals c ON r.chemical_id = c.id 
-        WHERE r.status IN ('APPROVED', 'REJECTED')
-        ORDER BY id DESC LIMIT 500;
-    """)
-    history = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return {"pending": [dict(r) for r in pending], "history": [dict(r) for r in history]}
+    try:
+        cursor.execute("""
+            SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, 
+                   COALESCE(created_by_name, 'ไม่ระบุ') as requester_name, name as chemical_name, brand, cas_number, category,
+                   quantity as qty, package_unit as unit, COALESCE(status, 'PENDING_ADD') as status, remark, location,
+                   TO_CHAR(COALESCE(created_at, CURRENT_TIMESTAMP), 'DD/MM/YYYY HH24:MI') as created_at_str
+            FROM chemicals WHERE status = 'PENDING_ADD'
+            UNION ALL
+            SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, 
+                   COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, c.cas_number, c.category,
+                   r.requested_quantity as qty, c.package_unit as unit, COALESCE(r.status, 'PENDING') as status, r.remark, c.location,
+                   TO_CHAR(COALESCE(r.created_at, CURRENT_TIMESTAMP), 'DD/MM/YYYY HH24:MI') as created_at_str
+            FROM requisitions r 
+            LEFT JOIN users u ON r.user_id = u.id 
+            JOIN chemicals c ON r.chemical_id = c.id 
+            WHERE r.status = 'PENDING' OR r.status IS NULL
+            ORDER BY id DESC;
+        """)
+        pending = cursor.fetchall()
+        
+        cursor.execute("""
+            SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, 
+                   COALESCE(created_by_name, 'ไม่ระบุ') as requester_name, name as chemical_name, brand, cas_number, category,
+                   quantity as qty, package_unit as unit, COALESCE(status, 'APPROVED') as status, 
+                   COALESCE(approved_by, 'Admin') as approved_by, remark, location,
+                   TO_CHAR(COALESCE(approved_at, created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
+            FROM chemicals WHERE status IN ('APPROVED', 'REJECTED_ADD')
+            UNION ALL
+            SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, 
+                   COALESCE(u.full_name, 'ไม่ระบุ') as requester_name, c.name as chemical_name, c.brand, c.cas_number, c.category,
+                   r.requested_quantity as qty, c.package_unit as unit, r.status, 
+                   COALESCE(r.approved_by, 'Admin') as approved_by, r.remark, COALESCE(r.assigned_location, c.location) as location,
+                   TO_CHAR(COALESCE(r.approved_at, r.created_at), 'DD/MM/YYYY HH24:MI') as approved_at_str
+            FROM requisitions r 
+            LEFT JOIN users u ON r.user_id = u.id 
+            JOIN chemicals c ON r.chemical_id = c.id 
+            WHERE r.status IN ('APPROVED', 'REJECTED')
+            ORDER BY id DESC LIMIT 500;
+        """)
+        history = cursor.fetchall()
+        return {"pending": [dict(r) for r in pending], "history": [dict(r) for r in history]}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/chemicals/{cid}/approve-add")
 def approve_add(cid: int, a: ActionPayload):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT name, order_code FROM chemicals WHERE id = %s", (cid,))
-    chem = cursor.fetchone()
-    
-    loc = a.assigned_location or 'Shelf A1L'
-    cursor.execute(
-        "UPDATE chemicals SET status = 'APPROVED', location = %s, approved_by = %s, approved_at = CURRENT_TIMESTAMP, remark = COALESCE(%s, remark) WHERE id = %s",
-        (loc, a.admin_name, a.remark, cid)
-    )
-    cursor.close()
-    conn.close()
-    
-    msg = f"✅ [อนุมัตินำเข้า] {chem['name'] if chem else ''} (#{chem['order_code'] if chem else cid}) จัดเก็บที่: {loc}"
-    add_notif(None, "requester", msg)
-    send_line(msg)
-    return {"message": "Approved"}
+    try:
+        cursor.execute("SELECT name, order_code FROM chemicals WHERE id = %s", (cid,))
+        chem = cursor.fetchone()
+        
+        loc = a.assigned_location or 'Shelf A1L'
+        cursor.execute(
+            "UPDATE chemicals SET status = 'APPROVED', location = %s, approved_by = %s, approved_at = CURRENT_TIMESTAMP, remark = COALESCE(%s, remark) WHERE id = %s",
+            (loc, a.admin_name, a.remark, cid)
+        )
+        
+        msg = f"✅ [อนุมัตินำเข้า] {chem['name'] if chem else ''} (#{chem['order_code'] if chem else cid}) จัดเก็บที่: {loc}"
+        add_notif(None, "requester", msg)
+        send_line(msg)
+        return {"message": "Approved"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/chemicals/{cid}/reject-add")
 def reject_add(cid: int, a: ActionPayload):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT name, order_code FROM chemicals WHERE id = %s", (cid,))
-    chem = cursor.fetchone()
-    
-    cursor.execute(
-        "UPDATE chemicals SET status = 'REJECTED_ADD', approved_by = %s, approved_at = CURRENT_TIMESTAMP, remark = COALESCE(%s, remark) WHERE id = %s",
-        (a.admin_name, a.remark, cid)
-    )
-    cursor.close()
-    conn.close()
-    
-    msg = f"❌ [ปฏิเสธนำเข้า] {chem['name'] if chem else ''} (#{chem['order_code'] if chem else cid})"
-    add_notif(None, "requester", msg)
-    send_line(msg)
-    return {"message": "Rejected"}
+    try:
+        cursor.execute("SELECT name, order_code FROM chemicals WHERE id = %s", (cid,))
+        chem = cursor.fetchone()
+        
+        cursor.execute(
+            "UPDATE chemicals SET status = 'REJECTED_ADD', approved_by = %s, approved_at = CURRENT_TIMESTAMP, remark = COALESCE(%s, remark) WHERE id = %s",
+            (a.admin_name, a.remark, cid)
+        )
+        
+        msg = f"❌ [ปฏิเสธนำเข้า] {chem['name'] if chem else ''} (#{chem['order_code'] if chem else cid})"
+        add_notif(None, "requester", msg)
+        send_line(msg)
+        return {"message": "Rejected"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/requisitions/basket")
 def req_basket(b: ReqBasket):
+    code = gen_code("OUT")
     conn = get_db()
     cursor = conn.cursor()
-    code = gen_code("OUT")
-    for item in b.items:
-        cursor.execute("SELECT quantity, name FROM chemicals WHERE id = %s", (item.chemical_id,))
-        c = cursor.fetchone()
-        if not c or float(c["quantity"]) < item.requested_quantity:
-            raise HTTPException(400, "Insufficient stock")
-        cursor.execute(
-            "INSERT INTO requisitions (user_id, chemical_id, requested_quantity, remark, status, order_code, batch_id) VALUES (%s,%s,%s,%s,'PENDING',%s,%s)",
-            (b.user_id, item.chemical_id, item.requested_quantity, item.remark, code, code)
-        )
-    cursor.close()
-    conn.close()
-    
-    msg = f"📤 [คำขอเบิกใหม่] Order #{code} โดยคุณ {b.requester_name}"
-    add_notif(None, "storekeeper", msg)
-    send_line(msg)
-    return {"message": "Success", "order_code": code}
+    try:
+        for item in b.items:
+            cursor.execute("SELECT quantity, name FROM chemicals WHERE id = %s", (item.chemical_id,))
+            c = cursor.fetchone()
+            if not c or float(c["quantity"]) < item.requested_quantity:
+                raise HTTPException(400, "Insufficient stock")
+            cursor.execute(
+                "INSERT INTO requisitions (user_id, chemical_id, requested_quantity, remark, status, order_code, batch_id) VALUES (%s,%s,%s,%s,'PENDING',%s,%s)",
+                (b.user_id, item.chemical_id, item.requested_quantity, item.remark, code, code)
+            )
+        
+        msg = f"📤 [คำขอเบิกใหม่] Order #{code} โดยคุณ {b.requester_name}"
+        add_notif(None, "storekeeper", msg)
+        send_line(msg)
+        return {"message": "Success", "order_code": code}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/requisitions/{rid}/approve")
 def approve_req(rid: int, a: ActionPayload):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id, chemical_id, requested_quantity, status, order_code FROM requisitions WHERE id = %s", (rid,))
-    req = cursor.fetchone()
-    
-    if not req or req["status"] != "PENDING":
-        raise HTTPException(400, "Invalid order or already processed")
+    try:
+        cursor.execute("SELECT user_id, chemical_id, requested_quantity, status, order_code FROM requisitions WHERE id = %s", (rid,))
+        req = cursor.fetchone()
         
-    cursor.execute("SELECT name, quantity, location FROM chemicals WHERE id = %s", (req["chemical_id"],))
-    chem = cursor.fetchone()
-    
-    if float(chem["quantity"]) < float(req["requested_quantity"]):
-        raise HTTPException(400, "Stock too low for requested quantity")
+        if not req or req["status"] != "PENDING":
+            raise HTTPException(400, "Invalid order or already processed")
+            
+        cursor.execute("SELECT name, quantity, location FROM chemicals WHERE id = %s", (req["chemical_id"],))
+        chem = cursor.fetchone()
         
-    loc = a.assigned_location or chem["location"] or 'Shelf A1L'
-    cursor.execute("UPDATE chemicals SET quantity = quantity - %s WHERE id = %s", (req["requested_quantity"], req["chemical_id"]))
-    cursor.execute(
-        "UPDATE requisitions SET status = 'APPROVED', approved_by = %s, approved_at = CURRENT_TIMESTAMP, assigned_location = %s, remark = COALESCE(%s, remark) WHERE id = %s",
-        (a.admin_name, loc, a.remark, rid)
-    )
-    cursor.close()
-    conn.close()
-    
-    msg = f"✅ [อนุมัติการเบิก] {chem['name'] if chem else ''} (#{req['order_code'] or rid})"
-    add_notif(req["user_id"], None, msg)
-    send_line(msg)
-    return {"message": "Approved"}
+        if float(chem["quantity"]) < float(req["requested_quantity"]):
+            raise HTTPException(400, "Stock too low for requested quantity")
+            
+        loc = a.assigned_location or chem["location"] or 'Shelf A1L'
+        cursor.execute("UPDATE chemicals SET quantity = quantity - %s WHERE id = %s", (req["requested_quantity"], req["chemical_id"]))
+        cursor.execute(
+            "UPDATE requisitions SET status = 'APPROVED', approved_by = %s, approved_at = CURRENT_TIMESTAMP, assigned_location = %s, remark = COALESCE(%s, remark) WHERE id = %s",
+            (a.admin_name, loc, a.remark, rid)
+        )
+        
+        msg = f"✅ [อนุมัติการเบิก] {chem['name'] if chem else ''} (#{req['order_code'] or rid})"
+        add_notif(req["user_id"], None, msg)
+        send_line(msg)
+        return {"message": "Approved"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/requisitions/{rid}/reject")
 def reject_req(rid: int, a: ActionPayload):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id, order_code FROM requisitions WHERE id = %s", (rid,))
-    req = cursor.fetchone()
-    
-    cursor.execute(
-        "UPDATE requisitions SET status = 'REJECTED', approved_by = %s, approved_at = CURRENT_TIMESTAMP, remark = COALESCE(%s, remark) WHERE id = %s",
-        (a.admin_name, a.remark, rid)
-    )
-    cursor.close()
-    conn.close()
-    
-    msg = f"❌ [ปฏิเสธการเบิก] Order (#{req['order_code'] if req else rid})"
-    add_notif(req["user_id"] if req else None, None, msg)
-    send_line(msg)
-    return {"message": "Rejected"}
+    try:
+        cursor.execute("SELECT user_id, order_code FROM requisitions WHERE id = %s", (rid,))
+        req = cursor.fetchone()
+        
+        cursor.execute(
+            "UPDATE requisitions SET status = 'REJECTED', approved_by = %s, approved_at = CURRENT_TIMESTAMP, remark = COALESCE(%s, remark) WHERE id = %s",
+            (a.admin_name, a.remark, rid)
+        )
+        
+        msg = f"❌ [ปฏิเสธการเบิก] Order (#{req['order_code'] if req else rid})"
+        add_notif(req["user_id"] if req else None, None, msg)
+        send_line(msg)
+        return {"message": "Rejected"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.post("/issues/report")
 def report_issue(p: IssuePayload):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO system_issues (user_id, reporter_name, issue_text) VALUES (%s, %s, %s);", (p.user_id, p.reporter_name, p.issue_text))
-    cursor.close()
-    conn.close()
-    
-    msg = f"⚠️ [แจ้งปัญหาใหม่] โดยคุณ {p.reporter_name}: {p.issue_text}"
-    add_notif(None, "storekeeper", msg)
-    return {"message": "Success"}
+    try:
+        cursor.execute("INSERT INTO system_issues (user_id, reporter_name, issue_text) VALUES (%s, %s, %s);", (p.user_id, p.reporter_name, p.issue_text))
+        
+        msg = f"⚠️ [แจ้งปัญหาใหม่] โดยคุณ {p.reporter_name}: {p.issue_text}"
+        add_notif(None, "storekeeper", msg)
+        return {"message": "Success"}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.get("/issues/all")
 def get_all_issues():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, user_id, reporter_name, issue_text, is_resolved, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str FROM system_issues ORDER BY id DESC LIMIT 200;")
-    issues = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return {"issues": [dict(r) for r in issues]}
+    try:
+        cursor.execute("SELECT id, user_id, reporter_name, issue_text, is_resolved, TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str FROM system_issues ORDER BY id DESC LIMIT 200;")
+        issues = cursor.fetchall()
+        return {"issues": [dict(r) for r in issues]}
+    finally:
+        cursor.close()
+        conn.close()
 
 # --- STOREKEEPER SPECIAL LOGS & USERS ENDPOINTS ---
 
@@ -542,48 +580,54 @@ def get_all_issues():
 def get_login_logs():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, full_name, username, role, ip_address, TO_CHAR(login_at, 'DD/MM/YYYY HH24:MI:SS') as time_str FROM login_logs ORDER BY id DESC LIMIT 500;")
-    logs = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return {"logs": [dict(r) for r in logs]}
+    try:
+        cursor.execute("SELECT id, full_name, username, role, ip_address, TO_CHAR(login_at, 'DD/MM/YYYY HH24:MI:SS') as time_str FROM login_logs ORDER BY id DESC LIMIT 500;")
+        logs = cursor.fetchall()
+        return {"logs": [dict(r) for r in logs]}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.get("/logs/task-duration")
 def get_task_duration_logs():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, COALESCE(created_by_name, 'ไม่ระบุ') as requester_name,
-               name as chemical_name, brand, quantity as qty, package_unit as unit, COALESCE(status, 'APPROVED') as status,
-               COALESCE(approved_by, 'Admin') as approved_by, remark,
-               TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str,
-               TO_CHAR(approved_at, 'DD/MM/YYYY HH24:MI:SS') as approved_at_str,
-               EXTRACT(EPOCH FROM (approved_at - created_at))/60 as duration_minutes
-        FROM chemicals WHERE approved_at IS NOT NULL
-        UNION ALL
-        SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name,
-               c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status,
-               COALESCE(r.approved_by, 'Admin') as approved_by, r.remark,
-               TO_CHAR(r.created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str,
-               TO_CHAR(r.approved_at, 'DD/MM/YYYY HH24:MI:SS') as approved_at_str,
-               EXTRACT(EPOCH FROM (r.approved_at - r.created_at))/60 as duration_minutes
-        FROM requisitions r 
-        LEFT JOIN users u ON r.user_id = u.id 
-        JOIN chemicals c ON r.chemical_id = c.id 
-        WHERE r.approved_at IS NOT NULL
-        ORDER BY approved_at_str DESC LIMIT 500;
-    """)
-    logs = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return {"logs": [dict(r) for r in logs]}
+    try:
+        cursor.execute("""
+            SELECT 'IMPORT' as type, id, COALESCE(order_code, '#' || id) as order_code, COALESCE(created_by_name, 'ไม่ระบุ') as requester_name,
+                   name as chemical_name, brand, quantity as qty, package_unit as unit, COALESCE(status, 'APPROVED') as status,
+                   COALESCE(approved_by, 'Admin') as approved_by, remark,
+                   TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str,
+                   TO_CHAR(approved_at, 'DD/MM/YYYY HH24:MI:SS') as approved_at_str,
+                   EXTRACT(EPOCH FROM (approved_at - created_at))/60 as duration_minutes
+            FROM chemicals WHERE approved_at IS NOT NULL
+            UNION ALL
+            SELECT 'EXPORT' as type, r.id, COALESCE(r.order_code, '#' || r.id) as order_code, COALESCE(u.full_name, 'ไม่ระบุ') as requester_name,
+                   c.name as chemical_name, c.brand, r.requested_quantity as qty, c.package_unit as unit, r.status,
+                   COALESCE(r.approved_by, 'Admin') as approved_by, r.remark,
+                   TO_CHAR(r.created_at, 'DD/MM/YYYY HH24:MI:SS') as created_at_str,
+                   TO_CHAR(r.approved_at, 'DD/MM/YYYY HH24:MI:SS') as approved_at_str,
+                   EXTRACT(EPOCH FROM (r.approved_at - r.created_at))/60 as duration_minutes
+            FROM requisitions r 
+            LEFT JOIN users u ON r.user_id = u.id 
+            JOIN chemicals c ON r.chemical_id = c.id 
+            WHERE r.approved_at IS NOT NULL
+            ORDER BY approved_at_str DESC LIMIT 500;
+        """)
+        logs = cursor.fetchall()
+        return {"logs": [dict(r) for r in logs]}
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.get("/users/status")
 def get_users_status():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, full_name, username, role, TO_CHAR(last_login, 'DD/MM/YYYY HH24:MI:SS') as last_online_str FROM users ORDER BY last_login DESC NULLS LAST;")
-    users = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return {"users": [dict(r) for r in users]}
+    try:
+        cursor.execute("SELECT id, full_name, username, role, TO_CHAR(last_login, 'DD/MM/YYYY HH24:MI:SS') as last_online_str FROM users ORDER BY last_login DESC NULLS LAST;")
+        users = cursor.fetchall()
+        return {"users": [dict(r) for r in users]}
+    finally:
+        cursor.close()
+        conn.close()
