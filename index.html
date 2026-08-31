@@ -1265,35 +1265,34 @@
             });
         }
 
-function renderWorkOrdersLog() {
-    const tbody = document.getElementById('work-orders-tbody');
-    if (!tbody) return;
+        function renderWorkOrdersLog() {
+            const tbody = document.getElementById('work-orders-tbody');
+            if (!tbody) return;
 
-    tbody.innerHTML = workOrdersLog.length ? workOrdersLog.map(wo => {
-        // Safe string escaping เพื่อป้องกัน Syntax Error จากอักขระพิเศษ
-        const safeStatus = String(wo.status || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        const safeLoc = String(wo.location || 'Shelf A1L').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        const safeRemark = String(wo.remark || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-        const isApprove = wo.status && wo.status.includes('APPROVED') ? 'approve' : 'reject';
+            tbody.innerHTML = workOrdersLog.length ? workOrdersLog.map(wo => {
+                const safeStatus = String(wo.status || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                const safeLoc = String(wo.location || 'Shelf A1L').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                const safeRemark = String(wo.remark || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                const isApprove = wo.status && wo.status.includes('APPROVED') ? 'approve' : 'reject';
 
-        return `
-            <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50">
-                <td class="py-2.5 px-2.5 font-mono font-bold text-[10px] text-indigo-600">${wo.order_code || 'WO-OFFICIAL'}</td>
-                <td class="py-2.5 px-2.5 font-bold">${wo.type === 'IMPORT' ? '📥 นำเข้า' : '📤 เบิกออก'}</td>
-                <td class="py-2.5 px-2.5">${wo.requester_name}</td>
-                <td class="py-2.5 px-2.5 font-bold">${wo.chemical_name}</td>
-                <td class="py-2.5 px-2.5 font-bold text-indigo-600">${wo.location || 'Shelf A1L'}</td>
-                <td class="py-2.5 px-2.5 font-mono text-[10px] text-slate-500">${wo.approved_at_str || '-'}</td>
-                <td class="py-2.5 px-2.5"><span class="${wo.status && wo.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${wo.status}</span></td>
-                <td class="py-2.5 px-2.5 text-center">
-                    <button onclick="showWorkOrderDocument('${wo.type}', ${wo.id}, '${isApprove}', '${safeLoc}', '${safeRemark}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[10px] font-bold">
-                        <i class="fa-solid fa-file-pdf mr-1"></i>ดูใบงาน Work Order
-                    </button>
-                </td>
-            </tr>
-        `;
-    }).join('') : '<tr><td colspan="8" class="text-center py-4 text-slate-400">ไม่มีประวัติ Work Order</td></tr>';
-}
+                return `
+                    <tr class="hover:bg-white/60 dark:hover:bg-slate-800/60 border-b border-slate-200/50">
+                        <td class="py-2.5 px-2.5 font-mono font-bold text-[10px] text-indigo-600">${wo.order_code || 'WO-OFFICIAL'}</td>
+                        <td class="py-2.5 px-2.5 font-bold">${wo.type === 'IMPORT' ? '📥 นำเข้า' : '📤 เบิกออก'}</td>
+                        <td class="py-2.5 px-2.5">${wo.requester_name}</td>
+                        <td class="py-2.5 px-2.5 font-bold">${wo.chemical_name}</td>
+                        <td class="py-2.5 px-2.5 font-bold text-indigo-600">${wo.location || 'Shelf A1L'}</td>
+                        <td class="py-2.5 px-2.5 font-mono text-[10px] text-slate-500">${wo.approved_at_str || '-'}</td>
+                        <td class="py-2.5 px-2.5"><span class="${wo.status && wo.status.includes('APPROVED') ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} px-2 py-0.5 rounded-full font-bold text-[10px]">${wo.status}</span></td>
+                        <td class="py-2.5 px-2.5 text-center">
+                            <button onclick="showWorkOrderDocument('${wo.type}', ${wo.id}, '${isApprove}', '${safeLoc}', '${safeRemark}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[10px] font-bold">
+                                <i class="fa-solid fa-file-pdf mr-1"></i>ดูใบงาน Work Order
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') : '<tr><td colspan="8" class="text-center py-4 text-slate-400">ไม่มีประวัติ Work Order</td></tr>';
+        }
 
         /* --- BATCH ADD ROWS WITH 2-WAY AUTO FETCH & NO LOCATION --- */
         function addBatchRow() {
